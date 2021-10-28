@@ -1,0 +1,17 @@
+modfiles/*.c
+modfiles/*.o
+hoc_templates/*
+runs/*
+
+*.yaml
+*.png
+*.h5
+*~
+
+nrnmech.dll
+test.h5
+__pycache__/generate_rec_points.cpython-37.pyc
+__pycache__/models.cpython-37.pyc
+__pycache__/stimulus.cpython-37.pyc
+params.csv
+*.pyc
