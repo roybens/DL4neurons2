@@ -1,0 +1,19 @@
+Param Name,Min_DB,Max_DB 
+gNaTs2_tbar_NaTs2_t_apical,0.012009,0.026145
+gSKv3_1bar_SKv3_1_apical,0.000513,0.039967
+gImbar_Im_apical,0.000143,0.001
+gNaTa_tbar_NaTa_t_axonal,3.137968,3.999904
+gK_Tstbar_K_Tst_axonal,0.001035,0.089259
+gNap_Et2bar_Nap_Et2_axonal,0.000671,5.60E-05
+gSK_E2bar_SK_E2_axonal,0.007104,0.098377
+gCa_HVAbar_Ca_HVA_axonal,0.000306,0.00099
+gK_Pstbar_K_Pst_axonal,0.428834,0.973538
+gSKv3_1bar_SKv3_1_axonal,0.004779,1.936176
+gCa_LVAstbar_Ca_LVAst_axonal,0.001612,7.00E-06
+gSKv3_1bar_SKv3_1_somatic,0.072929,0.303472
+gSK_E2bar_SK_E2_somatic,0.002971,0.099433
+gCa_HVAbar_Ca_HVA_somatic,0.000374,0.000994
+gNaTs2_tbar_NaTs2_t_somatic,0.926705,0.999812
+gIhbar_Ih_somatic,8.00E-05,8.00E-05
+gCa_LVAstbar_Ca_LVAst_somatic,0.000333,0.006868
+gIhbar_Ih_dend,8.00E-05,8.00E-05

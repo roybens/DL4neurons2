@@ -1,0 +1,23 @@
+Param name,Base value
+gNaTs2_tbar_NaTs2_t_apical,0.012009
+gSKv3_1bar_SKv3_1_apical,0.000513
+gImbar_Im_apical,0.00074
+gNaTa_tbar_NaTa_t_axonal,3.429725
+gK_Tstbar_K_Tst_axonal,0.001035
+gamma_CaDynamics_E2_axonal,0.016713
+gNap_Et2bar_Nap_Et2_axonal,0.009803
+gSK_E2bar_SK_E2_axonal,0.008085
+gCa_HVAbar_Ca_HVA_axonal,0.000306
+gK_Pstbar_K_Pst_axonal,0.959296
+gSKv3_1bar_SKv3_1_axonal,0.094971
+decay_CaDynamics_E2_axonal,384.114655
+gCa_LVAstbar_Ca_LVAst_axonal,5e-05
+gamma_CaDynamics_E2_somatic,0.000533
+gSKv3_1bar_SKv3_1_somatic,0.102517
+gSK_E2bar_SK_E2_somatic,0.099433
+gCa_HVAbar_Ca_HVA_somatic,0.000374
+gNaTs2_tbar_NaTs2_t_somatic,0.926705
+gIhbar_Ih_somatic,8e-05
+decay_CaDynamics_E2_somatic,342.544232
+gCa_LVAstbar_Ca_LVAst_somatic,0.000778
+gIhbar_Ih_dend,8e-05
