@@ -1,0 +1,38 @@
+nid02338
+Fri Oct 22 16:37:32 PDT 2021
+              total        used        free      shared  buff/cache   available
+Mem:             94           4          87           0           1          87
+Swap:             0           0           0
+top - 16:37:32 up 2 days,  1:36,  0 users,  load average: 28.15, 23.94, 37.90
+Tasks: 2541 total,  25 running, 2516 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  8.9 us,  0.2 sy,  0.0 ni, 90.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 96512.53+total, 89763.68+free, 4978.371 used, 1770.473 buff/cache
+MiB Swap:    0.000 total,    0.000 free,    0.000 used. 90005.07+avail Mem 
+
+   PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+158368 adisaran  20   0  723160 110668  32488 R 95.12 0.112   3:44.18 python3
+158372 adisaran  20   0  726100 107316  32468 R 95.12 0.109   3:46.92 python3
+158361 adisaran  20   0  724536 102136  32728 R 92.68 0.103   3:36.61 python3
+158365 adisaran  20   0  728428 114352  32848 R 92.68 0.116   3:46.15 python3
+158366 adisaran  20   0  724660 106600  32924 R 92.68 0.108   3:44.76 python3
+158369 adisaran  20   0  720988 106968  32496 R 92.68 0.108   3:44.54 python3
+158371 adisaran  20   0  731068 111452  32964 R 92.68 0.113   3:38.07 python3
+158373 adisaran  20   0  723420 113700  32888 R 92.68 0.115   3:46.30 python3
+158374 adisaran  20   0  733100 113208  32784 R 92.68 0.115   3:46.92 python3
+158378 adisaran  20   0  728428 114196  32692 R 92.68 0.116   3:45.99 python3
+158379 adisaran  20   0  724660 106328  32656 R 92.68 0.108   3:46.00 python3
+158380 adisaran  20   0  726052 114192  32856 R 92.68 0.116   3:44.70 python3
+158381 adisaran  20   0  723160 111116  32936 R 92.68 0.112   3:43.77 python3
+158382 adisaran  20   0  720988 107448  32964 R 92.68 0.109   3:41.49 python3
+158384 adisaran  20   0  731068 110800  32316 R 92.68 0.112   3:46.56 python3
+158386 adisaran  20   0  723420 113068  32260 R 92.68 0.114   3:45.80 python3
+158387 adisaran  20   0  733100 112996  32572 R 92.68 0.114   3:46.62 python3
+158388 adisaran  20   0  726520 108684  32600 R 92.68 0.110   3:46.83 python3
+158391 adisaran  20   0  728428 114428  32924 R 92.68 0.116   3:45.64 python3
+158392 adisaran  20   0  724660 106568  32896 R 92.68 0.108   3:46.04 python3
+158362 adisaran  20   0  726520 109000  32912 R 90.24 0.110   3:46.25 python3
+158367 adisaran  20   0  726132 114112  32964 R 90.24 0.115   3:42.26 python3
+158375 adisaran  20   0  726520 108188  32892 R 90.24 0.109   3:46.93 python3
+158385 adisaran  20   0  726228 107428  32448 R 90.24 0.109   3:46.26 python3
+159028 adisaran  20   0   74032   8356   4868 R 56.10 0.008   0:00.49 top
+     8 root      20   0       0      0      0 S 2.439 0.000   3:46.07 rcu_sched

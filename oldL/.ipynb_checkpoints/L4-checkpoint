@@ -1,0 +1,13 @@
+nid02405
+Fri Oct 22 17:09:33 PDT 2021
+              total        used        free      shared  buff/cache   available
+Mem:             94           2          90           0           0          90
+Swap:             0           0           0
+top - 17:09:34 up 2 days,  2:08,  0 users,  load average: 8.30, 25.50, 18.45
+Tasks: 2475 total,   1 running, 2474 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.1 us,  0.2 sy,  0.0 ni, 99.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 96512.53+total, 93066.32+free, 2750.418 used,  695.793 buff/cache
+MiB Swap:    0.000 total,    0.000 free,    0.000 used. 92553.79+avail Mem 
+
+   PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+132519 adisaran  20   0   74052   8376   4868 R 46.67 0.008   0:00.51 top
