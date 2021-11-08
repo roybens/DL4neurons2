@@ -125,3 +125,23 @@ Then pass this params file along with the stimulus file to run.py:
 python run.py --model BBP --m-type L5_TTPC1 --e-type cADpyr --outfile results_stim1.h5 --param-file params.csv --stim-file stims/chaotic_1.csv
 python run.py --model BBP --m-type L5_TTPC1 --e-type cADpyr --outfile results_stim2.h5 --param-file params.csv --stim-file stims/some_other_stim.csv
 ```
+
+
+## Update 2021 RBS
+Using the precompiled Neuron version on /global/cscratch1/sd/adisaran/neuronBBP_build2/nrn/
+```
+shifter --image=balewski/ubu18-py3-mpich:v2
+PATH=/global/cscratch1/sd/adisaran/neuronBBP_build2/nrn/bin:$PATH
+PYTHONPATH=/global/cscratch1/sd/adisaran/neuronBBP_build2/nrn/lib/python/
+```
+Then we need to compile the modfiles assuming the path is DL4Neurons2 root (this only needs to be done once)
+```
+cd modfiles
+nrnivmodl
+cp -r ./x86_64 ../
+```
+Then to check you have a working neuron with the compiled mechanisms you can write
+```
+nrngui
+```
+And neuron should start with a list of loaded mechanisms.
