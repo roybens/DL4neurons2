@@ -218,9 +218,10 @@ class BBP(BaseModel):
                 seclist = list(self.entire_cell.somatic)
             elif sec == 'axonal':
                 seclist = list(self.entire_cell.axonal)
+            elif sec == 'all':
+                seclist = list(self.entire_cell.all)
             else:
                 raise NotImplementedError("Unrecognized section identifier: {}".format(sec))
-
             yield name, sec, param_name, seclist
             
     def get_varied_params(self):
@@ -301,7 +302,69 @@ class BBPExc(BBP):
         'gCa_LVAstbar_Ca_LVAst_somatic',
         'gIhbar_Ih_dend',
     )
+class BBPExcV2(BBP):
+    PARAM_NAMES = (
+        'gNaTs2_tbar_NaTs2_t_apical',
+        'gSKv3_1bar_SKv3_1_apical',
+        'gImbar_Im_apical',
+        'gIhbar_Ih_dend',
+        'gNaTa_tbar_NaTa_t_axonal',
+        'gK_Tstbar_K_Tst_axonal',
+        'gNap_Et2bar_Nap_Et2_axonal',
+        'gSK_E2bar_SK_E2_axonal',
+        'gCa_HVAbar_Ca_HVA_axonal',
+        'gK_Pstbar_K_Pst_axonal',
+        'gCa_LVAstbar_Ca_LVAst_axonal',
+        'g_pas_axonal',
+        'cm_axonal',
+        'gSKv3_1bar_SKv3_1_somatic',
+        'gNaTs2_tbar_NaTs2_t_somatic',
+        'gCa_LVAstbar_Ca_LVAst_somatic',
+        'g_pas_somatic',
+        'cm_somatic',
+        'e_pas_all'
+    )
+    #these params would be assigned from values of other free parameters (parname:cloned_value)
+    CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
 
+    def _set_self_params(self, *args):
+        print(f'args is {args} param_names are {self.PARAM_NAMES}')
+        if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
+            args = self.DEFAULT_PARAMS
+        params = {name: arg for name, arg in zip(self.PARAM_NAMES, args)}
+        # Model params
+        for (var, val) in params.items():
+            setattr(self, var, val)
+        if(len(params.items())>0):
+            for (var,cloned_var) in self.CLONED_PARAMS.items():
+                print(params)
+                print(f'{var} {cloned_var} ,{params[cloned_var]}')
+                setattr(self,var,params[cloned_var])
+            
+    def create_cell(self):
+        BBP.create_cell(self)
+        self.PARAM_RANGES = (
+        (1.2E-03,2.6E+00),
+        (5.1E-05,4.0E-01),
+        (1.4E-05,1.0E-02),
+        (8.0E-07,8.0E-01),
+        (3.1E-01,4.0E+01),
+        (1.0E-04,8.9E-01),
+        (5.6E-06,9.8E-02),
+        (7.1E-04,9.8E-01),
+        (3.1E-05,9.9E-03),
+        (4.3E-02,9.7E+00),
+        (7.0E-07,8.8E-02),
+        (3.0E-07,3.0E-03),
+        (0.5,3),
+        (7.3E-03,3.0E+00),
+        (9.3E-02,1.0E+01),
+        (3.3E-05,6.9E-02),
+        (3.0E-07,3.0E-03),
+        (0.5,3),
+        (-100,-50)
+    )
+        
 
 class Mainen(BaseModel):
     PARAM_NAMES = (

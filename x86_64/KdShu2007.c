@@ -1,4 +1,4 @@
-/* Created by Language version: 7.5.0 */
+/* Created by Language version: 7.7.0 */
 /* VECTORIZED */
 #define NRN_VECTORIZED 1
 #include <stdio.h>
@@ -83,6 +83,15 @@ extern void hoc_register_limits(int, HocParmLimits*);
 extern void hoc_register_units(int, HocParmUnits*);
 extern void nrn_promote(Prop*, int, int);
 extern Memb_func* memb_func;
+ 
+#define NMODL_TEXT 1
+#if NMODL_TEXT
+static const char* nmodl_file_text;
+static const char* nmodl_filename;
+extern void hoc_reg_nmodl_text(int, const char*);
+extern void hoc_reg_nmodl_filename(int, const char*);
+#endif
+
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _extcall_prop = _prop;
@@ -170,7 +179,7 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static void _ode_matsol_instance1(_threadargsproto_);
  /* connect range variables in _p that hoc is supposed to know about */
  static const char *_mechanism[] = {
- "7.5.0",
+ "7.7.0",
 "KdShu2007",
  "gkbar_KdShu2007",
  "ek_KdShu2007",
@@ -231,6 +240,10 @@ extern void _cvode_abstol( Symbol**, double*, int);
      _nrn_thread_reg(_mechtype, 1, _thread_mem_init);
      _nrn_thread_reg(_mechtype, 0, _thread_cleanup);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
+ #if NMODL_TEXT
+  hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
+  hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
+#endif
   hoc_register_prop_size(_mechtype, 9, 3);
   hoc_register_dparam_semantics(_mechtype, 0, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "k_ion");
@@ -238,7 +251,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 KdShu2007 /global/cscratch1/sd/adisaran/DL4neurons/x86_64/KdShu2007.mod\n");
+ 	ivoc_help("help ?1 KdShu2007 /neuron_wrk/DL4neurons2/modfiles/KdShu2007.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -508,4 +521,78 @@ _first = 0;
 
 #if defined(__cplusplus)
 } /* extern "C" */
+#endif
+
+#if NMODL_TEXT
+static const char* nmodl_filename = "/neuron_wrk/DL4neurons2/modfiles/KdShu2007.mod";
+static const char* nmodl_file_text = 
+  "TITLE K-D\n"
+  ": K-D current for prefrontal cortical neuron ------Yuguo Yu  2007\n"
+  "\n"
+  "NEURON {\n"
+  "     THREADSAFE\n"
+  "	SUFFIX KdShu2007\n"
+  "	USEION k WRITE ik\n"
+  "	RANGE  gkbar, ik, ek\n"
+  "	GLOBAL minf, mtau, hinf, htau\n"
+  "}\n"
+  "\n"
+  "PARAMETER {\n"
+  "	gkbar = 0.1   	(mho/cm2)	\n"
+  "								\n"
+  "	celsius\n"
+  "	ek = -100	(mV)            : must be explicitly def. in hoc\n"
+  "	v 		(mV)\n"
+  "	vhalfm=-43  (mV)\n"
+  "	km=8\n"
+  "	vhalfh=-67  (mV) \n"
+  "      kh=7.3\n"
+  "	q10=2.3\n"
+  "}\n"
+  "\n"
+  "\n"
+  "UNITS {\n"
+  "	(mA) = (milliamp)\n"
+  "	(mV) = (millivolt)\n"
+  "	(pS) = (picosiemens)\n"
+  "	(um) = (micron)\n"
+  "} \n"
+  "\n"
+  "ASSIGNED {\n"
+  "	ik 		(mA/cm2)\n"
+  "	minf 		mtau (ms)	 	\n"
+  "	hinf 		htau (ms)	 	\n"
+  "}\n"
+  " \n"
+  "\n"
+  "STATE { m h}\n"
+  "\n"
+  "BREAKPOINT {\n"
+  "        SOLVE states METHOD cnexp\n"
+  "       ik = gkbar * m*h*(v-ek)\n"
+  "} \n"
+  "\n"
+  "INITIAL {\n"
+  "	trates(v)\n"
+  "	m=minf  \n"
+  "	h=hinf  \n"
+  "}\n"
+  "\n"
+  "DERIVATIVE states {   \n"
+  "        trates(v)      \n"
+  "        m' = (minf-m)/mtau\n"
+  "        h' = (hinf-h)/htau\n"
+  "}\n"
+  "\n"
+  "PROCEDURE trates(v) {  \n"
+  "	LOCAL qt\n"
+  "        qt=q10^((celsius-22)/10)\n"
+  "        minf=1-1/(1+exp((v-vhalfm)/km))\n"
+  "        hinf=1/(1+exp((v-vhalfh)/kh))\n"
+  "\n"
+  "  	 mtau = 0.6\n"
+  "	 htau = 1500\n"
+  "}\n"
+  "\n"
+  ;
 #endif

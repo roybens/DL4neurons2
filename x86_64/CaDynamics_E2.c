@@ -1,4 +1,4 @@
-/* Created by Language version: 7.5.0 */
+/* Created by Language version: 7.7.0 */
 /* VECTORIZED */
 #define NRN_VECTORIZED 1
 #include <stdio.h>
@@ -81,6 +81,15 @@ extern void hoc_register_limits(int, HocParmLimits*);
 extern void hoc_register_units(int, HocParmUnits*);
 extern void nrn_promote(Prop*, int, int);
 extern Memb_func* memb_func;
+ 
+#define NMODL_TEXT 1
+#if NMODL_TEXT
+static const char* nmodl_file_text;
+static const char* nmodl_filename;
+extern void hoc_reg_nmodl_text(int, const char*);
+extern void hoc_reg_nmodl_filename(int, const char*);
+#endif
+
  extern void _nrn_setdata_reg(int, void(*)(Prop*));
  static void _setdata(Prop* _prop) {
  _extcall_prop = _prop;
@@ -132,7 +141,7 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static void _ode_matsol_instance1(_threadargsproto_);
  /* connect range variables in _p that hoc is supposed to know about */
  static const char *_mechanism[] = {
- "7.5.0",
+ "7.7.0",
 "CaDynamics_E2",
  "gamma_CaDynamics_E2",
  "decay_CaDynamics_E2",
@@ -190,6 +199,10 @@ extern void _cvode_abstol( Symbol**, double*, int);
  _mechtype = nrn_get_mechtype(_mechanism[1]);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 2, _update_ion_pointer);
+ #if NMODL_TEXT
+  hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
+  hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
+#endif
   hoc_register_prop_size(_mechtype, 9, 4);
   hoc_register_dparam_semantics(_mechtype, 0, "ca_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "ca_ion");
@@ -199,11 +212,13 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 CaDynamics_E2 /global/cscratch1/sd/adisaran/DL4neurons/x86_64/CaDynamics_E2.mod\n");
+ 	ivoc_help("help ?1 CaDynamics_E2 /neuron_wrk/DL4neurons2/modfiles/CaDynamics_E2.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
- static double FARADAY = 96485.3;
+ 
+#define FARADAY _nrnunit_FARADAY[_nrnunit_use_legacy_]
+static double _nrnunit_FARADAY[2] = {0x1.78e555060882cp+16, 96485.3}; /* 96485.3321233100141 */
 static int _reset;
 static char *modelname = "";
 
@@ -415,4 +430,46 @@ _first = 0;
 
 #if defined(__cplusplus)
 } /* extern "C" */
+#endif
+
+#if NMODL_TEXT
+static const char* nmodl_filename = "/neuron_wrk/DL4neurons2/modfiles/CaDynamics_E2.mod";
+static const char* nmodl_file_text = 
+  ": Dynamics that track inside calcium concentration\n"
+  ": modified from Destexhe et al. 1994\n"
+  "\n"
+  "NEURON	{\n"
+  "	SUFFIX CaDynamics_E2\n"
+  "	USEION ca READ ica WRITE cai\n"
+  "	RANGE decay, gamma, minCai, depth\n"
+  "}\n"
+  "\n"
+  "UNITS	{\n"
+  "	(mV) = (millivolt)\n"
+  "	(mA) = (milliamp)\n"
+  "	FARADAY = (faraday) (coulombs)\n"
+  "	(molar) = (1/liter)\n"
+  "	(mM) = (millimolar)\n"
+  "	(um)	= (micron)\n"
+  "}\n"
+  "\n"
+  "PARAMETER	{\n"
+  "	gamma = 0.05 : percent of free calcium (not buffered)\n"
+  "	decay = 80 (ms) : rate of removal of calcium\n"
+  "	depth = 0.1 (um) : depth of shell\n"
+  "	minCai = 1e-4 (mM)\n"
+  "}\n"
+  "\n"
+  "ASSIGNED	{ica (mA/cm2)}\n"
+  "\n"
+  "STATE	{\n"
+  "	cai (mM)\n"
+  "	}\n"
+  "\n"
+  "BREAKPOINT	{ SOLVE states METHOD cnexp }\n"
+  "\n"
+  "DERIVATIVE states	{\n"
+  "	cai' = -(10000)*(ica*gamma/(2*FARADAY*depth)) - (cai - minCai)/decay\n"
+  "}\n"
+  ;
 #endif

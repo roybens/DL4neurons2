@@ -1,4 +1,4 @@
-/* Created by Language version: 7.5.0 */
+/* Created by Language version: 7.7.0 */
 /* VECTORIZED */
 #define NRN_VECTORIZED 1
 #include <stdio.h>
@@ -92,6 +92,15 @@ extern void hoc_register_limits(int, HocParmLimits*);
 extern void hoc_register_units(int, HocParmUnits*);
 extern void nrn_promote(Prop*, int, int);
 extern Memb_func* memb_func;
+ 
+#define NMODL_TEXT 1
+#if NMODL_TEXT
+static const char* nmodl_file_text;
+static const char* nmodl_filename;
+extern void hoc_reg_nmodl_text(int, const char*);
+extern void hoc_reg_nmodl_filename(int, const char*);
+#endif
+
  extern Prop* nrn_point_prop_;
  static int _pointtype;
  static void* _hoc_create_pnt(_ho) Object* _ho; { void* create_point_process();
@@ -168,7 +177,7 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static void _ode_matsol_instance1(_threadargsproto_);
  /* connect range variables in _p that hoc is supposed to know about */
  static const char *_mechanism[] = {
- "7.5.0",
+ "7.7.0",
 "Izhi2003a",
  "a",
  "b",
@@ -252,6 +261,10 @@ extern void _cvode_abstol( Symbol**, double*, int);
      _nrn_setdata_reg(_mechtype, _setdata);
      _nrn_thread_reg(_mechtype, 1, _thread_mem_init);
      _nrn_thread_reg(_mechtype, 0, _thread_cleanup);
+ #if NMODL_TEXT
+  hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
+  hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
+#endif
   hoc_register_prop_size(_mechtype, 20, 6);
   hoc_register_dparam_semantics(_mechtype, 0, "area");
   hoc_register_dparam_semantics(_mechtype, 1, "pntproc");
@@ -265,7 +278,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  pnt_receive[_mechtype] = _net_receive;
  pnt_receive_size[_mechtype] = 1;
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Izhi2003a /global/cscratch1/sd/adisaran/DL4neurons/x86_64/izhi2003a.mod\n");
+ 	ivoc_help("help ?1 Izhi2003a /neuron_wrk/DL4neurons2/modfiles/izhi2003a.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -633,4 +646,99 @@ _first = 0;
 
 #if defined(__cplusplus)
 } /* extern "C" */
+#endif
+
+#if NMODL_TEXT
+static const char* nmodl_filename = "/neuron_wrk/DL4neurons2/modfiles/izhi2003a.mod";
+static const char* nmodl_file_text = 
+  ": Izhikevich artificial neuron model from \n"
+  ": EM Izhikevich \"Simple Model of Spiking Neurons\"\n"
+  ": IEEE Transactions On Neural Networks, Vol. 14, No. 6, November 2003 pp 1569-1572\n"
+  ": V is the voltage analog, u controls \n"
+  ": see COMMENT below or izh.hoc for typical parameter values\n"
+  ": uncomment lines with dvv,du to graph derivatives\n"
+  "\n"
+  "NEURON {\n"
+  "  POINT_PROCESS Izhi2003a\n"
+  "  RANGE a,b,c,d,f,g,Iin,fflag,thresh,erev,taug\n"
+  "}\n"
+  "\n"
+  "INITIAL {\n"
+  "  V=-65\n"
+  "  u=0.2*V\n"
+  "  gsyn=0\n"
+  "  net_send(0,1)\n"
+  "}\n"
+  "\n"
+  "PARAMETER {\n"
+  "  a = 0.02\n"
+  "  b = 0.2\n"
+  "  c = -65\n"
+  "  d = 2\n"
+  "  f = 5\n"
+  "  g = 140\n"
+  "  Iin = 10\n"
+  "  taug = 1\n"
+  "  thresh=30\n"
+  "  erev = 0\n"
+  "  fflag = 1\n"
+  "}\n"
+  "\n"
+  "STATE { u V gsyn } : use V for voltage so don't interfere with built-in v of cell\n"
+  "\n"
+  "ASSIGNED {\n"
+  "}\n"
+  "\n"
+  "BREAKPOINT {\n"
+  "  SOLVE states METHOD derivimplicit\n"
+  "}\n"
+  "\n"
+  "DERIVATIVE states {\n"
+  "  V' = 0.04*V*V + f*V + g - u + Iin - gsyn*(V-erev)\n"
+  "  u' = a*(b*V-u) \n"
+  "  gsyn' = -gsyn/taug\n"
+  "}\n"
+  "\n"
+  "NET_RECEIVE (w) {\n"
+  "  if (flag == 1) {\n"
+  "    WATCH (V>thresh) 2\n"
+  "  } else if (flag == 2) {\n"
+  "    net_event(t)\n"
+  "    V = c\n"
+  "    u = u+d\n"
+  "  } else { : synaptic activation\n"
+  "    gsyn = gsyn+w\n"
+  "  }\n"
+  "}\n"
+  "\n"
+  ":** vers gives version\n"
+  "PROCEDURE version () {\n"
+  "\n"
+  "}\n"
+  "\n"
+  "COMMENT\n"
+  "        a        b       c      d       Iin\n"
+  "================================================================================\n"
+  "      0.02      0.2     -65     6      14       % tonic spiking\n"
+  "      0.02      0.25    -65     6       0.5     % phasic spiking\n"
+  "      0.02      0.2     -50     2      15       % tonic bursting\n"
+  "      0.02      0.25    -55     0.05    0.6     % phasic bursting\n"
+  "      0.02      0.2     -55     4      10       % mixed mode\n"
+  "      0.01      0.2     -65     8      30       % spike frequency adaptation\n"
+  "      0.02     -0.1     -55     6       0       % Class 1\n"
+  "      0.2       0.26    -65     0       0       % Class 2\n"
+  "      0.02      0.2     -65     6       7       % spike latency\n"
+  "      0.05      0.26    -60     0       0       % subthreshold oscillations\n"
+  "      0.1       0.26    -60    -1       0       % resonator\n"
+  "      0.02     -0.1     -55     6       0       % integrator\n"
+  "      0.03      0.25    -60     4       0       % rebound spike\n"
+  "      0.03      0.25    -52     0       0       % rebound burst\n"
+  "      0.03      0.25    -60     4       0       % threshold variability\n"
+  "      1         1.5     -60     0     -65       % bistability\n"
+  "      1         0.2     -60   -21       0       % DAP\n"
+  "      0.02      1       -55     4       0       % accomodation\n"
+  "     -0.02     -1       -60     8      80       % inhibition-induced spiking\n"
+  "     -0.026    -1       -45     0      80       % inhibition-induced bursting    \n"
+  "ENDCOMMENT\n"
+  ;
 #endif
