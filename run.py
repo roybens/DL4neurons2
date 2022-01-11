@@ -12,8 +12,8 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-#import ruamel.yaml as yaml
-import yaml as yaml
+import ruamel.yaml as yaml
+#import yaml as yaml
 from stimulus import stims, add_stims
 import models
 
@@ -35,6 +35,9 @@ from neuron import h, gui
 VOLTS_SCALE = 150
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
+stim_mul_range = [0.5,1.5]
+stim_offset_range = [-0.2,0.2]
+
 
 def _rangeify_linear(data, _range):
     return data * (_range[1] - _range[0]) + _range[0]
@@ -57,7 +60,7 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, *params):
             raise ValueError('Must specify --m-type and --e-type when using BBP')
         
         if e_type == 'cADpyr':
-            model = models.BBPExc(m_type, e_type, cell_i, *params, log=log)
+            model = models.BBPExcV2(m_type, e_type, cell_i, *params, log=log)
         else:
             model = models.BBPInh(m_type, e_type, cell_i, *params, log=log)
             
@@ -115,10 +118,18 @@ def get_random_params(args, n=1):
 
         # Put either the fixed or random params into phys_rand
         if param == float('inf'):
-            phys_rand[:, i] = rangeify(rand[:, i], _range)
+            #print(f'{i}-{model.PARAM_NAMES[i]}')
+            if i in args.linear_params_inds:
+                #print(f'{i}-{model.PARAM_NAMES[i]} is linear')
+                phys_rand[:, i] = _rangeify_linear(rand[:, i], _range)
+            else:
+                phys_rand[:, i] = rangeify(rand[:, i], _range)
         else:
             phys_rand[:, i] = np.array([param] * n)
     phys_rand[np.isnan(phys_rand)] = 9e9
+        
+            
+        
     return phys_rand, rand
 
         
@@ -144,7 +155,8 @@ def get_mpi_idx(args, nsamples):
 def get_stim(args, mult=None):
     stim_fn = os.path.basename(args.stim_file)
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
-    multiplier = mult or args.stim_multiplier or model.STIM_MULTIPLIER
+    #multiplier = mult or args.stim_multiplier or model.STIM_MULTIPLIER
+    multiplier = args.stim_multiplier
     log.debug("Stim multiplier = {}".format(multiplier))
     return (np.genfromtxt(args.stim_file, dtype=np.float32) * multiplier) + args.stim_dc_offset
 
@@ -347,6 +359,7 @@ def lock_params(args, paramsets):
 
 
 def main(args):
+    print(args)
     if args.trivial_parallel and args.outfile and '{NODEID}' in args.outfile:
         args.outfile = args.outfile.replace('{NODEID}', os.environ['SLURM_PROCID'])
 
@@ -400,7 +413,6 @@ def main(args):
         raise ValueError("Must pass --param-file with --blind")
 
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
-
     if args.metadata_only:
         write_metadata(args, model)
         exit()
@@ -426,26 +438,36 @@ def main(args):
         start, stop = 0, 1
 
     lock_params(args, paramsets)
-
     stim = get_stim(args)
+    orig_stim = stim
     if args.model == 'BBP':
         buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
     else:
         buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
     qa = np.zeros(stop-start)
 
+ 
     for i, params in enumerate(paramsets):
+        if args.stim_noise:
+            stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+            stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+            stim = orig_stim*stim_mul+stim_offset
         if args.print_every and i % args.print_every == 0:
             log.info("Processed {} samples".format(i))
         log.debug("About to run with params = {}".format(params))
+        
 
         model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)
+        if args.stim_noise:
+            params = np.append(params,[stim_mul,stim_offset])
+            print(params)
+            
         data = model.simulate(stim, args.dt)
         if args.model == 'BBP':
             data['v'] = np.stack(list(data.values()), axis=-1)
         buf[i, ...] = data['v'][:-1]
         qa[i] = _qa(args, data['v'])
-
+        
         plot(args, data, stim)
         
     # Save to disk
@@ -541,6 +563,10 @@ if __name__ == '__main__':
         help='when selecting random params, distribute them uniformly' + \
         'throughout the range, rather than exponentially'
     )
+    parser.add_argument(
+        '--linear-params-inds', type=int, nargs='+', default=[],required=False,
+        help='When used with --num, indicates which parameters should be randomized linearly all the other would be randomized exponentially or linearly if --linear is true'
+    )
 
     # CHOOSE STIMULUS
     parser.add_argument(
@@ -551,10 +577,13 @@ if __name__ == '__main__':
         help="apply a DC offset to the stimulus (shift it). Happens after --stim-multiplier"
     )
     parser.add_argument(
-        '--stim-multiplier', type=float, default=None,
+        '--stim-multiplier',  type=float, default=1,
         help="scale the stimulus amplitude by this factor. Happens before --stim-dc-offset"
     )
-
+    parser.add_argument(
+        '--stim-noise', action='store_true', default=False,
+        help="add random multiplier and dc-offset to the stim in the range hard coded in this script"
+    )
     parser.add_argument(
         '--tstart', type=int, default=None, required=False,
         help='when to start the recording'

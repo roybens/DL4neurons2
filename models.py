@@ -43,6 +43,7 @@ class BaseModel(object):
 
     def attach_clamp(self):
         h('objref clamp')
+        print(h.cell)
         clamp = h.IClamp(h.cell(0.5))
         clamp.delay = 0
         clamp.dur = h.tstop
@@ -86,7 +87,7 @@ class BaseModel(object):
         hoc_vectors = self.attach_recordings(ntimepts)
 
         self.init_hoc(dt, tstop)
-
+        h.dt=dt
         self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         self.log.debug("({} total timesteps)".format(ntimepts))
 
@@ -131,6 +132,7 @@ class BBP(BaseModel):
         return hoc_vectors
 
     def create_cell(self):
+        print('in bbp create cell')
         h.load_file('stdrun.hoc')
         h.load_file('import3d.hoc')
         cell_dir = self.cell_kwargs['model_directory']
@@ -328,7 +330,7 @@ class BBPExcV2(BBP):
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
 
     def _set_self_params(self, *args):
-        print(f'args is {args} param_names are {self.PARAM_NAMES}')
+        #print(f'args is {args} param_names are {self.PARAM_NAMES}')
         if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
             args = self.DEFAULT_PARAMS
         params = {name: arg for name, arg in zip(self.PARAM_NAMES, args)}
@@ -337,12 +339,13 @@ class BBPExcV2(BBP):
             setattr(self, var, val)
         if(len(params.items())>0):
             for (var,cloned_var) in self.CLONED_PARAMS.items():
-                print(params)
-                print(f'{var} {cloned_var} ,{params[cloned_var]}')
+                #print(params)
+                #print(f'{var} {cloned_var} ,{params[cloned_var]}')
                 setattr(self,var,params[cloned_var])
             
     def create_cell(self):
-        BBP.create_cell(self)
+        #print('creating BBPExcV2')
+        cell = BBP.create_cell(self)
         self.PARAM_RANGES = (
         (1.2E-03,2.6E+00),
         (5.1E-05,4.0E-01),
@@ -362,8 +365,8 @@ class BBPExcV2(BBP):
         (3.3E-05,6.9E-02),
         (3.0E-07,3.0E-03),
         (0.5,3),
-        (-100,-50)
-    )
+        (-100,-50))
+        return cell
         
 
 class Mainen(BaseModel):
