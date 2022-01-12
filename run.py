@@ -77,6 +77,7 @@ def clean_params(args, model):
     to 1.1
     """
     defaults = model.DEFAULT_PARAMS
+    print(f'{defaults} are and args.params is {args.params}')
     if args.params:
         assert len(args.params) == len(defaults)
         defs = [param == 'def' for param in args.params]
@@ -383,8 +384,8 @@ def main(args):
                     break
 
         # Get param string for holding some params fixed
-        paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
-                   if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
+        #paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
+        paramuse = [] if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
         args.params = [('inf' if use else 'def') for use in paramuse]
 
         if args.e_type in ('bIR', 'bAC'):

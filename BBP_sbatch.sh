@@ -8,7 +8,7 @@
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C knl
 #SBATCH --output logs/%A_%a  # job-array encodding
-#SBATCH --image=balewski/ubu18-py3-mpich:v2
+#SBATCH --image=balewski/ubu20-neuron8:v3
 #SBATCH --array 1-1
 
 
