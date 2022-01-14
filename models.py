@@ -367,6 +367,8 @@ class BBPExcV2(BBP):
         (0.5,3),
         (-100,-50))
         return cell
+    def get_probe_names(self):
+        return ['soma']
         
 
 class Mainen(BaseModel):

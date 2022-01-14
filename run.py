@@ -77,7 +77,6 @@ def clean_params(args, model):
     to 1.1
     """
     defaults = model.DEFAULT_PARAMS
-    print(f'{defaults} are and args.params is {args.params}')
     if args.params:
         assert len(args.params) == len(defaults)
         defs = [param == 'def' for param in args.params]
@@ -179,29 +178,23 @@ def create_h5(args, nsamples):
         ndim = len(model.PARAM_NAMES)
         f.create_dataset('phys_par', shape=(nsamples, ndim), dtype=np.float32)
         f.create_dataset('norm_par', shape=(nsamples, ndim), dtype=np.float32)
-        f.create_dataset('varParL', data=np.string_(model.PARAM_NAMES))
-        if args.model == 'BBP':
-            f.create_dataset('probeName', data=np.string_(model.get_probe_names())) ## MISSING CERTAIN PROBES
+        #f.create_dataset('varParL', data=np.string_(model.PARAM_NAMES))
+        #if args.model == 'BBP':
+            #f.create_dataset('probeName', data=np.string_(model.get_probe_names())) ## MISSING CERTAIN PROBES
 
-        # write param range
-        phys_par_range = np.stack(model.PARAM_RANGES)
-        params, defaulteds = clean_params(args, model)
-        for i, (varied, defaulted) in enumerate(zip(model.get_varied_params(), defaulteds)):
-            if not varied:
-                phys_par_range[i, :] = (0, 0)
-            if varied and defaulted:
-                phys_par_range[i, :] = (-1.1, -1.1)
-        f.create_dataset('phys_par_range', data=phys_par_range, dtype=np.float32)
+
 
         # create stim, qa, and voltage datasets
         stim = get_stim(args)
         ntimepts = len(stim)
         if args.model == 'BBP':
-            f.create_dataset('voltages', shape=(nsamples, ntimepts, model._n_rec_pts()), dtype=np.int16) ## MISSING 67, _n_rec_pts() GIVING 36
+            f.create_dataset('voltages', shape=(nsamples, ntimepts, model._n_rec_pts()), dtype=np.int16)
         else:
             f.create_dataset('voltages', shape=(nsamples, ntimepts), dtype=np.int16)
-        f.create_dataset('binQA', shape=(nsamples,), dtype=np.int32)
+        f.create_dataset('stim_par', shape=(nsamples,2), dtype=np.int32)
         f.create_dataset('stim', data=stim)
+        #f.create_dataset('binQA', shape=(nsamples,), dtype=np.int32)
+        
     #log.info("Done.")
 
 
@@ -216,7 +209,7 @@ def _normalize(args, data, minmax=1):
     return 2*minmax * ( (data - mins)/ranges ) - minmax
 
     
-def save_h5(args, buf, qa, params, start, stop, force_serial=False, upar=None):
+def save_h5(args, buf, qa, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
     #log.info("saving into h5 file {}".format(args.outfile))
     if (comm and n_tasks > 1) and not force_serial:
         log.debug("using parallel")
@@ -232,7 +225,8 @@ def save_h5(args, buf, qa, params, start, stop, force_serial=False, upar=None):
         log.debug("opened h5")
         log.debug(str(params))
         f['voltages'][start:stop, ...] = (buf*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
-        f['binQA'][start:stop] = qa
+        #f['binQA'][start:stop] = qa
+        f['stim_par'][start:stop] = stim_params
         if not args.blind:
             f['phys_par'][start:stop, :] = params
             f['norm_par'][start:stop, :] = (upar*2 - 1) if upar is not None else _normalize(args, params)
@@ -241,7 +235,7 @@ def save_h5(args, buf, qa, params, start, stop, force_serial=False, upar=None):
     os.chmod(args.outfile, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 
-def write_metadata(args, model):
+def write_metadata(args, model,stim_params = []):
     log.info("writing metadata")
     if args.model != 'BBP' or not args.metadata_file:
         return
@@ -259,6 +253,14 @@ def write_metadata(args, model):
     path, fn = os.path.split(args.outfile)
     bbp_name = model.cell_kwargs['model_directory']
     stimname = os.environ.get('stimname')
+    # write param range
+    phys_par_range = np.stack(model.PARAM_RANGES)
+    params, defaulteds = clean_params(args, model)
+    for i, (varied, defaulted) in enumerate(zip(model.get_varied_params(), defaulteds)):
+        if not varied:
+            phys_par_range[i, :] = (0, 0)
+        if varied and defaulted:
+            phys_par_range[i, :] = (-1.1, -1.1)
     metadata = {
         'timeAxis': {'step': args.dt, 'unit': "(ms)"},
         'voltsScale': VOLTS_SCALE,
@@ -266,6 +268,10 @@ def write_metadata(args, model):
         'probeName': model.get_probe_names(),
         'bbpName': bbp_name,
         'rawPath': path,
+        'parName': model.PARAM_NAMES
+        'linearParIdx': args.linear_params_inds
+        'stimParRange':[stim_mul_range,stim_offset_range] 
+        'physParRange': phys_par_range,
         'rawDataName': '{}-{}-*.h5'.format(bbp_name, stimname), # HACK
         'stimName': stimname, # HACK
     }
@@ -384,8 +390,8 @@ def main(args):
                     break
 
         # Get param string for holding some params fixed
-        #paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
-        paramuse = [] if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
+        paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
+                   if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
         args.params = [('inf' if use else 'def') for use in paramuse]
 
         if args.e_type in ('bIR', 'bAC'):
@@ -447,23 +453,23 @@ def main(args):
         buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
     qa = np.zeros(stop-start)
 
- 
+    stim_params = []
     for i, params in enumerate(paramsets):
         if args.stim_noise:
-            stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+            args.stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
             stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+            stim_params.append([stim_mul,stim_offset])
             stim = orig_stim*stim_mul+stim_offset
         if args.print_every and i % args.print_every == 0:
             log.info("Processed {} samples".format(i))
         log.debug("About to run with params = {}".format(params))
         
 
-        model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)
+        model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
+        data = model.simulate(stim, args.dt)
         if args.stim_noise:
             params = np.append(params,[stim_mul,stim_offset])
-            print(params)
-            
-        data = model.simulate(stim, args.dt)
+            #print(params)
         if args.model == 'BBP':
             data['v'] = np.stack(list(data.values()), axis=-1)
         buf[i, ...] = data['v'][:-1]
@@ -473,7 +479,7 @@ def main(args):
         
     # Save to disk
     if args.outfile:
-        save_h5(args, buf, qa, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar)
+        save_h5(args, buf, qa, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params,stim=orig_stim)
         # We will write metadata as a separate step for now
         # write_metadata(args, model)
 
@@ -583,7 +589,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--stim-noise', action='store_true', default=False,
-        help="add random multiplier and dc-offset to the stim in the range hard coded in this script"
+        help="add random multiplier and dc-offset to the stim in the range hard coded in this script this will override --stim-multiplier and stim-dc-offest"
     )
     parser.add_argument(
         '--tstart', type=int, default=None, required=False,
