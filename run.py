@@ -152,13 +152,16 @@ def get_mpi_idx(args, nsamples):
     return start, stop
 
 
-def get_stim(args, mult=None):
-    stim_fn = os.path.basename(args.stim_file)
+def get_stim(args, idx = -1,mult=None):
+    if isinstance(args.stim_file,'str'): 
+        stim_fn = os.path.basename(args.stim_file)
+    else:
+        stim_fn = os.path.basename(args.stim_file[idx])
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     #multiplier = mult or args.stim_multiplier or model.STIM_MULTIPLIER
     multiplier = args.stim_multiplier
     log.debug("Stim multiplier = {}".format(multiplier))
-    return (np.genfromtxt(args.stim_file, dtype=np.float32) * multiplier) + args.stim_dc_offset
+    return (np.genfromtxt(args.stim_file, dtype=np.float32) * multiplier) + args.stim_dc_offset,stim_fn
 
 
 def _qa(args, trace, thresh=-10):
@@ -211,6 +214,7 @@ def _normalize(args, data, minmax=1):
     
 def save_h5(args, buf, qa, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
     #log.info("saving into h5 file {}".format(args.outfile))
+    #print(f'printing soma? {model.get_probe_names()}')
     if (comm and n_tasks > 1) and not force_serial:
         log.debug("using parallel")
         kwargs = {'driver': 'mpio', 'comm': comm}
@@ -263,22 +267,22 @@ def write_metadata(args, model,stim_params = []):
             phys_par_range[i, :] = (-1.1, -1.1)
     metadata = {
         'timeAxis': {'step': args.dt, 'unit': "(ms)"},
-        'voltsScale': VOLTS_SCALE,
+        'voltsScale': str(VOLTS_SCALE),
         'varParL': params,
-        'probeName': model.get_probe_names(),
+        'probeName': str(model.get_probe_names()),
         'bbpName': bbp_name,
         'rawPath': path,
-        'parName': model.PARAM_NAMES
-        'linearParIdx': args.linear_params_inds
-        'stimParRange':[stim_mul_range,stim_offset_range] 
+        'parName': model.PARAM_NAMES,
+        'linearParIdx': args.linear_params_inds,
+        'stimParRange':[stim_mul_range,stim_offset_range], 
         'physParRange': phys_par_range,
         'rawDataName': '{}-{}-*.h5'.format(bbp_name, stimname), # HACK
-        'stimName': stimname, # HACK
+        'stimName': stimname # HACK
     }
 
     def serialize(val):
         if isinstance(val, list):
-            body = ', '.join(val)
+            body = ', '.join(str(val))
             return '[' + body + ']'
         if isinstance(val, dict):
             body = ', '.join('{}: {}'.format(k, v) for k, v in val.items())
@@ -287,6 +291,7 @@ def write_metadata(args, model,stim_params = []):
 
     with open(args.metadata_file, 'w') as outfile:
         for k,v in metadata.items():
+            print(f'k-{k} v- {v}') 
             print('{}: {}'.format(k, serialize(v)), file=outfile)
     #log.info("wrote metadata")
         
@@ -390,8 +395,8 @@ def main(args):
                     break
 
         # Get param string for holding some params fixed
-        paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
-                   if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
+        #paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
+        paramuse = [1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1,1,1,1,1] if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
         args.params = [('inf' if use else 'def') for use in paramuse]
 
         if args.e_type in ('bIR', 'bAC'):
@@ -444,42 +449,47 @@ def main(args):
         upar = None
         start, stop = 0, 1
 
+        
+    # MAIN LOOP    
     lock_params(args, paramsets)
-    stim = get_stim(args)
-    orig_stim = stim
-    if args.model == 'BBP':
-        buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
-    else:
-        buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
-    qa = np.zeros(stop-start)
-
-    stim_params = []
-    for i, params in enumerate(paramsets):
-        if args.stim_noise:
-            args.stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
-            stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
-            stim_params.append([stim_mul,stim_offset])
-            stim = orig_stim*stim_mul+stim_offset
-        if args.print_every and i % args.print_every == 0:
-            log.info("Processed {} samples".format(i))
-        log.debug("About to run with params = {}".format(params))
-        
-
-        model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
-        data = model.simulate(stim, args.dt)
-        if args.stim_noise:
-            params = np.append(params,[stim_mul,stim_offset])
-            #print(params)
+    buf_list = []
+    all_stim_params = []
+    for stim_idx in args.stim_file:
+        stim,stim_fn = get_stim(args)
+        orig_stim = stim
+        curr_stim_params = []
         if args.model == 'BBP':
-            data['v'] = np.stack(list(data.values()), axis=-1)
-        buf[i, ...] = data['v'][:-1]
-        qa[i] = _qa(args, data['v'])
+            buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
+        else:
+            buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
+            qa = np.zeros(stop-start)
+    
         
+        for i, params in enumerate(paramsets):
+            if args.stim_noise:
+                stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+                stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+                curr_stim_params.append([stim_mul,stim_offset])
+                stim = orig_stim*stim_mul+stim_offset
+            if args.print_every and i % args.print_every == 0:
+                log.info("Processed {} samples".format(i))
+            log.debug("About to run with params = {}".format(params))
+        
+
+            model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
+            data = model.simulate(stim, args.dt)
+            if args.model == 'BBP':
+                data['v'] = np.stack(list(data.values()), axis=-1)
+            buf[i, ...] = data['v'][:-1]
+            qa[i] = _qa(args, data['v'])
+        buf_list.append(buf)
+        all_stim_params.append(curr_stim_params)
         plot(args, data, stim)
-        
+    buf_list = np.stack(buf_list)
+    stim_params = np.stack(all_stim_params)
     # Save to disk
     if args.outfile:
-        save_h5(args, buf, qa, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params,stim=orig_stim)
+        save_h5(args, buf_list, qa, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params)
         # We will write metadata as a separate step for now
         # write_metadata(args, model)
 
@@ -571,14 +581,15 @@ if __name__ == '__main__':
         'throughout the range, rather than exponentially'
     )
     parser.add_argument(
-        '--linear-params-inds', type=int, nargs='+', default=[],required=False,
+        '--linear-params-inds', type=int, nargs='*', default=[],required=False,
         help='When used with --num, indicates which parameters should be randomized linearly all the other would be randomized exponentially or linearly if --linear is true'
     )
 
     # CHOOSE STIMULUS
     parser.add_argument(
-        '--stim-file', type=str, default=os.path.join('stims', 'chaotic_2.csv'),
+        '--stim-file', type=str,nargs='+', default=os.path.join('stims', 'chaotic_2.csv'),
         help="csv to use as the stimulus")
+    
     parser.add_argument(
         '--stim-dc-offset', type=float, default=0.0,
         help="apply a DC offset to the stimulus (shift it). Happens after --stim-multiplier"
