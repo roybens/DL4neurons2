@@ -33,3 +33,14 @@ def plot_stim(stim_fn,dt=0.1):
     fig, ax= plt.subplots(1,figsize=(5,5))
     ax.plot(time_pts,stim)
     ax.set_title(f'{stim_fn}')
+    fig.savefig(f'{stim_fn}.pdf')
+    plt.show()
+    return fig,ax
+plot_stim(f'{stim_folder}chaotic_2.csv')
+plot_stim(f'{stim_folder}step.csv')
+plot_stim(f'{stim_folder}sine.csv')
+plot_stim(f'{stim_folder}ramp.csv')
+plot_stim(f'{stim_folder}chirp16a.csv')
+
+
+

@@ -367,8 +367,11 @@ class BBPExcV2(BBP):
         (0.5,3),
         (-100,-50))
         return cell
-    def get_probe_names(self):
-        return ['soma']
+
+    def _get_rec_pts(self):
+        if not hasattr(self, 'probes'):
+            self.probes = list(OrderedDict.fromkeys(get_rec_points(self.entire_cell)))
+        return self.probes
         
 
 class Mainen(BaseModel):

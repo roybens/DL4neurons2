@@ -163,7 +163,7 @@ def get_rec_list():
     dist_list = [0] + dist_list
     # print_secs_dists(rec_list,dist_list)
     return rec_list
-
-        
-        
+def get_rec_pts_from_distances(hobj,axon_dists= [],dend_dists = []):
+    h.distance()
+    
         

@@ -584,6 +584,15 @@ if __name__ == '__main__':
         '--linear-params-inds', type=int, nargs='*', default=[],required=False,
         help='When used with --num, indicates which parameters should be randomized linearly all the other would be randomized exponentially or linearly if --linear is true'
     )
+    #CHOOSE PROBES
+    parser.add_argument(
+        '--axon-probes', type=float,nargs='*',
+        help="specify the distances of axonal probe/s from the soma")
+    
+    parser.add_argument(
+        '--dend-probes', type=float,nargs='*',
+        help="specify the distances of axonaldend probe/s from the soma")
+    
 
     # CHOOSE STIMULUS
     parser.add_argument(
