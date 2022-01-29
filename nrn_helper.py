@@ -36,6 +36,7 @@ def plot_stim(stim_fn,dt=0.1):
     fig.savefig(f'{stim_fn}.pdf')
     plt.show()
     return fig,ax
+
 plot_stim(f'{stim_folder}chaotic_2.csv')
 plot_stim(f'{stim_folder}step.csv')
 plot_stim(f'{stim_folder}sine.csv')
