@@ -1,0 +1,8 @@
+python3 rbs_bbp_test.py 
+
+shifter --image=balewski/ubu20-neuron8:v2 python3 run.py --model BBP --m-type L5_TTPC1 --e-type cADpyr --num 1  --create-params --linear-params-inds 12 17 18 --param-file params.csv
+
+BBP_NAME=L5_TTPC1RBS
+NODEID=0
+
+shifter --image=balewski/ubu20-neuron8:v2 python3 run.py --outfile /global/cscratch1/sd/roybens/bbpexcv3/wrk//runs2/_/{BBP_NAME}/c1/{BBP_NAME}-chaotic_2-{NODEID}-1-c1.h5 --stim-file stims/chaotic_2.csv --model BBP --cell-i 0 --cori-csv /tmp/excitatorycells.csv --cori-start 0 --cori-end 1 --num 4 --trivial-parallel --print-every 8 --metadata-file /global/cscratch1/sd/roybens/bbpexcv3/wrk//runs2/_/{BBP_NAME}-chaotic_2-meta-1.yaml
