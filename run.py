@@ -443,6 +443,7 @@ def main(args):
         paramsets = np.atleast_2d(np.array(args.params))
         upar = None
         start, stop = 0, 1
+    
     else:
         log.info("Cell parameters not specified, running with default parameters")
         paramsets = np.atleast_2d(model.DEFAULT_PARAMS)
