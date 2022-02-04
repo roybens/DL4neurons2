@@ -326,7 +326,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  pnt_receive_init[_mechtype] = _net_init;
  pnt_receive_size[_mechtype] = 5;
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 ProbGABAAB_EMS /neuron_wrk/DL4neurons2/modfiles/ProbGABAAB_EMS.mod\n");
+ 	ivoc_help("help ?1 ProbGABAAB_EMS /global/u2/r/roybens/DL4neurons2/modfiles/ProbGABAAB_EMS.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -691,7 +691,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/neuron_wrk/DL4neurons2/modfiles/ProbGABAAB_EMS.mod";
+static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/ProbGABAAB_EMS.mod";
 static const char* nmodl_file_text = 
   "COMMENT\n"
   "/*                                                                               \n"

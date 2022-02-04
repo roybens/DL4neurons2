@@ -76,13 +76,13 @@ def get_distance(sec_list,dendritic,axonal):
     axon_dists = []
     dend_dists = []
     for curr_sec in sec_list:
-        curr_dist = h.distance(0.5)
+        curr_dist = h.distance(0.5,sec=curr_sec)
         distances.append(curr_dist)
     for curr_sec in dendritic:
-        curr_dist = h.distance(0.5)
+        curr_dist = h.distance(0.5,sec=curr_sec)
         dend_dists.append(curr_dist)
     for curr_sec in axonal:
-        curr_dist = h.distance(0.5)
+        curr_dist = h.distance(0.5,sec=curr_sec)
         axon_dists.append(curr_dist)
     return distances,axon_dists,dend_dists
 
@@ -165,24 +165,18 @@ def get_rec_list():
     return rec_list
 
 
-def get_probe_from_dist(rec_dist_list,probe_name,req_distance):
+def get_probe_from_dist(rec_dist_list,probe_names,req_distance):
     best_dist = 1e6
     ans_probe = ''
     best_ind = -1
     counter = -1
     dist_from_soma = 1e6
-    for pair in rec_dist_list:
-        currname = pair[0]
-        counter +=1
-        if probe_name in currname:
-            currdist = pair[1]
-            distance_from_req = np.abs(req_distance-currdist)
-            if (distance_from_req<best_dist):
-                ans_probe = currname
-                #print(f'updating: closest probe to {req_distance}  of {probe_name} is {ans_probe} it is {currdist} from soma and {distance_from_req} form desired probe prev {best_dist}')
-                best_dist = distance_from_req
-                best_ind = counter
-                dist_from_soma = currdist
+    for currname,currdist in  zip(probe_names,rec_dist_list):
+        distance_from_req = np.abs(req_distance-currdist)
+        if (distance_from_req<best_dist):
+            ans_probe = currname
+            best_dist = distance_from_req
+            dist_from_soma = currdist
     ans_entry = [best_ind,ans_probe,dist_from_soma]
     return ans_entry
 
@@ -204,13 +198,13 @@ def get_rec_pts_from_distances(hobj,axon_targets = [],dend_targets = []):
         rec_list.append(curr_sec)
         dist_list.append(0)
     for curr_dist in axon_targets:
-        [idx,probe_name,probe_dist] = get_closest_probe(axon_dists,sec_axons,curr_dist)
+        [idx,probe_name,probe_dist] = get_probe_from_dist(axon_dists,sec_axons,curr_dist)
         rec_list.append(probe_name)
         dist_list.append(probe_dist)
     
     for curr_dist in dend_targets:
-        [idx,probe_name,probe_dist] = get_closest_probe(dend_dists,sec_dends,curr_dist)
+        [idx,probe_name,probe_dist] = get_probe_from_dist(dend_dists,sec_dends,curr_dist)
         rec_list.append(probe_name)
         dist_list.append(probe_dist)
-    print(f'probe names {rec_list} dists {dist_list}')
+    #print(f'probe names {rec_list} dists {dist_list}')
     return rec_list

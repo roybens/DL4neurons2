@@ -61,11 +61,11 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=chaotic_2
-export stimname2=step
+export stimname1=chaotic3
+export stimname2=step_200
 export stimname3=ramp
 export stimname4=chirp
-export stimname5=sine
+export stimname5=step_500
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -104,10 +104,10 @@ do
           --num ${NSAMPLES_PER_RUN} --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
           --metadata-file ${METADATA_FILE} --stim-noise --dt 0.1"
         echo "args" $args
-        srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3  run.py $args
+        srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u  run.py $args
 
         # Write one metadata yaml per cell
-        srun -n ${NCELLS} shifter python3 run.py $args --metadata-only
+        #srun -n ${NCELLS} shifter python3 run.py $args --metadata-only
     done
     
     chmod -R a+r $RUNDIR/*.yaml

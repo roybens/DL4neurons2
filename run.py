@@ -153,7 +153,7 @@ def get_mpi_idx(args, nsamples):
 
 
 def get_stim(args, idx = -1,mult=None):
-    if isinstance(args.stim_file,'str'): 
+    if isinstance(args.stim_file,str): 
         stim_fn = os.path.basename(args.stim_file)
     else:
         stim_fn = os.path.basename(args.stim_file[idx])
@@ -162,16 +162,6 @@ def get_stim(args, idx = -1,mult=None):
     multiplier = args.stim_multiplier
     log.debug("Stim multiplier = {}".format(multiplier))
     return (np.genfromtxt(args.stim_file, dtype=np.float32) * multiplier) + args.stim_dc_offset,stim_fn
-
-
-def _qa(args, trace, thresh=-10):
-    trace = trace[:-1] # My setup runs one extra timepoint. Too lazy to figure out why...
-    if args.model == 'BBP':
-        trace = trace[:, 0] # Take soma potential only
-    thresh_crossings = np.diff((trace > thresh).astype('int'))
-    num_aps = np.sum(thresh_crossings == 1)
-    return num_aps > 0
-
 
 def create_h5(args, nsamples):
     #log.info("Creating h5 file {}".format(args.outfile))
@@ -191,11 +181,11 @@ def create_h5(args, nsamples):
         stim = get_stim(args)
         ntimepts = len(stim)
         if args.model == 'BBP':
-            f.create_dataset('voltages', shape=(nsamples, ntimepts, model._n_rec_pts()), dtype=np.int16)
+            f.create_dataset('voltages', shape=(nsamples, ntimepts, model._n_rec_pts(),len(args.stim_file)), dtype=np.int16)
         else:
             f.create_dataset('voltages', shape=(nsamples, ntimepts), dtype=np.int16)
-        f.create_dataset('stim_par', shape=(nsamples,2), dtype=np.int32)
-        f.create_dataset('stim', data=stim)
+        f.create_dataset('stim_par', shape=(nsamples,2,len(args.stim_file)), dtype=np.int32)
+        #f.create_dataset('stim', data=stim)
         #f.create_dataset('binQA', shape=(nsamples,), dtype=np.int32)
         
     #log.info("Done.")
@@ -212,7 +202,7 @@ def _normalize(args, data, minmax=1):
     return 2*minmax * ( (data - mins)/ranges ) - minmax
 
     
-def save_h5(args, buf, qa, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
+def save_h5(args, buf, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
     #log.info("saving into h5 file {}".format(args.outfile))
     #print(f'printing soma? {model.get_probe_names()}')
     if (comm and n_tasks > 1) and not force_serial:
@@ -228,7 +218,7 @@ def save_h5(args, buf, qa, params, start, stop,force_serial=False, upar=None,sti
     with h5py.File(args.outfile, 'a', **kwargs) as f:
         log.debug("opened h5")
         log.debug(str(params))
-        f['voltages'][start:stop, ...] = (buf*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
+        #f['voltages'][start:stop, ...] = (buf*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
         #f['binQA'][start:stop] = qa
         f['stim_par'][start:stop] = stim_params
         if not args.blind:
@@ -325,34 +315,6 @@ def plot(args, data, stim):
         plt.show()
 
 
-def add_qa(args):
-    log.debug("adding qa")
-    if comm and n_tasks > 1:
-        log.debug("using parallel")
-        kwargs = {'driver': 'mpio', 'comm': comm}
-    else:
-        log.debug("using serial")
-        kwargs = {}
-        
-    start, stop = get_mpi_idx(args, args.num)
-        
-    with h5py.File(args.outfile, 'r', **kwargs) as f:
-        v = f['voltages'][start:stop, :]
-
-    qa = np.zeros(stop-start)
-
-    for i in range(start, stop):
-        #if args.print_every and i % args.print_every == 0:
-            #log.info("done {}".format(i))
-        qa[i] = _qa(v[i, :])
-
-    with h5py.File(args.outfile, 'a', **kwargs) as f:
-        f.create_dataset('qa', shape=(args.num,))
-        f['qa'][start:stop] = qa
-
-    log.debug("done")
-
-
 def lock_params(args, paramsets):
     # DEPRECATED. Create/use Latched model sublcasses (see HHBallStick7ParamLatched)
     assert len(args.locked_params) % 2 == 0
@@ -405,7 +367,7 @@ def main(args):
 
     if args.outfile and '{BBP_NAME}' in args.outfile:
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
-        args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
+        #args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
 
     if args.create:
         if not args.num:
@@ -415,10 +377,6 @@ def main(args):
 
     if args.create_params:
         np.savetxt(args.param_file, get_random_params(args, n=args.num)[0])
-        exit()
-
-    if args.add_qa:
-        add_qa(args)
         exit()
 
     if args.blind and not args.param_file:
@@ -440,7 +398,8 @@ def main(args):
         start, stop = get_mpi_idx(args, args.num)
         paramsets, upar = get_random_params(args, n=stop-start)
     elif args.params not in (None, [None]):
-        paramsets = np.atleast_2d(np.array(args.params))
+        #paramsets = np.atleast_2d(np.array(args.params))
+        paramsets = np.atleast_2d(model.DEFAULT_PARAMS)
         upar = None
         start, stop = 0, 1
     
@@ -463,15 +422,13 @@ def main(args):
             buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
         else:
             buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
-            qa = np.zeros(stop-start)
     
-        
+        if args.stim_noise:
+            stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+            stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+            curr_stim_params.append([stim_mul,stim_offset])
+            stim = orig_stim*stim_mul+stim_offset
         for i, params in enumerate(paramsets):
-            if args.stim_noise:
-                stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
-                stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
-                curr_stim_params.append([stim_mul,stim_offset])
-                stim = orig_stim*stim_mul+stim_offset
             if args.print_every and i % args.print_every == 0:
                 log.info("Processed {} samples".format(i))
             log.debug("About to run with params = {}".format(params))
@@ -482,7 +439,7 @@ def main(args):
             if args.model == 'BBP':
                 data['v'] = np.stack(list(data.values()), axis=-1)
             buf[i, ...] = data['v'][:-1]
-            qa[i] = _qa(args, data['v'])
+            #qa[i] = _qa(args, data['v'])
         buf_list.append(buf)
         all_stim_params.append(curr_stim_params)
         plot(args, data, stim)
@@ -490,7 +447,7 @@ def main(args):
     stim_params = np.stack(all_stim_params)
     # Save to disk
     if args.outfile:
-        save_h5(args, buf_list, qa, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params)
+        save_h5(args, buf_list, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params)
         # We will write metadata as a separate step for now
         # write_metadata(args, model)
 
@@ -530,7 +487,6 @@ if __name__ == '__main__':
         '--create-params', action='store_true', default=False,
         help="create the params file (--param-file) and exit. Must use with --num"
     )
-    parser.add_argument('--add-qa', action='store_true', default=False)
 
     parser.add_argument(
         '--plot', nargs='*',

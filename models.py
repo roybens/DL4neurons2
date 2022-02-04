@@ -13,7 +13,7 @@ import numpy as np
 
 from neuron import h, gui
 
-from get_rec_points import get_rec_points
+from get_rec_points import get_rec_points,get_rec_pts_from_distances
 
 class BaseModel(object):
     def __init__(self, *args, **kwargs):
@@ -102,7 +102,7 @@ class BBP(BaseModel):
     def __init__(self, m_type, e_type, cell_i, *args, **kwargs):
         with open('cells.json') as infile:
             cells = json.load(infile)
-        
+        self.args = args
         self.e_type = e_type
         self.m_type = m_type
         self.cell_i = cell_i
@@ -132,7 +132,6 @@ class BBP(BaseModel):
         return hoc_vectors
 
     def create_cell(self):
-        print('in bbp create cell')
         h.load_file('stdrun.hoc')
         h.load_file('import3d.hoc')
         cell_dir = self.cell_kwargs['model_directory']
@@ -187,6 +186,8 @@ class BBP(BaseModel):
             for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
                 for sec in seclist:
                     if hasattr(sec, name):
+                        #print(f'sec is {sec} name is {name} param_name is {param_name} get_attr is {getattr(self, param_name)}')
+                        #print(self.DEFAULT_PARAMS)
                         setattr(sec, name, getattr(self, param_name))
                     else:
                         log.debug("Not setting {} (absent from this cell)".format(param_name))
@@ -370,7 +371,7 @@ class BBPExcV2(BBP):
 
     def _get_rec_pts(self):
         if not hasattr(self, 'probes'):
-            self.probes = list(OrderedDict.fromkeys(get_rec_points(self.entire_cell)))
+            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         return self.probes
         
 

@@ -321,7 +321,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
   hoc_register_dparam_semantics(_mechtype, 4, "area");
  	hoc_register_cvode(_mechtype, _ode_count, 0, 0, 0);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 StochKv /neuron_wrk/DL4neurons2/modfiles/StochKv.mod\n");
+ 	ivoc_help("help ?1 StochKv /global/u2/r/roybens/DL4neurons2/modfiles/StochKv.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -881,7 +881,7 @@ _first = 0;
 }
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/neuron_wrk/DL4neurons2/modfiles/StochKv.mod";
+static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/StochKv.mod";
 static const char* nmodl_file_text = 
   "TITLE skm95.mod  \n"
   " \n"
