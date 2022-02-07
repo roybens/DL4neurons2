@@ -131,7 +131,14 @@ def get_random_params(args, n=1):
             
         
     return phys_rand, rand
-
+def get_stim(args,idx):
+    
+    stim_fn = f'./{args.stim_file[idx]}'
+    stim = np.genfromtxt(stim_fn, dtype=np.float32)
+    stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+    stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+    stim = stim*stim_mul+stim_offset
+    return stim,stim_mul,stim_offset
         
 def get_mpi_idx(args, nsamples):
     if args.trivial_parallel:
@@ -152,18 +159,11 @@ def get_mpi_idx(args, nsamples):
     return start, stop
 
 
-def get_stim(args, idx = -1,mult=None):
-    if isinstance(args.stim_file,str): 
-        stim_fn = os.path.basename(args.stim_file)
-    else:
-        stim_fn = os.path.basename(args.stim_file[idx])
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
-    #multiplier = mult or args.stim_multiplier or model.STIM_MULTIPLIER
-    multiplier = args.stim_multiplier
-    log.debug("Stim multiplier = {}".format(multiplier))
-    return (np.genfromtxt(args.stim_file, dtype=np.float32) * multiplier) + args.stim_dc_offset,stim_fn
+
+
 
 def create_h5(args, nsamples):
+    print(f'in crate h5 we have {nsamples} nsamples ')
     #log.info("Creating h5 file {}".format(args.outfile))
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     with h5py.File(args.outfile, 'w') as f:
@@ -178,7 +178,7 @@ def create_h5(args, nsamples):
 
 
         # create stim, qa, and voltage datasets
-        stim = get_stim(args)
+        stim = get_stim(args,0)
         ntimepts = len(stim)
         if args.model == 'BBP':
             f.create_dataset('voltages', shape=(nsamples, ntimepts, model._n_rec_pts(),len(args.stim_file)), dtype=np.int16)
@@ -414,20 +414,14 @@ def main(args):
     lock_params(args, paramsets)
     buf_list = []
     all_stim_params = []
-    for stim_idx in args.stim_file:
-        stim,stim_fn = get_stim(args)
-        orig_stim = stim
-        curr_stim_params = []
+    for stim_idx in range(len(args.stim_file)):
+        stim,stim_mul,stim_offset = get_stim(args,stim_idx)
         if args.model == 'BBP':
             buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
         else:
             buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
-    
-        if args.stim_noise:
-            stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
-            stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
-            curr_stim_params.append([stim_mul,stim_offset])
-            stim = orig_stim*stim_mul+stim_offset
+        
+        curr_stim_params = [stim_mul,stim_offset]
         for i, params in enumerate(paramsets):
             if args.print_every and i % args.print_every == 0:
                 log.info("Processed {} samples".format(i))
@@ -436,8 +430,13 @@ def main(args):
 
             model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
             data = model.simulate(stim, args.dt)
+            print(f' done simulating data {data} buf is in {np.shape(buf)}')
             if args.model == 'BBP':
                 data['v'] = np.stack(list(data.values()), axis=-1)
+                print(f"data[v] is {data['v']} shape is  {np.shape(data['v'])}")
+                #data['v'] = np.stack(list(data.values()))
+                #print(f"list data.values is {data['v']} {np.shape(data['v'])}")
+                
             buf[i, ...] = data['v'][:-1]
             #qa[i] = _qa(args, data['v'])
         buf_list.append(buf)

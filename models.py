@@ -90,8 +90,9 @@ class BaseModel(object):
         h.dt=dt
         self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         self.log.debug("({} total timesteps)".format(ntimepts))
-
+        print("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         h.run()
+        #print(f"hoc vectors is {hoc_vectors['v']}")
 
         self.log.debug("Time to simulate: {}".format(datetime.now() - _start))
 
