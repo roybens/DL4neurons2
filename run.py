@@ -12,6 +12,7 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
+from  Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
 #import yaml as yaml
 from stimulus import stims, add_stims
@@ -202,7 +203,7 @@ def _normalize(args, data, minmax=1):
     return 2*minmax * ( (data - mins)/ranges ) - minmax
 
     
-def save_h5(args, buf, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
+def save_h5(args, buf_vs, buf_stims, params, start, stop,force_serial=False, upar=None,stim_params = [],stim=None):
     #log.info("saving into h5 file {}".format(args.outfile))
     #print(f'printing soma? {model.get_probe_names()}')
     if (comm and n_tasks > 1) and not force_serial:
@@ -408,49 +409,47 @@ def main(args):
         paramsets = np.atleast_2d(model.DEFAULT_PARAMS)
         upar = None
         start, stop = 0, 1
-
-        
-    # MAIN LOOP    
+    stimL = []
+ 
+    # MAIN LOOP   
     lock_params(args, paramsets)
-    buf_list = []
-    all_stim_params = []
-    for stim_idx in range(len(args.stim_file)):
-        stim,stim_mul,stim_offset = get_stim(args,stim_idx)
-        if args.model == 'BBP':
-            buf = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts()), dtype=np.float32)
-        else:
-            buf = np.zeros(shape=(stop-start, len(stim)), dtype=np.float32)
+    stim,stim_mul,stim_offset = get_stim(args,0)#only for gettign the length to create the buffer
+    buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
+    buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
+    print('dd',type(paramsets),paramsets.shape)
+    for i, params in enumerate(paramsets):
         
-        curr_stim_params = [stim_mul,stim_offset]
-        for i, params in enumerate(paramsets):
-            if args.print_every and i % args.print_every == 0:
-                log.info("Processed {} samples".format(i))
-            log.debug("About to run with params = {}".format(params))
+        if args.print_every and i % args.print_every == 0:
+            log.info("Processed {} samples".format(i))
+        log.debug("About to run with params = {}".format(params))
         
-
+        #print(f'printing buf {buf}, printing shape{buf.shape}')
+        for stim_idx in range(len(args.stim_file)):
+            stim,stim_mul,stim_offset = get_stim(args,stim_idx)
+            #stimL.append(stim)
+            buf_stims[0,:,stim_idx]=np.array([stim_mul,stim_offset])
             model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
             data = model.simulate(stim, args.dt)
-            print(f' done simulating data {data} buf is in {np.shape(buf)}')
-            if args.model == 'BBP':
-                data['v'] = np.stack(list(data.values()), axis=-1)
-                print(f"data[v] is {data['v']} shape is  {np.shape(data['v'])}")
-                #data['v'] = np.stack(list(data.values()))
-                #print(f"list data.values is {data['v']} {np.shape(data['v'])}")
-                
-            buf[i, ...] = data['v'][:-1]
-            #qa[i] = _qa(args, data['v'])
-        buf_list.append(buf)
-        all_stim_params.append(curr_stim_params)
-        plot(args, data, stim)
-    buf_list = np.stack(buf_list)
-    stim_params = np.stack(all_stim_params)
+            print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
+            for i,k in enumerate(data):
+                wave=data[k][:-1]
+                print('bbb',i,k,wave.shape)
+                buf_vs[0,:,i,stim_idx]=wave#change here!!!!
+    plot(args, data, stim)
     # Save to disk
     if args.outfile:
-        save_h5(args, buf_list, paramsets, start, stop, force_serial=args.trivial_parallel, upar=upar,stim_params=stim_params)
-        # We will write metadata as a separate step for now
-        # write_metadata(args, model)
-
-
+        myUpar= _normalize(args, paramsets).astype(np.float32)
+        buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
+        myUpar=myUpar*2 -1
+        assert not np.isnan(buf_vs).any()
+        assert not np.isnan(buf_stims).any()
+        outD={'volts':buf_vs,'stim_par':buf_stims,'phys_par':paramsets.astype(np.float32),'nrom_par':myUpar}
+        outF=args.outfile
+        write3_data_hdf5(outD,outF)
+        #outF='bbp3_stims.h5'
+        #outD={'stims':np.array(stimL)}
+        #write3_data_hdf5(outD,outF)
+        
 if __name__ == '__main__':
     parser = ArgumentParser()
 
