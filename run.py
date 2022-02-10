@@ -8,11 +8,11 @@ import itertools
 import logging as log
 from argparse import ArgumentParser
 from datetime import datetime
-
+import neuron
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from  Util_H5io3 import write3_data_hdf5
+from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
 #import yaml as yaml
 from stimulus import stims, add_stims
@@ -36,8 +36,8 @@ from neuron import h, gui
 VOLTS_SCALE = 150
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
-stim_mul_range = [0.5,1.5]
-stim_offset_range = [-0.2,0.2]
+stim_mul_range = [0.9999999999,1]
+stim_offset_range = [-1e-5,0]
 
 
 def _rangeify_linear(data, _range):
@@ -229,64 +229,6 @@ def save_h5(args, buf_vs, buf_stims, params, start, stop,force_serial=False, upa
     #log.info("closed h5")
     os.chmod(args.outfile, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-
-def write_metadata(args, model,stim_params = []):
-    log.info("writing metadata")
-    if args.model != 'BBP' or not args.metadata_file:
-        return
-
-    params = []
-    for param, varied, def_par in zip(model.PARAM_NAMES, model.get_varied_params(), args.params):
-        if not varied:
-            prefix = 'const_'
-        elif def_par == 'def':
-            prefix = 'fixed_'
-        else:
-            prefix = ''
-        params.append(prefix + param)
-
-    path, fn = os.path.split(args.outfile)
-    bbp_name = model.cell_kwargs['model_directory']
-    stimname = os.environ.get('stimname')
-    # write param range
-    phys_par_range = np.stack(model.PARAM_RANGES)
-    params, defaulteds = clean_params(args, model)
-    for i, (varied, defaulted) in enumerate(zip(model.get_varied_params(), defaulteds)):
-        if not varied:
-            phys_par_range[i, :] = (0, 0)
-        if varied and defaulted:
-            phys_par_range[i, :] = (-1.1, -1.1)
-    metadata = {
-        'timeAxis': {'step': args.dt, 'unit': "(ms)"},
-        'voltsScale': str(VOLTS_SCALE),
-        'varParL': params,
-        'probeName': str(model.get_probe_names()),
-        'bbpName': bbp_name,
-        'rawPath': path,
-        'parName': model.PARAM_NAMES,
-        'linearParIdx': args.linear_params_inds,
-        'stimParRange':[stim_mul_range,stim_offset_range], 
-        'physParRange': phys_par_range,
-        'rawDataName': '{}-{}-*.h5'.format(bbp_name, stimname), # HACK
-        'stimName': stimname # HACK
-    }
-
-    def serialize(val):
-        if isinstance(val, list):
-            body = ', '.join(str(val))
-            return '[' + body + ']'
-        if isinstance(val, dict):
-            body = ', '.join('{}: {}'.format(k, v) for k, v in val.items())
-            return '{' + body + '}'
-        return val
-
-    with open(args.metadata_file, 'w') as outfile:
-        for k,v in metadata.items():
-            print(f'k-{k} v- {v}') 
-            print('{}: {}'.format(k, serialize(v)), file=outfile)
-    #log.info("wrote metadata")
-        
-
 def plot(args, data, stim):
     if args.plot is not None:
         ntimepts = len(stim)
@@ -417,9 +359,9 @@ def main(args):
     buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     print('dd',type(paramsets),paramsets.shape)
-    for i, params in enumerate(paramsets):
+    for iSamp, params in enumerate(paramsets):
         
-        if args.print_every and i % args.print_every == 0:
+        if args.print_every and iSamp % args.print_every == 0:
             log.info("Processed {} samples".format(i))
         log.debug("About to run with params = {}".format(params))
         
@@ -427,14 +369,14 @@ def main(args):
         for stim_idx in range(len(args.stim_file)):
             stim,stim_mul,stim_offset = get_stim(args,stim_idx)
             #stimL.append(stim)
-            buf_stims[0,:,stim_idx]=np.array([stim_mul,stim_offset])
+            buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])
             model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
             data = model.simulate(stim, args.dt)
             print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
-            for i,k in enumerate(data):
+            for iProb,k in enumerate(data):
                 wave=data[k][:-1]
-                print('bbb',i,k,wave.shape)
-                buf_vs[0,:,i,stim_idx]=wave#change here!!!!
+                print('bbb',iProb,k,wave.shape)
+                buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
     plot(args, data, stim)
     # Save to disk
     if args.outfile:
@@ -443,12 +385,25 @@ def main(args):
         myUpar=myUpar*2 -1
         assert not np.isnan(buf_vs).any()
         assert not np.isnan(buf_stims).any()
-        outD={'volts':buf_vs,'stim_par':buf_stims,'phys_par':paramsets.astype(np.float32),'nrom_par':myUpar}
+        bbp_name = model.cell_kwargs['model_directory']
+        outD={'volts':buf_vs,'stim_par':buf_stims,'phys_par':paramsets.astype(np.float32),'unit_par':myUpar}
         outF=args.outfile
-        write3_data_hdf5(outD,outF)
-        #outF='bbp3_stims.h5'
-        #outD={'stims':np.array(stimL)}
-        #write3_data_hdf5(outD,outF)
+        
+        metadata = {
+        'timeAxis': {'step': args.dt, 'unit': "(ms)"},
+        'voltsScale': VOLTS_SCALE,
+        'probeName': str(model.get_probe_names()),
+        'bbpName': bbp_name,
+        'parName': model.PARAM_NAMES,
+        'linearParIdx': args.linear_params_inds,
+        'stimParRange':[stim_mul_range,stim_offset_range],
+        'physParRange':model.PARAM_RANGES,
+        'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
+        'stimName': args.stim_file, 
+        'neuronSimVer': neuron.__version__
+    }
+        write3_data_hdf5(outD,outF,metaD=metadata)
+
         
 if __name__ == '__main__':
     parser = ArgumentParser()

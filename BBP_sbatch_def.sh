@@ -47,7 +47,7 @@ for i in $(seq $((${START_CELL}+1)) ${END_CELL});
 do
     line=$(head -$i ${CELLS_FILE} | tail -1)
     bbp_name=$(echo $line | awk -F "," '{print $1}')
-    for k in {1..1}
+    for k in {0..4}
     do
         mkdir -p $RUNDIR/$bbp_name/c${k}
         chmod a+rx $RUNDIR/$bbp_name/c${k}
@@ -93,21 +93,24 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 for j in $(seq 1 ${NRUNS});
 do
     echo "Doing run $j of $NRUNS at" `date`
-    for l in {0..0}
+    for l in {0..4}
     do
-        adjustedval=$((l+1))
-        METADATA_FILE=$RUNDIR/${FILENAME}-meta-${adjustedval}.yaml $ remove-it
-        OUTFILE=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
+        adjustedval=$((l))
+        OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
+        FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
+        OUTFILE=$OUT_DIR/$FILE_NAME
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --num ${NSAMPLES_PER_RUN} --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
-          --metadata-file ${METADATA_FILE} --stim-noise --dt 0.1"
+          --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
+          --stim-noise --dt 0.1"
         echo "args" $args
-        srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u  run.py $args
+        srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 
-        chmod a+r $OUTFILE
     done
+    
+    chmod  a+r $RUNDIR/*/c*/*.h5
+    # run.py sets permissions on the data files themselves (doing them here simultaneously takes forever)
     
     echo "Done run $j of $NRUNS at" `date`
 

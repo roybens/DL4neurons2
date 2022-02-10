@@ -15,3 +15,5 @@ __pycache__/models.cpython-37.pyc
 __pycache__/stimulus.cpython-37.pyc
 params.csv
 *.pyc
+x86_64/*
+logs/
