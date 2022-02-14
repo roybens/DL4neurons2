@@ -7,7 +7,7 @@
 #SBATCH -C knl
 #SBATCH --output logs/%A_%a  # job-array encodding
 #SBATCH --image=balewski/ubu20-neuron8:v3
-#SBATCH --array 1-1
+#SBATCH --array 1-1 #a
 
 # Stuff for knl
 export OMP_NUM_THREADS=1
@@ -108,13 +108,13 @@ do
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 
     done
-    
-    chmod  a+r $RUNDIR/*/c*/*.h5
     # run.py sets permissions on the data files themselves (doing them here simultaneously takes forever)
     
     echo "Done run $j of $NRUNS at" `date`
 
 done
+echo ope-read $RUNDIR
+chmod  a+r $RUNDIR/*/c*/*.h5
 
 
 #salloc -q debug -C knl --image=balewski/ubu20-neuron8:v2 -t 30:00 -N 1
