@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
-#import yaml as yaml
+import yaml as yaml
 from stimulus import stims, add_stims
 import models
 
@@ -136,8 +136,16 @@ def get_stim(args,idx):
     
     stim_fn = f'./{args.stim_file[idx]}'
     stim = np.genfromtxt(stim_fn, dtype=np.float32)
-    stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
-    stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+    if args.stim_multiplier:
+        stim_mul = args.stim_multiplier
+        print("Taking Sim from ARGS for MUL",args.stim_multiplier)    
+    else:
+        stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+    if args.stim_dc_offset:
+        stim_offset = args.stim_dc_offset
+        print("Taking Sim from ARGS for OFFSET",args.stim_dc_offset)
+    else:
+        stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
     return stim,stim_mul,stim_offset
         
@@ -352,6 +360,8 @@ def main(args):
         upar = None
         start, stop = 0, 1
     stimL = []
+
+   
  
     # MAIN LOOP   
     lock_params(args, paramsets)
