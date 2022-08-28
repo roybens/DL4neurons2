@@ -17,3 +17,5 @@ params.csv
 *.pyc
 x86_64/*
 logs/
+
+**/.ipynb_checkpoints/**

@@ -45,9 +45,9 @@ extern double hoc_Exp(double);
  
 #define t _nt->_t
 #define dt _nt->_dt
-#define gImbar _p[0]
+#define gbar _p[0]
 #define ik _p[1]
-#define gIm _p[2]
+#define g _p[2]
 #define m _p[3]
 #define ek _p[4]
 #define mInf _p[5]
@@ -77,6 +77,7 @@ extern "C" {
  static Datum* _extcall_thread;
  static Prop* _extcall_prop;
  /* external NEURON variables */
+ extern double celsius;
  /* declaration of user functions */
  static void _hoc_rates(void);
  static int _mechtype;
@@ -117,9 +118,9 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  0,0,0
 };
  static HocParmUnits _hoc_parm_units[] = {
- "gImbar_Im", "S/cm2",
+ "gbar_Im", "S/cm2",
  "ik_Im", "mA/cm2",
- "gIm_Im", "S/cm2",
+ "g_Im", "S/cm2",
  0,0
 };
  static double delta_t = 0.01;
@@ -149,10 +150,10 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static const char *_mechanism[] = {
  "7.7.0",
 "Im",
- "gImbar_Im",
+ "gbar_Im",
  0,
  "ik_Im",
- "gIm_Im",
+ "g_Im",
  0,
  "m_Im",
  0,
@@ -166,7 +167,7 @@ static void nrn_alloc(Prop* _prop) {
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 12, _prop);
  	/*initialize range parameters*/
- 	gImbar = 1e-05;
+ 	gbar = 1e-05;
  	_prop->param = _p;
  	_prop->param_size = 12;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
@@ -213,7 +214,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Im /global/u2/r/roybens/DL4neurons2/modfiles/Im.mod\n");
+ 	ivoc_help("help ?1 Im /global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Im.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -253,7 +254,7 @@ static int _ode_spec1(_threadargsproto_);
  
 static int  rates ( _threadargsproto_ ) {
    double _lqt ;
- _lqt = pow( 2.3 , ( ( 34.0 - 21.0 ) / 10.0 ) ) ;
+ _lqt = pow( 2.3 , ( ( celsius - 21.0 ) / 10.0 ) ) ;
     mAlpha = 3.3e-3 * exp ( 2.5 * 0.04 * ( v - - 35.0 ) ) ;
    mBeta = 3.3e-3 * exp ( - 2.5 * 0.04 * ( v - - 35.0 ) ) ;
    mInf = mAlpha / ( mAlpha + mBeta ) ;
@@ -356,8 +357,8 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 }
 
 static double _nrn_current(double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt, double _v){double _current=0.;v=_v;{ {
-   gIm = gImbar * m ;
-   ik = gIm * ( v - ek ) ;
+   g = gbar * m ;
+   ik = g * ( v - ek ) ;
    }
  _current += ik;
 
@@ -472,15 +473,15 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/Im.mod";
+static const char* nmodl_filename = "/global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Im.mod";
 static const char* nmodl_file_text = 
-  ":Reference : :		Adams et al. 1982 - M-currents and other potassium currents in bullfrog sympathetic neurones\n"
-  ":Comment: corrected rates using q10 = 2.3, target temperature 34, orginal 21\n"
+  ": Reference:		Adams et al. 1982 - M-currents and other potassium currents in bullfrog sympathetic neurones\n"
+  ": Comment: corrected rates using q10 = 2.3, target temperature 34, orginal 21\n"
   "\n"
   "NEURON	{\n"
   "	SUFFIX Im\n"
   "	USEION k READ ek WRITE ik\n"
-  "	RANGE gImbar, gIm, ik\n"
+  "	RANGE gbar, g, ik\n"
   "}\n"
   "\n"
   "UNITS	{\n"
@@ -490,14 +491,15 @@ static const char* nmodl_file_text =
   "}\n"
   "\n"
   "PARAMETER	{\n"
-  "	gImbar = 0.00001 (S/cm2) \n"
+  "	gbar = 0.00001 (S/cm2) \n"
   "}\n"
   "\n"
   "ASSIGNED	{\n"
   "	v	(mV)\n"
   "	ek	(mV)\n"
   "	ik	(mA/cm2)\n"
-  "	gIm	(S/cm2)\n"
+  "	g	(S/cm2)\n"
+  "	celsius (degC)\n"
   "	mInf\n"
   "	mTau\n"
   "	mAlpha\n"
@@ -510,8 +512,8 @@ static const char* nmodl_file_text =
   "\n"
   "BREAKPOINT	{\n"
   "	SOLVE states METHOD cnexp\n"
-  "	gIm = gImbar*m\n"
-  "	ik = gIm*(v-ek)\n"
+  "	g = gbar*m\n"
+  "	ik = g*(v-ek)\n"
   "}\n"
   "\n"
   "DERIVATIVE states	{\n"
@@ -526,7 +528,7 @@ static const char* nmodl_file_text =
   "\n"
   "PROCEDURE rates(){\n"
   "  LOCAL qt\n"
-  "  qt = 2.3^((34-21)/10)\n"
+  "  qt = 2.3^((celsius-21)/10)\n"
   "\n"
   "	UNITSOFF\n"
   "		mAlpha = 3.3e-3*exp(2.5*0.04*(v - -35))\n"

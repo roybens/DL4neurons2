@@ -8,10 +8,13 @@ Created on Wed Dec 11 21:59:43 2019
 
 
 import sys
-sys.path.insert(1, '../DL4neurons/')
+sys.path.insert(1, '/global/cscratch1/sd/zladd/DL4neurons2/')
 import os
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
+curr_dir = os.getcwd()
+os.chdir('../../../DL4neurons2')
 from run import get_model
+os.chdir(curr_dir)
+
 import logging as log
 import models
 import numpy as np
@@ -21,7 +24,7 @@ import json
 import itertools
 import pickle as pkl
 import random
-stimfn = './stims/chaotic_2.csv'
+stimfn = '/global/cscratch1/sd/zladd/DL4neurons2/stims/chaotic_2.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.025*i for i in range(len(stim))]
@@ -51,60 +54,37 @@ def make_paramset_regions(my_model,param_ind,nsamples,nregions):
 
 def get_volts(mtype,etype,param_ind,nsamples):
     all_volts = []
+    os.chdir('../../../DL4neurons2')
     my_model = get_model('BBP',log,m_type=mtype,e_type=etype,cell_i=1) 
+    os.chdir(curr_dir)
     param_set = make_paramset(my_model,param_ind,nsamples)
     #param_name = my_model.PARAM_NAMES[param_ind]
     for i in range(nsamples):
         print("working on param_ind" + str(param_ind) + " sample" + str(i))
         params = param_set[i]
+        os.chdir('../../../DL4neurons2')
         my_model = get_model('BBP',log,mtype,etype,1,*params)
+        os.chdir(curr_dir)
         my_model.DEFAULT_PARAMS = False
         volts = my_model.simulate(stim,0.025)
         all_volts.append(volts)
     return all_volts
-
-
-# previous GVR
-# def get_volts_regions(mtype,etype,param_ind,nsamples,nregions, model_source='BBP'):
-#     all_volts = []
-#     # normally "model source " is BBP
-#     my_model = get_model(model_source,log,m_type=mtype,e_type=etype,cell_i=1) 
-#     param_sets = make_paramset_regions(my_model,param_ind,nsamples,nregions)
-#     #param_name = my_model.PARAM_NAMES[param_ind]
-#     for params_set in param_sets:
-#         region_volts = []
-#         for i in range(nsamples):
-#             curr_params = params_set[i]
-#             print("working on param_ind" + str(param_ind) + " sample" + str(i) )
-#             my_model = get_model(model_source,log,mtype,etype,1,*curr_params)
-#             my_model.DEFAULT_PARAMS = False
-#             curr_volts = my_model.simulate(stim,0.025)
-#             region_volts.append(curr_volts)
-#         all_volts.append(region_volts)
-#     return all_volts
-
-## XANDER GVR
-def get_volts_regions(mtype,etype,param_ind,nsamples,nregions, model_source='BBP', cell_id=0):
-    # normally "model source " is BBP
+def get_volts_regions(mtype,etype,param_ind,nsamples,nregions):
     all_volts = []
-    my_model = get_model(model_source,log,m_type=mtype,e_type=etype,cell_i=0,cell_id=cell_id) 
+    my_model = get_model('BBP',log,m_type=mtype,e_type=etype,cell_i=1) 
     param_sets = make_paramset_regions(my_model,param_ind,nsamples,nregions)
     #param_name = my_model.PARAM_NAMES[param_ind]
-    all_params = {'param_bounds': my_model.PARAM_RANGES, 'sampled_params': param_sets}
     for params_set in param_sets:
         region_volts = []
-        for i in range(1,nsamples):
+        for i in range(nsamples):
             curr_params = params_set[i]
-            print("working on param_ind" + str(param_ind) + " sample" + str(i) )
-            my_model = get_model(model_source,log,mtype,etype,0,cell_id=cell_id, *curr_params)
+            print("working on param_ind" + str(param_ind) + " sample" + str(i))
+            my_model = get_model('BBP',log,mtype,etype,1,*curr_params)
             my_model.DEFAULT_PARAMS = False
             curr_volts = my_model.simulate(stim,0.025)
             region_volts.append(curr_volts)
-            # if np.max(curr_volts['v']) < 0:
-                # import pdb; pdb.set_trace()
-            print("MAX VOLTS:  ", np.max(curr_volts['v']), 'max stim', np.max(stim))
         all_volts.append(region_volts)
-    return all_volts, all_params
+    return all_volts
 
 def get_rec_sec(def_volts,adjusted_param):
     probes = list(def_volts.keys())
@@ -190,7 +170,7 @@ def main_for_divided_range():
     e_type = sys.argv[2]
     nsamples = int(sys.argv[3])
     
-    files_loc = f'/global/cscratch1/sd/zladd/Sensitivity_raw_regions/{m_type}_{e_type}/'
+    files_loc = f'/global/cscratch1/sd/zladd/Cori/NeuronInverter/SensitivityAnalysis/Sensitivity_raw_regions/{m_type}_{e_type}/'
     os.makedirs(files_loc,exist_ok=True)
     try:
         procid = int(os.environ['SLURM_PROCID'])
@@ -199,9 +179,9 @@ def main_for_divided_range():
     except:
         print("not in cori")
         procid = 0   
-
+    os.chdir('../../../DL4neurons2')
     my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
-    
+    os.chdir(curr_dir)
     def_vals = my_model.DEFAULT_PARAMS
     pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) if def_vals[i]>0]
     threads_per_param = int(NTHREADS/len(pnames))
@@ -211,52 +191,11 @@ def main_for_divided_range():
     p_ind = procid%(len(pnames))
     adjusted_param = my_model.PARAM_NAMES[p_ind]
     print("working on " + adjusted_param + "will be sampled " + str(samples_per_thread*threads_per_param) )
-    all_volts, all_params = get_volts_regions(m_type,e_type,p_ind,samples_per_thread,nregions)
+    all_volts = get_volts_regions(m_type,e_type,p_ind,samples_per_thread,nregions)
     pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '.pkl'
     with open(pkl_fn, 'wb') as output:
         pkl.dump(all_volts,output)
-    
-        
-def main_for_allen_range():
-    nregions = 4
-    NTHREADS = 128
-    m_type = sys.argv[1]
-    e_type = sys.argv[2]
-    nsamples = int(sys.argv[3])
-    cell_id = sys.argv[4]
 
-    
-    files_loc = f'/global/cscratch1/sd/zladd/Sensitivity_raw_regions/{m_type}_{e_type}_{cell_id}/'
-    os.makedirs(files_loc,exist_ok=True)
-    try:
-        procid = int(os.environ['SLURM_PROCID'])
-        print("in cori")
-        
-    except:
-        print("not in cori")
-        procid = 0   
-    # my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
-    my_model = get_model('ALLEN_F9',log,m_type=m_type,e_type=e_type,cell_i=0,cell_id=cell_id)
-    def_vals = my_model.DEFAULT_PARAMS
-    pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) if def_vals[i]>0]
-    threads_per_param = int(NTHREADS/len(pnames))
-    if threads_per_param < 1:
-        threads_per_param = 1 
-    samples_per_thread = int(nsamples/threads_per_param)+1
-    p_ind = procid%(len(pnames))
-    adjusted_param = my_model.PARAM_NAMES[p_ind]
-    print("working on " + adjusted_param + "will be sampled " + str(samples_per_thread*threads_per_param) )
-    all_volts, all_params = get_volts_regions(m_type,e_type,p_ind,samples_per_thread,nregions, model_source='ALLEN_F9', cell_id=cell_id)
-    pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '.pkl'
-    with open(pkl_fn, 'wb') as output:
-        pkl.dump(all_volts,output)
-    pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '_params.pkl'
-    with open(pkl_fn, 'wb') as output:
-        pkl.dump(all_params,output)
-        
-
-        
-    
 log.basicConfig(format='%(asctime)s %(message)s', level=log.DEBUG)
-main_for_allen_range()
-#main_for_divided_range()
+#main_for_all_range()
+main_for_divided_range()

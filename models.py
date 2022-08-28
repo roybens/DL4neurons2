@@ -13,8 +13,19 @@ import numpy as np
 
 from neuron import h, gui
 
+import copy
 from get_rec_points import get_rec_points,get_rec_pts_from_distances
+# import allensdk.core.json_utilities as ju
 
+try:
+    os.chdir('allen')
+    import allensdk.core.json_utilities as ju
+    import allensdk.model.biophysical.runner as runner
+    os.chdir('../')
+
+except:
+    print('failed to import allen sdk modules')
+    
 class BaseModel(object):
     def __init__(self, *args, **kwargs):
         h.celsius = kwargs.pop('celsius', 34)
@@ -78,21 +89,33 @@ class BaseModel(object):
         
         ntimepts = len(stim)
         tstop = ntimepts * dt
-        # self.init_hoc(dt, tstop)
+        self.init_hoc(dt, tstop)
 
         h('objref cell')
         h.cell = self.create_cell()
         self.attach_clamp()
         self.attach_stim(stim)
         hoc_vectors = self.attach_recordings(ntimepts)
-
-        self.init_hoc(dt, tstop)
+        hoc_vectors = self.attach_recordings(ntimepts)
+        # self.init_hoc(dt, tstop)
         h.dt=dt
         self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         self.log.debug("({} total timesteps)".format(ntimepts))
         print("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
+        print('im: ', h.cell.gbar_Im,
+              'gbar_Ih: ', h.cell.gbar_Ih,
+              'gbar_NaTs: ', h.cell.gbar_NaTs, 
+              'gbar_Nap: ', h.cell.gbar_Nap, 
+              'gbar_K_P: ', h.cell.gbar_K_P, 
+              'gbar_K_T: ', h.cell.gbar_K_T,
+              'gbar_SK: ', h.cell.gbar_SK, 
+              'gbar_Ca_HVA: ', h.cell.gbar_Ca_HVA, 
+              'gbar_Ca_LVA: ', h.cell.gbar_Ca_LVA, 
+              'gamma_CaDynamics: ', h.cell.gbar_K_P, 
+              'decay_CaDynamics: ', h.cell.decay_CaDynamics,
+              'g_pas: ', h.cell.g_pas) 
         h.run()
-        #print(f"hoc vectors is {hoc_vectors['v']}")
+        #print(f"hoc vectors is {np.max(hoc_vectors['v'].to_python())}")
 
         self.log.debug("Time to simulate: {}".format(datetime.now() - _start))
 
@@ -138,23 +161,24 @@ class BBP(BaseModel):
         cell_dir = self.cell_kwargs['model_directory']
         log.debug("cell_dir = {}".format(cell_dir))
         template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
-        templates_dir = 'hoc_templates'
+        templates_dir = './hoc_templates'
+        templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
         
         constants = '/'.join([templates_dir, cell_dir, 'constants.hoc'])
         log.debug(constants)
-        h.load_file(constants)
+        # h.load_file(constants)
 
         morpho_template = '/'.join([templates_dir, cell_dir, 'morphology.hoc'])
         log.debug(morpho_template)
-        h.load_file(morpho_template)
+        # h.load_file(morpho_template)
         
         biophys_template = '/'.join([templates_dir, cell_dir, 'biophysics.hoc'])
         log.debug(biophys_template)
-        h.load_file(biophys_template)
+        # h.load_file(biophys_template)
         
         synapse_template = '/'.join([templates_dir, cell_dir, 'synapses/synapses.hoc'])
         log.debug(synapse_template)
-        h.load_file(synapse_template)
+        # h.load_file(synapse_template)
         
         cell_template = '/'.join([templates_dir, cell_dir, 'template.hoc'])
         log.debug(cell_template)
@@ -715,6 +739,69 @@ class HHTwoDend10ParamLatched(HHTwoDend13Param):
         super(HHTwoDend10ParamLatched, self).__init__(*newargs, **kwargs)
         self.gl_apic = self.gl_basal = self.gl_soma
 
+class ALLEN_F9(BaseModel):
+    
+
+    # param_dict = ju.read('allen/f9_fit_style.json')
+    param_dict = ju.read('allen/f9_fit_style_constraint1_082122.json')
+
+    # is it neccesary to name params like BBP ones? gCabar_Ca_axonal
+    # PARAM_NAMES = ["ra","cm_soma", "cm_axon", "cm_dend", "cm_apic", "e_pas"]
+    PARAM_NAMES = []
+    PARAM_NAMES += [ch['parameter'][0] + ch['mechanism'] + ch['parameter'][1:] + '_' \
+                   + ch['mechanism']  + '_' + ch['section']  \
+                   for ch in param_dict['channels']]
+    PARAM_NAMES += [ch['parameter'][0] + ch['mechanism'] + ch['parameter'][1:] + '_' \
+                   + ch['mechanism']  + '_' + ch['section']  \
+                   for ch in param_dict['addl_params']]
+    PARAM_RANGES = [( ch['min'], ch['max']) for ch in param_dict['channels']]
+    PARAM_RANGES += [( ch['min'], ch['max']) for ch in param_dict['addl_params']]
+
+    # DEFAULT_PARAMS cannot be assigned here because although we know fit style
+    # we don't know what cell we are looking at
+    def __init__(self, m_type, e_type, cell_i, *args, **kwargs):
+        cell_id = kwargs['cell_id']
+        cell_path = os.path.join('allen','cells',f'cell_{cell_id}')
+        # TODO: is it ok to set all axon types to truncagted
+        print('WARNING: assuming axontype is truncated')
+        allen_args = {'manifest_file': os.path.abspath(os.path.join(cell_path, 'manifest.json')), 'axon_type': 'truncated'}
+        # param_dict = ju.read(os.path.join(cell_path, f'{cell_id}_fit.json'))   
+        param_dict = ju.read(os.path.join(cell_path, f'fit_parameters.json'))        
+
+        self.cell_files = {'morph_filename': os.path.abspath(os.path.join(cell_path, f'reconstruction.swc')), 'passive': param_dict['passive'], 'params': param_dict['genome'] }
+        self.orig_params =  copy.deepcopy(param_dict['genome'])
+        if len(args):
+            for idx, param in enumerate(args):
+                # print('orig: ', self.cell_files['params'][idx], 'name?: ', self.PARAM_NAMES[idx], 'value : ', param)
+                assert param >= 0, "cannot have negative param"
+                self.cell_files['params'][idx]['value'] = param
+        self.curr_dir = os.path.abspath(os.getcwd())
+        os.chdir(cell_path)
+        self.description = runner.load_description(allen_args)
+        # change to allen folder
+        os.chdir('../../')
+        self.utils = runner.create_utils(self.description)
+        self.DEFAULT_PARAMS = [elem['value'] for elem in param_dict['genome']]
+        # h.load_file('demofig1.hoc')        
+        super(ALLEN_F9, self).__init__(*args, **kwargs)
+        self.args = args
+        self.e_type = e_type
+        self.m_type = m_type
+        self.cell_i = cell_i
+        os.chdir(self.curr_dir)
+    
+    def create_cell(self):
+        os.chdir('allen')
+        morph_filename, passive,  params = self.cell_files['morph_filename'], self.cell_files['passive'], self.cell_files['params']
+        self.utils.generate_morphology(morph_filename)
+        self.utils.load_passive_parameters(passive[0])
+        self.utils.load_parameters(params)
+        # print(params)
+        [print(f"{name} is {elem['value']}  and orig is {true_val['value']}") for elem, true_val, name in zip(params, self.orig_params, self.PARAM_NAMES) if elem['value'] != true_val['value']]
+        #normally returns  hobj.soma[0]
+        os.chdir(self.curr_dir)
+        return self.utils.h.soma[0]
+                    
 
 MODELS_BY_NAME = {
     'izhi': Izhi,
