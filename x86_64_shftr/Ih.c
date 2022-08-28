@@ -45,9 +45,9 @@ extern double hoc_Exp(double);
  
 #define t _nt->_t
 #define dt _nt->_dt
-#define gbar _p[0]
+#define gIhbar _p[0]
 #define ihcn _p[1]
-#define g _p[2]
+#define gIh _p[2]
 #define m _p[3]
 #define mInf _p[4]
 #define mTau _p[5]
@@ -75,7 +75,6 @@ extern "C" {
  /* external NEURON variables */
  /* declaration of user functions */
  static void _hoc_rates(void);
- static void _hoc_vtrap(void);
  static int _mechtype;
 extern void _nrn_cacheloop_reg(int, int);
 extern void hoc_register_prop_size(int, int, int);
@@ -106,11 +105,8 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  static VoidFunc hoc_intfunc[] = {
  "setdata_Ih", _hoc_setdata,
  "rates_Ih", _hoc_rates,
- "vtrap_Ih", _hoc_vtrap,
  0, 0
 };
-#define vtrap vtrap_Ih
- extern double vtrap( _threadargsprotocomma_ double , double );
  /* declare global and static user variables */
 #define ehcn ehcn_Ih
  double ehcn = -45;
@@ -120,9 +116,9 @@ extern void hoc_reg_nmodl_filename(int, const char*);
 };
  static HocParmUnits _hoc_parm_units[] = {
  "ehcn_Ih", "mV",
- "gbar_Ih", "S/cm2",
+ "gIhbar_Ih", "S/cm2",
  "ihcn_Ih", "mA/cm2",
- "g_Ih", "S/cm2",
+ "gIh_Ih", "S/cm2",
  0,0
 };
  static double delta_t = 0.01;
@@ -153,10 +149,10 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static const char *_mechanism[] = {
  "7.7.0",
 "Ih",
- "gbar_Ih",
+ "gIhbar_Ih",
  0,
  "ihcn_Ih",
- "g_Ih",
+ "gIh_Ih",
  0,
  "m_Ih",
  0,
@@ -169,7 +165,7 @@ static void nrn_alloc(Prop* _prop) {
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 11, _prop);
  	/*initialize range parameters*/
- 	gbar = 1e-05;
+ 	gIhbar = 1e-05;
  	_prop->param = _p;
  	_prop->param_size = 11;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 1, _prop);
@@ -204,7 +200,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ih /global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Ih.mod\n");
+ 	ivoc_help("help ?1 Ih /global/cscratch1/sd/zladd/DL4neurons2/modfiles/Ih.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -243,7 +239,10 @@ static int _ode_spec1(_threadargsproto_);
 }
  
 static int  rates ( _threadargsproto_ ) {
-    mAlpha = 0.001 * 6.43 * vtrap ( _threadargscomma_ v + 154.9 , 11.9 ) ;
+    if ( v  == - 154.9 ) {
+     v = v + 0.0001 ;
+     }
+   mAlpha = 0.001 * 6.43 * ( v + 154.9 ) / ( exp ( ( v + 154.9 ) / 11.9 ) - 1.0 ) ;
    mBeta = 0.001 * 193.0 * exp ( v / 33.1 ) ;
    mInf = mAlpha / ( mAlpha + mBeta ) ;
    mTau = 1.0 / ( mAlpha + mBeta ) ;
@@ -257,28 +256,6 @@ static void _hoc_rates(void) {
   _nt = nrn_threads;
  _r = 1.;
  rates ( _p, _ppvar, _thread, _nt );
- hoc_retpushx(_r);
-}
- 
-double vtrap ( _threadargsprotocomma_ double _lx , double _ly ) {
-   double _lvtrap;
-  if ( fabs ( _lx / _ly ) < 1e-6 ) {
-     _lvtrap = _ly * ( 1.0 - _lx / _ly / 2.0 ) ;
-     }
-   else {
-     _lvtrap = _lx / ( exp ( _lx / _ly ) - 1.0 ) ;
-     }
-    
-return _lvtrap;
- }
- 
-static void _hoc_vtrap(void) {
-  double _r;
-   double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
-   if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
-  _thread = _extcall_thread;
-  _nt = nrn_threads;
- _r =  vtrap ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) );
  hoc_retpushx(_r);
 }
  
@@ -358,8 +335,8 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 }
 
 static double _nrn_current(double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt, double _v){double _current=0.;v=_v;{ {
-   g = gbar * m ;
-   ihcn = g * ( v - ehcn ) ;
+   gIh = gIhbar * m ;
+   ihcn = gIh * ( v - ehcn ) ;
    }
  _current += ihcn;
 
@@ -468,14 +445,15 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Ih.mod";
+static const char* nmodl_filename = "/global/cscratch1/sd/zladd/DL4neurons2/modfiles/Ih.mod";
 static const char* nmodl_file_text = 
-  ": Reference:		Kole,Hallermann,and Stuart, J. Neurosci. 2006\n"
+  ":Comment :\n"
+  ":Reference : :		Kole,Hallermann,and Stuart, J. Neurosci. 2006\n"
   "\n"
   "NEURON	{\n"
   "	SUFFIX Ih\n"
   "	NONSPECIFIC_CURRENT ihcn\n"
-  "	RANGE gbar, g, ihcn \n"
+  "	RANGE gIhbar, gIh, ihcn \n"
   "}\n"
   "\n"
   "UNITS	{\n"
@@ -485,14 +463,14 @@ static const char* nmodl_file_text =
   "}\n"
   "\n"
   "PARAMETER	{\n"
-  "	gbar = 0.00001 (S/cm2) \n"
+  "	gIhbar = 0.00001 (S/cm2) \n"
   "	ehcn =  -45.0 (mV)\n"
   "}\n"
   "\n"
   "ASSIGNED	{\n"
   "	v	(mV)\n"
   "	ihcn	(mA/cm2)\n"
-  "	g	(S/cm2)\n"
+  "	gIh	(S/cm2)\n"
   "	mInf\n"
   "	mTau\n"
   "	mAlpha\n"
@@ -505,8 +483,8 @@ static const char* nmodl_file_text =
   "\n"
   "BREAKPOINT	{\n"
   "	SOLVE states METHOD cnexp\n"
-  "	g = gbar*m\n"
-  "	ihcn = g*(v-ehcn)\n"
+  "	gIh = gIhbar*m\n"
+  "	ihcn = gIh*(v-ehcn)\n"
   "}\n"
   "\n"
   "DERIVATIVE states	{\n"
@@ -521,24 +499,13 @@ static const char* nmodl_file_text =
   "\n"
   "PROCEDURE rates(){\n"
   "	UNITSOFF\n"
-  "    :    if(v == -154.9){\n"
-  "    :       v = v + 0.0001\n"
-  "    :    }\n"
-  "		:mAlpha =  0.001*6.43*(v+154.9)/(exp((v+154.9)/11.9)-1)\n"
-  "		mAlpha = 0.001 * 6.43 * vtrap(v + 154.9, 11.9)\n"
+  "        if(v == -154.9){\n"
+  "            v = v + 0.0001\n"
+  "        }\n"
+  "		mAlpha =  0.001*6.43*(v+154.9)/(exp((v+154.9)/11.9)-1)\n"
   "		mBeta  =  0.001*193*exp(v/33.1)\n"
   "		mInf = mAlpha/(mAlpha + mBeta)\n"
   "		mTau = 1/(mAlpha + mBeta)\n"
-  "	UNITSON\n"
-  "}\n"
-  "\n"
-  "FUNCTION vtrap(x, y) { : Traps for 0 in denominator of rate equations\n"
-  "	UNITSOFF\n"
-  "	if (fabs(x / y) < 1e-6) {\n"
-  "		vtrap = y * (1 - x / y / 2)\n"
-  "	} else {\n"
-  "		vtrap = x / (exp(x / y) - 1)\n"
-  "	}\n"
   "	UNITSON\n"
   "}\n"
   ;

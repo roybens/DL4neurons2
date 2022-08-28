@@ -11,7 +11,7 @@ decay_CaDynamics_E2_axonal,64.27799
 e_pas_axonal,-60.21651
 g_pas_axonal,9.4e-05
 gImbar_Im_axonal,0.000999
-gCabar_Ca_axonal,3e-06
+"BBP ",3e-06
 gK_Tstbar_K_Tst_somatic,0.092965
 gamma_CaDynamics_E2_somatic,0.000511
 gNap_Et2bar_Nap_Et2_somatic,1e-06
@@ -33,3 +33,4 @@ gIhbar_Ih_dend,5.2e-05
 e_pas_dend,-79.31574
 g_pas_dend,1e-06
 gImbar_Im_dend,8e-06
+,

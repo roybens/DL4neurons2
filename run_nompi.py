@@ -18,17 +18,6 @@ import ruamel.yaml as yaml
 from stimulus import stims, add_stims
 import models
 
-try:
-    from mpi4py import MPI
-    mpi = True
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    n_tasks = comm.Get_size()
-except:
-    mpi = False
-    comm = None
-    rank = 0
-    n_tasks = 1
     
 os.chdir('allen')
 from neuron import h, gui

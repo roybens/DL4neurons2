@@ -45,12 +45,12 @@ extern double hoc_Exp(double);
  
 #define t _nt->_t
 #define dt _nt->_dt
-#define gCa_HVAbar _p[0]
+#define gbar _p[0]
 #define ica _p[1]
-#define m _p[2]
-#define h _p[3]
-#define eca _p[4]
-#define gCa _p[5]
+#define g _p[2]
+#define m _p[3]
+#define h _p[4]
+#define eca _p[5]
 #define mInf _p[6]
 #define mTau _p[7]
 #define mAlpha _p[8]
@@ -85,6 +85,7 @@ extern "C" {
  /* external NEURON variables */
  /* declaration of user functions */
  static void _hoc_rates(void);
+ static void _hoc_vtrap(void);
  static int _mechtype;
 extern void _nrn_cacheloop_reg(int, int);
 extern void hoc_register_prop_size(int, int, int);
@@ -115,16 +116,20 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  static VoidFunc hoc_intfunc[] = {
  "setdata_Ca_HVA", _hoc_setdata,
  "rates_Ca_HVA", _hoc_rates,
+ "vtrap_Ca_HVA", _hoc_vtrap,
  0, 0
 };
+#define vtrap vtrap_Ca_HVA
+ extern double vtrap( _threadargsprotocomma_ double , double );
  /* declare global and static user variables */
  /* some parameters have upper and lower limits */
  static HocParmLimits _hoc_parm_limits[] = {
  0,0,0
 };
  static HocParmUnits _hoc_parm_units[] = {
- "gCa_HVAbar_Ca_HVA", "S/cm2",
+ "gbar_Ca_HVA", "S/cm2",
  "ica_Ca_HVA", "mA/cm2",
+ "g_Ca_HVA", "S/cm2",
  0,0
 };
  static double delta_t = 0.01;
@@ -155,9 +160,10 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  static const char *_mechanism[] = {
  "7.7.0",
 "Ca_HVA",
- "gCa_HVAbar_Ca_HVA",
+ "gbar_Ca_HVA",
  0,
  "ica_Ca_HVA",
+ "g_Ca_HVA",
  0,
  "m_Ca_HVA",
  "h_Ca_HVA",
@@ -172,7 +178,7 @@ static void nrn_alloc(Prop* _prop) {
 	double *_p; Datum *_ppvar;
  	_p = nrn_prop_data_alloc(_mechtype, 18, _prop);
  	/*initialize range parameters*/
- 	gCa_HVAbar = 1e-05;
+ 	gbar = 1e-05;
  	_prop->param = _p;
  	_prop->param_size = 18;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
@@ -219,7 +225,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ca_HVA /global/u2/r/roybens/DL4neurons2/modfiles/Ca_HVA.mod\n");
+ 	ivoc_help("help ?1 Ca_HVA /global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Ca_HVA.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -261,10 +267,7 @@ static int _ode_spec1(_threadargsproto_);
 }
  
 static int  rates ( _threadargsproto_ ) {
-    if ( ( v  == - 27.0 ) ) {
-     v = v + 0.0001 ;
-     }
-   mAlpha = ( 0.055 * ( - 27.0 - v ) ) / ( exp ( ( - 27.0 - v ) / 3.8 ) - 1.0 ) ;
+    mAlpha = 0.055 * vtrap ( _threadargscomma_ - 27.0 - v , 3.8 ) ;
    mBeta = ( 0.94 * exp ( ( - 75.0 - v ) / 17.0 ) ) ;
    mInf = mAlpha / ( mAlpha + mBeta ) ;
    mTau = 1.0 / ( mAlpha + mBeta ) ;
@@ -282,6 +285,28 @@ static void _hoc_rates(void) {
   _nt = nrn_threads;
  _r = 1.;
  rates ( _p, _ppvar, _thread, _nt );
+ hoc_retpushx(_r);
+}
+ 
+double vtrap ( _threadargsprotocomma_ double _lx , double _ly ) {
+   double _lvtrap;
+  if ( fabs ( _lx / _ly ) < 1e-6 ) {
+     _lvtrap = _ly * ( 1.0 - _lx / _ly / 2.0 ) ;
+     }
+   else {
+     _lvtrap = _lx / ( exp ( _lx / _ly ) - 1.0 ) ;
+     }
+    
+return _lvtrap;
+ }
+ 
+static void _hoc_vtrap(void) {
+  double _r;
+   double* _p; Datum* _ppvar; Datum* _thread; _NrnThread* _nt;
+   if (_extcall_prop) {_p = _extcall_prop->param; _ppvar = _extcall_prop->dparam;}else{ _p = (double*)0; _ppvar = (Datum*)0; }
+  _thread = _extcall_thread;
+  _nt = nrn_threads;
+ _r =  vtrap ( _p, _ppvar, _thread, _nt, *getarg(1) , *getarg(2) );
  hoc_retpushx(_r);
 }
  
@@ -372,8 +397,8 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 }
 
 static double _nrn_current(double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt, double _v){double _current=0.;v=_v;{ {
-   gCa = gCa_HVAbar * m * m * h ;
-   ica = gCa * ( v - eca ) ;
+   g = gbar * m * m * h ;
+   ica = g * ( v - eca ) ;
    }
  _current += ica;
 
@@ -489,15 +514,14 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/Ca_HVA.mod";
+static const char* nmodl_filename = "/global/cscratch1/sd/zladd/DL4neurons2/allen/modfiles/Ca_HVA.mod";
 static const char* nmodl_file_text = 
-  ":Comment :\n"
-  ":Reference : :		Reuveni, Friedman, Amitai, and Gutnick, J.Neurosci. 1993\n"
+  ": Reference:		Reuveni, Friedman, Amitai, and Gutnick, J.Neurosci. 1993\n"
   "\n"
   "NEURON	{\n"
   "	SUFFIX Ca_HVA\n"
   "	USEION ca READ eca WRITE ica\n"
-  "	RANGE gCa_HVAbar, gCa_HVA, ica \n"
+  "	RANGE gbar, g, ica \n"
   "}\n"
   "\n"
   "UNITS	{\n"
@@ -507,14 +531,14 @@ static const char* nmodl_file_text =
   "}\n"
   "\n"
   "PARAMETER	{\n"
-  "	gCa_HVAbar = 0.00001 (S/cm2) \n"
+  "	gbar = 0.00001 (S/cm2) \n"
   "}\n"
   "\n"
   "ASSIGNED	{\n"
   "	v	(mV)\n"
   "	eca	(mV)\n"
   "	ica	(mA/cm2)\n"
-  "	gCa	(S/cm2)\n"
+  "	g	(S/cm2)\n"
   "	mInf\n"
   "	mTau\n"
   "	mAlpha\n"
@@ -532,8 +556,8 @@ static const char* nmodl_file_text =
   "\n"
   "BREAKPOINT	{\n"
   "	SOLVE states METHOD cnexp\n"
-  "	gCa = gCa_HVAbar*m*m*h\n"
-  "	ica = gCa*(v-eca)\n"
+  "	g = gbar*m*m*h\n"
+  "	ica = g*(v-eca)\n"
   "}\n"
   "\n"
   "DERIVATIVE states	{\n"
@@ -550,10 +574,11 @@ static const char* nmodl_file_text =
   "\n"
   "PROCEDURE rates(){\n"
   "	UNITSOFF\n"
-  "        if((v == -27) ){        \n"
-  "            v = v+0.0001\n"
-  "        }\n"
-  "		mAlpha =  (0.055*(-27-v))/(exp((-27-v)/3.8) - 1)        \n"
+  "    :   if((v == -27) ){        \n"
+  "    :       v = v+0.0001\n"
+  "    :   }\n"
+  "		:mAlpha =  (0.055*(-27-v))/(exp((-27-v)/3.8) - 1)\n"
+  "		mAlpha = 0.055 * vtrap(-27 - v, 3.8)        \n"
   "		mBeta  =  (0.94*exp((-75-v)/17))\n"
   "		mInf = mAlpha/(mAlpha + mBeta)\n"
   "		mTau = 1/(mAlpha + mBeta)\n"
@@ -561,6 +586,16 @@ static const char* nmodl_file_text =
   "		hBeta  =  (0.0065/(exp((-v-15)/28)+1))\n"
   "		hInf = hAlpha/(hAlpha + hBeta)\n"
   "		hTau = 1/(hAlpha + hBeta)\n"
+  "	UNITSON\n"
+  "}\n"
+  "\n"
+  "FUNCTION vtrap(x, y) { : Traps for 0 in denominator of rate equations\n"
+  "	UNITSOFF\n"
+  "	if (fabs(x / y) < 1e-6) {\n"
+  "		vtrap = y * (1 - x / y / 2)\n"
+  "	} else {\n"
+  "		vtrap = x / (exp(x / y) - 1)\n"
+  "	}\n"
   "	UNITSON\n"
   "}\n"
   ;

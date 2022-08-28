@@ -1,13 +1,13 @@
 #!/bin/sh
 if test "x${NRNHOME}" = "x" ; then
-    NRNHOME="/global/cscratch1/sd/zladd/conda/dot_envv2/lib/python3.9/site-packages/neuron/.data"
+    NRNHOME="/usr/local/lib/python3.8/dist-packages/neuron/.data"
 fi
 if test "${NEURONHOME}" = "" ; then
     NEURONHOME=${NRNHOME}/share/nrn
     export NEURONHOME
 fi
 if test "x${NRNBIN}" = "x" ; then
-    NRNBIN="/global/cscratch1/sd/zladd/conda/dot_envv2/bin"
+    NRNBIN="/usr/local/bin"
 fi
 if test "" = "yes" ; then
     NRNIV="${NRNBIN}/nrniv.app/Contents/MacOS/nrniv"

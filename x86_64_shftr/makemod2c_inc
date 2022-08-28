@@ -1,0 +1,185 @@
+
+./Ca.c: ../modfiles/Ca.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ca.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Ca.o: ./Ca.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./CaDynamics_E2.c: ../modfiles/CaDynamics_E2.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) CaDynamics_E2.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./CaDynamics_E2.o: ./CaDynamics_E2.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ca_HVA.c: ../modfiles/Ca_HVA.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ca_HVA.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Ca_HVA.o: ./Ca_HVA.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ca_LVAst.c: ../modfiles/Ca_LVAst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ca_LVAst.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Ca_LVAst.o: ./Ca_LVAst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ih.c: ../modfiles/Ih.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ih.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Ih.o: ./Ih.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./Im.c: ../modfiles/Im.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Im.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Im.o: ./Im.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./K_Pst.c: ../modfiles/K_Pst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) K_Pst.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./K_Pst.o: ./K_Pst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./K_Tst.c: ../modfiles/K_Tst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) K_Tst.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./K_Tst.o: ./K_Tst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./KdShu2007.c: ../modfiles/KdShu2007.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) KdShu2007.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./KdShu2007.o: ./KdShu2007.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./NaTa_t.c: ../modfiles/NaTa_t.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) NaTa_t.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./NaTa_t.o: ./NaTa_t.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./NaTs2_t.c: ../modfiles/NaTs2_t.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) NaTs2_t.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./NaTs2_t.o: ./NaTs2_t.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./Nap_Et2.c: ../modfiles/Nap_Et2.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Nap_Et2.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./Nap_Et2.o: ./Nap_Et2.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./ProbAMPANMDA_EMS.c: ../modfiles/ProbAMPANMDA_EMS.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) ProbAMPANMDA_EMS.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./ProbAMPANMDA_EMS.o: ./ProbAMPANMDA_EMS.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./ProbGABAAB_EMS.c: ../modfiles/ProbGABAAB_EMS.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) ProbGABAAB_EMS.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./ProbGABAAB_EMS.o: ./ProbGABAAB_EMS.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./SK_E2.c: ../modfiles/SK_E2.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) SK_E2.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./SK_E2.o: ./SK_E2.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./SKv3_1.c: ../modfiles/SKv3_1.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) SKv3_1.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./SKv3_1.o: ./SKv3_1.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./StochKv.c: ../modfiles/StochKv.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) StochKv.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./StochKv.o: ./StochKv.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./cad.c: ../modfiles/cad.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) cad.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./cad.o: ./cad.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./izhi2003a.c: ../modfiles/izhi2003a.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) izhi2003a.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./izhi2003a.o: ./izhi2003a.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./kca.c: ../modfiles/kca.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) kca.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./kca.o: ./kca.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./km.c: ../modfiles/km.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) km.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./km.o: ./km.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./kv.c: ../modfiles/kv.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) kv.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./kv.o: ./kv.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
+./na.c: ../modfiles/na.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd "../modfiles"; MODLUNIT=$(NRNUNITS) $(NOCMODL) na.mod -o "/global/cscratch1/sd/zladd/DL4neurons2/x86_64")
+
+./na.o: ./na.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I"../modfiles" $(INCLUDES) -fPIC -c $< -o $@
+
