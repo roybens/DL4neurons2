@@ -93,10 +93,11 @@ def check_param_sensitivity(all_volts,adjusted_param,files_loc):
         volt_debug.append(volts_to_plot2)
         curr_cum_sum1= np.cumsum(np.abs(volts_to_plot1))*0.025
         curr_cum_sum2= np.cumsum(np.abs(volts_to_plot2))*0.025
-        cum_sum_err = curr_cum_sum1 - curr_cum_sum2
+        cum_sum_err = np.abs(curr_cum_sum1 - curr_cum_sum2)
         cum_sum_errs.append(cum_sum_err)
         if(create_pdfs):
             err = volts_to_plot1 - volts_to_plot2
+            err = [abs(pos) for pos in err]
             ax1.plot(times,volts_to_plot1[:-1])
             ax1.plot(times,volts_to_plot2[:-1])
             ax2.plot(times,err[:-1])
@@ -147,10 +148,11 @@ def check_param_sensitivity_regions(all_volts_regions,adjusted_param,files_loc,n
             volt_debug.append(volts_to_plot2)
             curr_cum_sum1= np.cumsum(np.abs(volts_to_plot1))*0.025
             curr_cum_sum2= np.cumsum(np.abs(volts_to_plot2))*0.025
-            cum_sum_err = curr_cum_sum1 - curr_cum_sum2
+            cum_sum_err = np.abs(curr_cum_sum1 - curr_cum_sum2)
             cum_sum_errs.append(cum_sum_err)
             if(create_pdfs):
                 err = volts_to_plot1 - volts_to_plot2
+                err = [abs(pos) for pos in err]
                 ax1.plot(times,volts_to_plot1[:-1])
                 ax1.plot(times,volts_to_plot2[:-1])
                 ax2.plot(times,err[:-1])
@@ -521,39 +523,40 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
 
 
 
-def main():
-    short_name = None
-    m_type = sys.argv[1]
-    e_type = sys.argv[2]
-    try:
-        short_name = sys.argv[3]
-    except:
-        print('no short name')
-        short_name = None    
+# def main():
+#     short_name = None
+#     m_type = sys.argv[1]
+#     e_type = sys.argv[2]
+#     try:
+#         short_name = sys.argv[3]
+#     except:
+#         print('no short name')
+#         short_name = None    
 
     
-    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected2/' + m_type + '_' + e_type + '/'
-    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
-    def_vals = my_model.DEFAULT_PARAMS
+#     files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected2/' + m_type + '_' + e_type + '/'
+#     my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
+#     def_vals = my_model.DEFAULT_PARAMS
     
-    ECDS = test_sensitivity(files_loc,my_model)
-    #if short_name is not  None:
-    if short_name is not None:
-        ml_results = get_ml_results(short_name,list(ECDS.keys())) 
-        analyze_ecds(ECDS,def_vals,files_loc,ml_results)
-    else:
-        analyze_ecds_no_ML(ECDS,def_vals,files_loc)
+#     ECDS = test_sensitivity(files_loc,my_model)
+#     #if short_name is not  None:
+#     if short_name is not None:
+#         ml_results = get_ml_results(short_name,list(ECDS.keys())) 
+#         analyze_ecds(ECDS,def_vals,files_loc,ml_results)
+#     else:
+#         analyze_ecds_no_ML(ECDS,def_vals,files_loc)
 def main_regions():
-    nregions = 4
+    nregions = 8
     short_name = None
     m_type = sys.argv[1]
     e_type = sys.argv[2]
+    i_cell = sys.argv[3]
     try:
-        short_name = sys.argv[3]
+        short_name = sys.argv[4]
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected2/' + m_type + '_' + e_type + '/'
+    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')

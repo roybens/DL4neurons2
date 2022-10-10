@@ -39,8 +39,8 @@ def make_paramset_regions(my_model,param_ind,nsamples,nregions):
     param_sets = []
     range_to_vary = my_model.PARAM_RANGES[param_ind]
     for curr_region in range(nregions):
-        curr_lb = -1 + curr_region*(2/nregions)
-        curr_ub = -1 + (curr_region+1)*(2/nregions)
+        curr_lb = -1 + curr_region*(8/nregions)
+        curr_ub = -1 + (curr_region+1)*(8/nregions)
         curr_param_set = np.array([def_param_vals]*nsamples)
         curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*np.log(10))
         curr_param_set[:,param_ind] = curr_vals_check
@@ -156,13 +156,14 @@ def main_for_all_range():
         
         
 def main_for_divided_range():
-    nregions = 4
+    nregions = 8
     NTHREADS = 128
     m_type = sys.argv[1]
     e_type = sys.argv[2]
-    nsamples = int(sys.argv[3])
+    i_cell = sys.argv[3]
+    nsamples = int(sys.argv[4])
     
-    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected/{m_type}_{e_type}/'
+    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana5/{m_type}_{e_type}_{i_cell}/'
     os.makedirs(files_loc,exist_ok=True)
     try:
         procid = int(os.environ['SLURM_PROCID'])
@@ -171,7 +172,7 @@ def main_for_divided_range():
     except:
         print("not in cori")
         procid = 0   
-    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
+    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
     
     def_vals = my_model.DEFAULT_PARAMS
     pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) if def_vals[i]>0]
@@ -183,6 +184,7 @@ def main_for_divided_range():
     adjusted_param = my_model.PARAM_NAMES[p_ind]
     print("working on " + adjusted_param + "will be sampled " + str(samples_per_thread*threads_per_param) )
     all_volts = get_volts_regions(m_type,e_type,p_ind,samples_per_thread,nregions)
+    print("SAVING in pkl")
     pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '.pkl'
     with open(pkl_fn, 'wb') as output:
         pkl.dump(all_volts,output)

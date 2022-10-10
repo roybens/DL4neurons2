@@ -13,7 +13,7 @@ num_param = 3
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected2/"
+path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana_selected/"
 pdf = matplotlib.backends.backend_pdf.PdfPages("STD.pdf")
 df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/excitatorycells.csv")
 nregions = 4
@@ -55,20 +55,21 @@ for i in range(nregions):
         y = param_values[k]
         total_param[k] = total_param[k] + y 
         x = np.random.normal(1+k, 0.1, size=len(y))
+        max_y = max(y)
         if(k ==0):
-            P.plot(x, y, 'r.', alpha=0.3,color = colour[i],label = "Region"+str(i))
+            P.plot(x, y,'.', alpha=0.3,color = colour[i],label = "Region"+str(i))
             #plt.g.plot(x, y, 'r.', alpha=0.3,color = colour[i],label = "Region"+str(i))
 
         else:
-            P.plot(x, y, 'r.', alpha=0.3,color = colour[i])
+            P.plot(x, y,'.', alpha=0.3,color = colour[i])
             #fig.plot(x, y, 'r.', alpha=0.3,color = colour[i])
-    P.axis([0,num_param+1,0, 100])
+    P.axis([0,num_param+1,0,  max_y*1.5])
     x = range(0,num_param+1)
     P.xticks(x,P_names,rotation=90)
 
-    pdf.savefig(fig,bbox_inches="tight",label = "Region"+str(i))
+    pdf.savefig(fig,bbox_inches="tight")
 x = range(0,num_param+1)
-P.axis([0,num_param+1,0, 100])
+P.axis([0,num_param+1,0, 500 ])
 
 P.legend(loc="lower right")
 P.ylabel("STD")

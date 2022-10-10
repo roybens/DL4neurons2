@@ -46,8 +46,12 @@ def make_paramset_regions(my_model,param_ind,nsamples,nregions):
         curr_lb = -1 + curr_region*(4/nregions)
         curr_ub = -1 + (curr_region+1)*(4/nregions)
         curr_param_set = np.array([def_param_vals]*nsamples)
+        print(curr_param_set.shape)
         curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*np.log(10))
-        curr_param_set[:,param_ind] = curr_vals_check
+        if(nsamples>1):
+            curr_param_set[:,param_ind] = curr_vals_check
+        else:
+            curr_param_set[:]=curr_vals_check
         param_sets.append(curr_param_set)
     return param_sets
 
@@ -160,8 +164,8 @@ def main_for_all_range():
         
         
 def main_for_divided_range():
-    nregions = 4
-    NTHREADS = 10
+    nregions = 8
+    NTHREADS = 1
     m_type = sys.argv[1]
     e_type = sys.argv[2]
     nsamples = int(sys.argv[3])
@@ -181,7 +185,7 @@ def main_for_divided_range():
     threads_per_param = NTHREADS
     
     
-    samples_per_thread = int(nsamples/threads_per_param)
+    samples_per_thread = min(int(nsamples/threads_per_param),1)
     for p_index in procid:
         p_ind = int(p_index)
         adjusted_param = my_model.PARAM_NAMES[p_ind]

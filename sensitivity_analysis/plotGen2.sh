@@ -1,10 +1,10 @@
 #!/bin/bash -l
 #SBATCH -N 1
-#SBATCH -t 4:00:00
-#SBATCH -q regular
+#SBATCH -t 30:00
+#SBATCH -q debug
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
-#SBATCH -C hs
+#SBATCH -C knl
 #SBATCH --output logs/%A_%a  # job-array encodding
 #SBATCH --image=balewski/ubu20-neuron8:v3
 #SBATCH --array 1-1 #a
@@ -59,16 +59,22 @@ for i in $(seq $((${START_CELL}+1)) ${END_CELL});
 do
     line=$(head -$i ${CELLS_FILE} | tail -1)
     bbp_name=$(echo $line | awk -F "," '{print $1}')
-    for STIM_MUL in 0.7 0.9 1.1 1.3
-    do
+    
             
-            for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
-            do
-                adjustedval=$STIM_MUL+$STIM_OFFSET
+    for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
+    do
+                adjustedval=1+$STIM_OFFSET
                 mkdir -p $RUNDIR/$bbp_name/c${adjustedval}
                 chmod a+rx $RUNDIR/$bbp_name/c${adjustedval}
 
-            done
+    done
+
+    for STIM_MUL in 0.7 0.9 1.1 1.3
+    do
+                adjustedval=$STIM_MUL+0
+                mkdir -p $RUNDIR/$bbp_name/c${adjustedval}
+                chmod a+rx $RUNDIR/$bbp_name/c${adjustedval}
+
     done
 done
 cp plotGen.sh $RUNDIR
@@ -112,18 +118,17 @@ for j in $(seq 1 ${NRUNS});
 do
     echo "Doing run $j of $NRUNS at" `date`
     l=1
-    for STIM_MUL in 0.7 0.9 1.1 1.3
-    do
+   
         
-        for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
-        do
+    for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
+    do
           
             
-            adjustedval=$STIM_MUL+$STIM_OFFSET
+            adjustedval=1+$STIM_OFFSET
             OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
             FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
             OUTFILE=$OUT_DIR/$FILE_NAME
-            args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --stim-multiplier $STIM_MUL --stim-dc-offset ${STIM_OFFSET} --model BBP --cell-i ${l} \
+            args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --stim-multiplier 1 --stim-dc-offset ${STIM_OFFSET} --model BBP --cell-i ${l} \
             --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --num 1 --cori-start ${START_CELL} --cori-end ${END_CELL} \
             --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
             --stim-noise --dt 0.025"
@@ -132,9 +137,21 @@ do
             srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
             
             
-        done
-            
+    done
 
+    for STIM_MUL in 0.7 0.9 1.1 1.3
+    do  
+            adjustedval=$STIM_MUL+0
+            OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
+            FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
+            OUTFILE=$OUT_DIR/$FILE_NAME
+            args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --stim-multiplier $STIM_MUL --stim-dc-offset 0 --model BBP --cell-i ${l} \
+            --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --num 1 --cori-start ${START_CELL} --cori-end ${END_CELL} \
+            --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
+            --stim-noise --dt 0.025"
+
+            echo "args" $args
+            srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
     done
     # run.py sets permissions on the data files themselves (doing them here simultaneously takes forever)
     

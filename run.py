@@ -345,11 +345,13 @@ def main(args):
         if args.num and start > args.num:
             return
         paramsets = all_paramsets[start:stop, :]
+        paramsets = np.atleast_2d(paramsets)
     elif args.num:
         start, stop = get_mpi_idx(args, args.num)
         paramsets, upar = get_random_params(args, n=stop-start)
     elif args.params not in (None, [None]):
         #paramsets = np.atleast_2d(np.array(args.params))
+        #NEED TO CHANGE THIS
         paramsets = np.atleast_2d(model.DEFAULT_PARAMS)
         upar = None
         start, stop = 0, 1
