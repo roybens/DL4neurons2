@@ -138,7 +138,7 @@ class BBP(BaseModel):
         cell_dir = self.cell_kwargs['model_directory']
         log.debug("cell_dir = {}".format(cell_dir))
         template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
-        templates_dir = 'hoc_templates'
+        templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
         
         constants = '/'.join([templates_dir, cell_dir, 'constants.hoc'])
         log.debug(constants)
@@ -371,7 +371,8 @@ class BBPExcV2(BBP):
         return cell
 
     def _get_rec_pts(self):
-        if not hasattr(self, 'probes'):
+        # if not hasattr(self, 'probes') or self.probes:
+        if True: 
             self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         return self.probes
         

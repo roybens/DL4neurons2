@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
-import yaml as yaml
+# import yaml as yaml
 from stimulus import stims, add_stims
 import models
 
@@ -390,6 +390,10 @@ def main(args):
                 print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
     plot(args, data, stim)
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    print("COMPLETED ALL SIMULATIONS",dt_string)
+
     # Save to disk
     if args.outfile:
         myUpar= _normalize(args, paramsets).astype(np.float32)
