@@ -16,10 +16,10 @@ module unload craype-hugepages2M
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
-OUT_DIR=/global/cscratch1/sd/roybens/bbpexcv3/wrk/
+OUT_DIR=/global/homes/k/ktub1999/testRun/
 # simu run in the dir where  Slurm job was started
 
-CELLS_FILE='excitatorycells.csv'
+CELLS_FILE='testcell.csv'
 START_CELL=0
 NCELLS=1
 END_CELL=$((${START_CELL}+${NCELLS}))
@@ -47,7 +47,7 @@ for i in $(seq $((${START_CELL}+1)) ${END_CELL});
 do
     line=$(head -$i ${CELLS_FILE} | tail -1)
     bbp_name=$(echo $line | awk -F "," '{print $1}')
-    for k in {0..4}
+    for k in 1
     do
         mkdir -p $RUNDIR/$bbp_name/c${k}
         chmod a+rx $RUNDIR/$bbp_name/c${k}
@@ -82,7 +82,8 @@ echo "STIM FILE" $stimfile
 echo "SLURM_NODEID" ${SLURM_NODEID}
 echo "SLURM_PROCID" ${SLURM_PROCID}
 
-REMOTE_CELLS_FILE='/tmp/excitatorycells.csv'
+REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv'
+PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
 echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
@@ -93,17 +94,17 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 for j in $(seq 1 ${NRUNS});
 do
     echo "Doing run $j of $NRUNS at" `date`
-    for l in {0..4}
+    for l in 1
     do
         adjustedval=$((l))
         OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
-          --cori-csv ${REMOTE_CELLS_FILE} --cori-start ${START_CELL} --cori-end ${END_CELL} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} --model BBP --cell-i ${l} \
+          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num 19 --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
-          --stim-noise --dt 0.1"
+          --stim-noise --dt 0.025"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 
