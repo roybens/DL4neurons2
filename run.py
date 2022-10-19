@@ -396,9 +396,7 @@ def main(args):
         log.debug("About to run with params = {}".format(params))
         
         #print(f'printing buf {buf}, printing shape{buf.shape}')
-        # for stim_idx in range(len(args.stim_file)):
-        if True:
-            stim_idx=0
+        for stim_idx in range(len(args.stim_file)):
             stim,stim_mul,stim_offset = get_stim(args,stim_idx)
             #stimL.append(stim)
             buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])

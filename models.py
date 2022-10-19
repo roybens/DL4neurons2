@@ -115,7 +115,9 @@ class BaseModel(object):
         #h.frecord_init()
         #hoc_vector ={}
         #self.hoc_vectors = self.attach_recordings(ntimepts)
-        
+
+        self.stimvals = h.Vector().from_python(stim)
+        self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
         h.finitialize()
         print(self.hoc_vectors)
         

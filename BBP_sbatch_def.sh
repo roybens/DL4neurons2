@@ -53,7 +53,7 @@ do
         chmod a+rx $RUNDIR/$bbp_name/c${k}
     done
 done
-cp BBP_sbatch2.sh $RUNDIR
+cp BBP_sbatch_def.sh $RUNDIR
 chmod a+rx $RUNDIR
 chmod a+rx $RUNDIR/*
 echo done
@@ -81,7 +81,7 @@ FILENAME=\{BBP_NAME\}-v3
 echo "STIM FILE" $stimfile
 echo "SLURM_NODEID" ${SLURM_NODEID}
 echo "SLURM_PROCID" ${SLURM_PROCID}
-
+numParamSets=10
 REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv'
 PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
@@ -101,8 +101,8 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} --model BBP --cell-i ${l} \
-          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num 19 --cori-start ${START_CELL} --cori-end ${END_CELL} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
+          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
           --stim-noise --dt 0.025"
         echo "args" $args
