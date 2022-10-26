@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 import neuron
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
@@ -98,6 +99,12 @@ def report_random_params(args, params, model):
 def get_random_params(args,model,n=1):
     #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     ranges = model.PARAM_RANGES
+    Default_paramsdf =pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
+    Default_params = Default_paramsdf[args.m_type+"_"+args.e_type+"_"+str(args.cell_i-1)].tolist()
+    ranges=[]
+    for params_single in Default_params:
+        ranges.append((params_single*np.exp(int(-1)*np.log(10)),params_single*np.exp(int(+1)*np.log(10))))
+    ranges = tuple(ranges)
     ndim = len(ranges)
     rand = np.random.rand(n, ndim)
     phys_rand = np.zeros(shape=rand.shape)
