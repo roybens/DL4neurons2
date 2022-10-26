@@ -18,6 +18,7 @@ import ruamel.yaml as yaml
 from stimulus import stims, add_stims
 import models
 
+templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
 
 try:
     from mpi4py import MPI
@@ -282,6 +283,21 @@ def lock_params(args, paramsets):
         target_i = paramnames.index(target)
         paramsets[:, target_i] = paramsets[:, source_i]
 
+def template_present(cellName,i_cell):
+    
+    i_cell = str(int(i_cell)+1)
+    # template_cell = templates_dir+"/"+cellName
+    cell_clones =  os.listdir(templates_dir)
+    cell_clones =[x for x in cell_clones if cellName in x]
+    cell_is=[]
+    print(i_cell)
+    for x in cell_clones:
+        cell_is.append(x.split('_')[-1])
+    if(i_cell not in cell_is):
+        print("Template Doesnt Exist{}, Skipping".format(cellName))
+        # print(template_cell)
+        return False
+    return True
 
 def main(args):
     print(args)
@@ -291,7 +307,10 @@ def main(args):
     if (not args.outfile) and (not args.force) and (args.plot is None) and (not args.create_params):
         raise ValueError("You didn't choose to plot or save anything. "
                          + "Pass --force to continue anyways")
-
+    cellName = args.m_type+"_"+args.e_type
+    # template_cell = templates_dir+"/"+cellName
+    if(not template_present(cellName,args.cell_i)):
+        return
     if args.cori_csv:
         cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
         if cori_i == 9:

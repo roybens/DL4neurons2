@@ -14,32 +14,39 @@ num_param = 1
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/"
+path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/"
 
-df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/excitatorycells.csv")
+df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/testCell3.csv")
 nregions = 1
-para_df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/L6_TPC_L1_cADpyr/sensitivityregion_6.0_7.0_L6_TPC_L1cADpyr.csv")
+para_df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/L6_TPC_L1_cADpyr_2/sensitivityregion_6.0_7.0_L6_TPC_L1cADpyr.csv")
 colour=['r','b','g','y']
 flag = False
-total_param = []
+# total_param = []
 Parameters = para_df['param_name']
 Plot_DIR = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityPlots"
+CSV_DIR=    "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityCSVs/"
+
+AllPlotsPDF = matplotlib.backends.backend_pdf.PdfPages("ALLSTD.pdf")
 for param in range(len(Parameters)):
-    
+    ALL_MEAN_PARAMS={}
+    ALL_STD_PARAMS={}
+    Mean_Params=[]
+    STD_Params=[]    
     os.chdir(Plot_DIR)
     pdf = matplotlib.backends.backend_pdf.PdfPages(str(Parameters[param])+".pdf")
-    for i in range(num_param):
-        total_param.append([])
-    for i in range(nregions):
-        param_values=[]
-        for j in range(num_param):
-            param_values.append([])
+    # for i in range(num_param):
+    #     total_param.append([])
+    # for i in range(nregions):
+    #     param_values=[]
+    #     for j in range(num_param):
+    #         param_values.append([])
+    if(True):
         
         for j in range(len(df)):
             m_type = df.iloc[j]['mType']
             e_type = df.iloc[j]['eType']
             # filenames = listdir(path+m_type+'_'+e_type)
-            for i_cell in range(1,6):
+            for i_cell in range(0,5):
                 search_dir = path+m_type+'_'+e_type+'_'+str(i_cell)
                 if(os.path.exists(search_dir)):
                     fig = P.figure()
@@ -54,7 +61,7 @@ for param in range(len(Parameters)):
                     num=0
                     for res in all_csv:
                         
-                        if(len(all_csv)>i):
+                        if(len(all_csv)>0):
                             curr_csv = res
                             # inum = res.rfind('/')+1
                             # num = res[inum]
@@ -82,6 +89,7 @@ for param in range(len(Parameters)):
 
                             param_values_single.append(std_cell)
                             param_values_single_mean.append(mean_cell)
+                           
                             #param_values_single.append(mean_cell)
                             # for k in range(len(mean_cell)):
                             #     param_values[k].append(mean_cell[k])
@@ -90,16 +98,18 @@ for param in range(len(Parameters)):
                     # dict1 = OrderedDict(sorted(param_values_single.items()))
                     # dict2 = OrderedDict(sorted(param_values_single_mean.items()))
                     y = param_values_single
+                    STD_Params.append(param_values_single)
+                    Mean_Params.append(param_values_single_mean)
                     # x = range(0,len(all_csv))
                     # for x1 in x:
                     #     x1 /=2
-                    x = [x1-1 for x1 in range(0,8)]
-
+                    # x = [x1/100-1 for x1 in range(0,200,25)]
+                    x =[x1-1 for x1 in range(0,8,1)]
                     # print(x)
                     #P.xticks(x,P_names,rotation=90)
                     #P.axis([0,len(all_csv)+1,0, max(y)+1 ])
                     if(len(y)>0):
-                        P.title(m_type+" "+e_type+" "+str(i_cell))
+                        P.title(m_type+" "+e_type+" "+str(i_cell) + str(Parameters[param]))
                         P.plot(x, y, alpha=0.3,color = 'y',label = m_type+" "+e_type+" "+str(i_cell))
                     
                     y = param_values_single_mean
@@ -107,6 +117,7 @@ for param in range(len(Parameters)):
                         P.plot(x, y, alpha=0.3,color = 'r',label = m_type+" "+e_type+" "+str(i_cell))
                         P.legend(["STD", "Mean"], loc ="lower right")
                         pdf.savefig(fig,bbox_inches="tight")
+                        AllPlotsPDF.savefig(fig,bbox_inches="tight")
         # for k in range(num_param):
         #     y = param_values[k]
         #     total_param[k] = total_param[k] + y 
@@ -120,6 +131,8 @@ for param in range(len(Parameters)):
         #         P.plot(x, y,'.', alpha=0.3,color = colour[i])
         #         #fig.plot(x, y, 'r.', alpha=0.3,color = colour[i])
         # P.axis([0,num_param+1,0,  max_y*1.5])
+    # ALL_MEAN_PARAMS[str(Parameters[param])]=Mean_Params
+    # ALL_STD_PARAMS[str(Parameters[param])]=STD_Params
     #     x = range(0,num_param+1)
     #     P.xticks(x,P_names,rotation=90)
 
@@ -136,3 +149,9 @@ for param in range(len(Parameters)):
     # P.savefig("STD_box.png",bbox_inches="tight")
     #pdf.savefig(fig)
     pdf.close()
+    
+    Mean_param = pd.DataFrame.from_dict(Mean_Params)
+    STD_param = pd.DataFrame.from_dict(STD_Params)
+    Mean_param.to_csv(CSV_DIR+Parameters[param]+"Mean.csv",index=False)
+    STD_param.to_csv(CSV_DIR+Parameters[param]+"STD.csv",index=False)
+AllPlotsPDF.close()

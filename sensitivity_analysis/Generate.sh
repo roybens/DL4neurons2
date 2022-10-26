@@ -1,10 +1,19 @@
 #!/bin/bash
+#SBATCH -N 5
+#SBATCH -C cpu
+#SBATCH -q debug
+#SBATCH -t 30:00
+#SBATCH -J ALL_CLONES
+#SBATCH --output /global/homes/k/ktub1999/mainDL4/DL4neurons2/logs/Ktub/%A_%a  # job-array encodding
+#SBATCH --image=balewski/ubu20-neuron8:v5
+#SBATCH --array 1-1 #a
+
 INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/excitatorycells.csv
 OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
-nsamp=10/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/Sensitivity Plots
-count=0
+nsamp=10
+count=1
 while read name mtype etype
 do
     if [[ $count -gt 0 ]]; then

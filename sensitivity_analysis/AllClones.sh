@@ -10,11 +10,11 @@
 
 echo "Mtype: $1";
 echo "EType: $2";
-nsamp=12
+nsamp=10
 Mtype=$1
 Etype=$2
-i_cell=1
-while [ $i_cell -ne 6 ]
+i_cell=0
+while [ $i_cell -ne 5 ]
 do
     echo "srun -k  -n 128 --exclusive shifter python3 -u generate_analysis_data_copy.py  $Mtype $Etype $i_cell $nsamp"
     srun -k  -n 128  shifter python3 -u generate_analysis_data_copy.py  $Mtype $Etype $i_cell $nsamp&
