@@ -14,7 +14,7 @@ num_param = 1
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/"
+path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana7/"
 
 df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/testCell3.csv")
 nregions = 1
@@ -25,6 +25,8 @@ flag = False
 Parameters = para_df['param_name']
 Plot_DIR = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityPlots"
 CSV_DIR=    "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityCSVs/"
+right_bound_all_cells = {}
+left_bound_all_cells = {}
 
 AllPlotsPDF = matplotlib.backends.backend_pdf.PdfPages("ALLSTD.pdf")
 for param in range(len(Parameters)):
@@ -97,6 +99,18 @@ for param in range(len(Parameters)):
 
                     # dict1 = OrderedDict(sorted(param_values_single.items()))
                     # dict2 = OrderedDict(sorted(param_values_single_mean.items()))
+                    
+                    if(len(param_values_single)>0):
+                        if(m_type+'_'+e_type+'_'+str(i_cell) not in right_bound_all_cells.keys()):
+                                right_bound_all_cells[m_type+'_'+e_type+'_'+str(i_cell)]=[param_values_single[-1]]
+                        else:
+                                right_bound_all_cells[m_type+'_'+e_type+'_'+str(i_cell)].append(param_values_single[-1])
+                        if(m_type+'_'+e_type+'_'+str(i_cell) not in left_bound_all_cells.keys()):
+                                left_bound_all_cells[m_type+'_'+e_type+'_'+str(i_cell)]=[param_values_single[0]]
+                        else:
+                                left_bound_all_cells[m_type+'_'+e_type+'_'+str(i_cell)].append(param_values_single[0])
+
+
                     y = param_values_single
                     STD_Params.append(param_values_single)
                     Mean_Params.append(param_values_single_mean)
@@ -154,4 +168,8 @@ for param in range(len(Parameters)):
     STD_param = pd.DataFrame.from_dict(STD_Params)
     Mean_param.to_csv(CSV_DIR+Parameters[param]+"Mean.csv",index=False)
     STD_param.to_csv(CSV_DIR+Parameters[param]+"STD.csv",index=False)
+left_bound_all_cells = pd.DataFrame.from_dict(left_bound_all_cells)
+left_bound_all_cells.to_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/left_bound_all_cells.csv")
+right_bound_all_cells = pd.DataFrame.from_dict(right_bound_all_cells)
+right_bound_all_cells.to_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/left_bound_all_cells.csv")
 AllPlotsPDF.close()
