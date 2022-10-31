@@ -22,7 +22,7 @@ import random
 import ruamel.yaml as yaml
 import sys
 import csv
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/step_500.csv'
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic3.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.025*i for i in range(len(stim))]
@@ -564,16 +564,17 @@ def main_regions():
             myfile.write(f'abc {m_type} {e_type}')
         return;
        
-    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=0)
+    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
     def_vals = my_model.DEFAULT_PARAMS
     
     ECDS = test_sensitivity_regions(files_loc,my_model,nregions)
     for curr_region in range(nregions):
-        curr_lb = -1 + curr_region*(8/nregions)
-        curr_ub = -1 + (curr_region+1)*(8/nregions)
+        curr_lb = -1 + (curr_region-1)*(4/nregions)
+        curr_ub = -1 + (curr_region)*(4/nregions)
         curr_region_str = f'region_{curr_lb}_{curr_ub}'
         #print(ECDS[0])
         analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str)
+    print("Done for ",m_type,e_type,i_cell)
 
     
 main_regions()

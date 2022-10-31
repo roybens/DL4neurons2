@@ -15,10 +15,14 @@ import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
+
 #import yaml as yaml
+# import yaml as yaml
+
 from stimulus import stims, add_stims
 import models
 
+templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
 
 try:
     from mpi4py import MPI
@@ -290,6 +294,21 @@ def lock_params(args, paramsets,model):
         target_i = paramnames.index(target)
         paramsets[:, target_i] = paramsets[:, source_i]
 
+def template_present(cellName,i_cell):
+    
+    i_cell = str(int(i_cell)+1)
+    # template_cell = templates_dir+"/"+cellName
+    cell_clones =  os.listdir(templates_dir)
+    cell_clones =[x for x in cell_clones if cellName in x]
+    cell_is=[]
+    print(i_cell)
+    for x in cell_clones:
+        cell_is.append(x.split('_')[-1])
+    if(i_cell not in cell_is):
+        print("Template Doesnt Exist{}, Skipping".format(cellName))
+        # print(template_cell)
+        return False
+    return True
 
 def main(args):
     print(args)
@@ -299,7 +318,10 @@ def main(args):
     if (not args.outfile) and (not args.force) and (args.plot is None) and (not args.create_params):
         raise ValueError("You didn't choose to plot or save anything. "
                          + "Pass --force to continue anyways")
-
+    cellName = args.m_type+"_"+args.e_type
+    # template_cell = templates_dir+"/"+cellName
+    if(not template_present(cellName,args.cell_i)):
+        return
     if args.cori_csv:
         cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
         if cori_i == 9:
@@ -423,6 +445,10 @@ def main(args):
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
     plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     plot(args, data, stim)
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    print("COMPLETED ALL SIMULATIONS",dt_string)
+
     # Save to disk
     if args.outfile:
         myUpar= _normalize(args, paramsets,model).astype(np.float32)

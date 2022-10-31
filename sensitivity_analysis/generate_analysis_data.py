@@ -20,10 +20,16 @@ import json
 import itertools
 import pickle as pkl
 import random
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/step_500.csv'
+import pandas as pd
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic3.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.025*i for i in range(len(stim))]
+templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
+Default_Parameters = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
+Bounds = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/Bounds.csv")
+# Default_Parameters = Default_Parameters['New Base'].tolist()
+
 
 def make_paramset(my_model,param_ind,nsamples):
     def_param_vals = my_model.DEFAULT_PARAMS
@@ -34,15 +40,24 @@ def make_paramset(my_model,param_ind,nsamples):
     param_set[:,param_ind] = vals_check
     return param_set
 
-def make_paramset_regions(my_model,param_ind,nsamples,nregions):
-    def_param_vals = my_model.DEFAULT_PARAMS
+def make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cell):
+    #def_param_vals = my_model.DEFAULT_PARAMS
+    def_param_vals= Default_Parameters[mtype+"_"+etype+"_"+str(i_cell)].tolist()
+    param_name = my_model.PARAM_NAMES[param_ind]
+    bounds = Bounds.loc[Bounds['Parameter']==param_name]
+    LB = bounds['LB']
+    UB = bounds['UB']
+    # TO CALCULATE THE VLAUE :Value = Base* e^(x*a*ln10)
+    #a =(Upper Bound - LowerBound)/2
+    a_value = (UB-LB)/2
+    a_value = float(a_value.iloc[0])
     param_sets = []
     range_to_vary = my_model.PARAM_RANGES[param_ind]
     for curr_region in range(nregions):
-        curr_lb = -1 + curr_region*(8/nregions)
-        curr_ub = -1 + (curr_region+1)*(8/nregions)
+        curr_lb = -1 + (curr_region-1)*(4/nregions)
+        curr_ub = -1 + (curr_region)*(4/nregions)
         curr_param_set = np.array([def_param_vals]*nsamples)
-        curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*np.log(10))
+        curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*a_value*np.log(10))
         curr_param_set[:,param_ind] = curr_vals_check
         param_sets.append(curr_param_set)
     return param_sets
@@ -61,17 +76,17 @@ def get_volts(mtype,etype,param_ind,nsamples):
         volts = my_model.simulate(stim,0.025)
         all_volts.append(volts)
     return all_volts
-def get_volts_regions(mtype,etype,param_ind,nsamples,nregions):
+def get_volts_regions(mtype,etype,i_cell,param_ind,nsamples,nregions):
     all_volts = []
-    my_model = get_model('BBP',log,m_type=mtype,e_type=etype,cell_i=1) 
-    param_sets = make_paramset_regions(my_model,param_ind,nsamples,nregions)
+    my_model = get_model('BBP',log,m_type=mtype,e_type=etype,cell_i=int(i_cell)) 
+    param_sets = make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cell)
     param_name = my_model.PARAM_NAMES[param_ind]
     for params_set in param_sets:
         region_volts = []
         for i in range(nsamples):
             curr_params = params_set[i]
             print("working on param_ind" + str(param_ind) + " sample" + str(i) )
-            my_model = get_model('BBP',log,mtype,etype,1,*curr_params)
+            my_model = get_model('BBP',log,mtype,etype,int(i_cell),*curr_params)
             my_model.DEFAULT_PARAMS = False
             curr_volts = my_model.simulate(stim,0.025)
             region_volts.append(curr_volts)
@@ -128,7 +143,7 @@ def check_param_sensitivity(all_volts,def_volts_probes,adjusted_param,m_type,e_t
 #        ALL_ETYPES = list(set(itertools.chain.from_iterable(mtype.keys() for mtype in cells.values())))
 
 def main_for_all_range():
-    NTHREADS = 128
+    NTHREADS = 1
     m_type = sys.argv[1]
     e_type = sys.argv[2]
     nsamples = int(sys.argv[3])
@@ -163,8 +178,8 @@ def main_for_divided_range():
     i_cell = sys.argv[3]
     nsamples = int(sys.argv[4])
     
-    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana5/{m_type}_{e_type}_{i_cell}/'
-    os.makedirs(files_loc,exist_ok=True)
+    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/{m_type}_{e_type}_{i_cell}/'
+    
     try:
         procid = int(os.environ['SLURM_PROCID'])
         print("in cori")
@@ -172,22 +187,38 @@ def main_for_divided_range():
     except:
         print("not in cori")
         procid = 0   
-    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
-    
-    def_vals = my_model.DEFAULT_PARAMS
-    pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) if def_vals[i]>0]
-    threads_per_param = int(NTHREADS/len(pnames))
-    if threads_per_param < 1:
-        threads_per_param = 1 
-    samples_per_thread = int(nsamples/threads_per_param)+1
-    p_ind = procid%(len(pnames))
-    adjusted_param = my_model.PARAM_NAMES[p_ind]
-    print("working on " + adjusted_param + "will be sampled " + str(samples_per_thread*threads_per_param) )
-    all_volts = get_volts_regions(m_type,e_type,p_ind,samples_per_thread,nregions)
-    print("SAVING in pkl")
-    pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '.pkl'
-    with open(pkl_fn, 'wb') as output:
-        pkl.dump(all_volts,output)
+    cellName = m_type+"_"+e_type
+    # template_cell = templates_dir+"/"+cellName
+    cell_clones =  os.listdir(templates_dir)
+    cell_clones =[x for x in cell_clones if cellName in x]
+    cell_is=[]
+    for x in cell_clones:
+        cell_is.append(x.split('_')[-1])
+    if(str(int(i_cell)+1) not in cell_is):
+        print(cell_is,str(int(i_cell)+1))
+        print("Template Doesnt Exist{}, Skipping".format(cellName))
+        return
+    os.makedirs(files_loc,exist_ok=True)
+    try:
+        my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
+        
+        def_vals = my_model.DEFAULT_PARAMS
+        pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) if def_vals[i]>0]
+        threads_per_param = int(NTHREADS/len(pnames))
+        if threads_per_param < 1:
+            threads_per_param = 1 
+        samples_per_thread = int(nsamples/threads_per_param)+1
+        p_ind = procid%(len(pnames))
+        adjusted_param = my_model.PARAM_NAMES[p_ind]
+        print("working on " + adjusted_param + "will be sampled " + str(samples_per_thread*threads_per_param) )
+        all_volts = get_volts_regions(m_type,e_type,i_cell,p_ind,samples_per_thread,nregions)
+        print("SAVING in pkl")
+        pkl_fn =files_loc + str(nregions) + 'regions_' + m_type + '_' + e_type + adjusted_param + '_' + str(procid) + '.pkl'
+        print(pkl_fn)
+        with open(pkl_fn, 'wb') as output:
+            pkl.dump(all_volts,output)
+    except FileNotFoundError:
+        print("FILE not found for ",i_cell)
 
 log.basicConfig(format='%(asctime)s %(message)s', level=log.DEBUG)
 #main_for_all_range()

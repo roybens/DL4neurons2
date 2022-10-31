@@ -432,6 +432,7 @@ class BBPExcV2(BBP):
         self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         print(self.probes)
         print(self.entire_cell)
+
         return self.probes
         
 
