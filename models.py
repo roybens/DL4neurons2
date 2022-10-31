@@ -55,7 +55,6 @@ class BaseModel(object):
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
 
     def attach_recordings(self, ntimepts):
-        print("Hello There")
         hoc_vectors = {
             'v': h.Vector(ntimepts),
             'ina': h.Vector(ntimepts),
@@ -64,19 +63,14 @@ class BaseModel(object):
             'i_leak': h.Vector(ntimepts),
             'i_cap': h.Vector(ntimepts),
         }
-        print(1)
+        
         hoc_vectors['v'].record(h.cell(0.5)._ref_v)
-        print(2)
         hoc_vectors['ina'].record(h.cell(0.5)._ref_ina)
-        print(3)
         hoc_vectors['ica'].record(h.cell(0.5)._ref_ica)
-        print(4)
         hoc_vectors['ik'].record(h.cell(0.5)._ref_ik)
-        print(5)
         hoc_vectors['i_leak'].record(h.cell(0.5).pas._ref_i)
-        print(6)
         hoc_vectors['i_cap'].record(h.cell(0.5)._ref_i_cap)
-        print(7)
+
 
         return hoc_vectors
 
@@ -160,9 +154,7 @@ class BBP(BaseModel):
 
     def _get_rec_pts(self):
         if not hasattr(self, 'probes'):
-            print("HI")
             self.probes = list(OrderedDict.fromkeys(get_rec_points(self.entire_cell)))
-        print("HI2")
         return self.probes
         
     def _n_rec_pts(self):
@@ -171,7 +163,6 @@ class BBP(BaseModel):
     def attach_recordings(self, ntimepts):
         hoc_vectors = OrderedDict()
         for sec in self._get_rec_pts():
-            print("SEC",sec)
             hoc_vectors[sec.hname()] = h.Vector(ntimepts)
             hoc_vectors[sec.hname()].record(sec(0.5)._ref_v)
 
@@ -390,7 +381,7 @@ class BBPExcV2(BBP):
         
 
     def _set_self_params(self, *args):
-        print("Setting PARAM Namesssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss")
+        print("Setting PARAM Names")
         #print(f'args is {args} param_names are {self.PARAM_NAMES}')
         if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
             args = self.DEFAULT_PARAMS
@@ -431,13 +422,14 @@ class BBPExcV2(BBP):
         return cell
 
     def _get_rec_pts(self):
-        print("HI3")
+        
         #if not hasattr(self, 'probes'):
-        if True:
+        # 
             # print("HI4")
             #This should be taken from probes
+            # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
             
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         print(self.probes)
         print(self.entire_cell)
         return self.probes

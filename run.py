@@ -384,8 +384,6 @@ def main(args):
         start, stop = 0, 1
     stimL = []
 
-    print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
- 
     # MAIN LOOP   
     lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset = get_stim(args,0)#only for gettign the length to create the buffer
