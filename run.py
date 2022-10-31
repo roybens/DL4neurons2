@@ -10,11 +10,15 @@ from argparse import ArgumentParser
 from datetime import datetime
 import neuron
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
+
+#import yaml as yaml
 # import yaml as yaml
+
 from stimulus import stims, add_stims
 import models
 
@@ -96,9 +100,15 @@ def report_random_params(args, params, model):
             log.debug("Using random values for '{}'".format(name))
 
     
-def get_random_params(args, n=1):
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+def get_random_params(args,model,n=1):
+    #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     ranges = model.PARAM_RANGES
+    Default_paramsdf =pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
+    Default_params = Default_paramsdf[args.m_type+"_"+args.e_type+"_"+str(args.cell_i-1)].tolist()
+    ranges=[]
+    for params_single in Default_params:
+        ranges.append((params_single*np.exp(int(-1)*np.log(10)),params_single*np.exp(int(+1)*np.log(10))))
+    ranges = tuple(ranges)
     ndim = len(ranges)
     rand = np.random.rand(n, ndim)
     phys_rand = np.zeros(shape=rand.shape)
@@ -172,10 +182,10 @@ def get_mpi_idx(args, nsamples):
 
 
 
-def create_h5(args, nsamples):
+def create_h5(args, nsamples,model):
     print(f'in crate h5 we have {nsamples} nsamples ')
     #log.info("Creating h5 file {}".format(args.outfile))
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     with h5py.File(args.outfile, 'w') as f:
         # write params
         ndim = len(model.PARAM_NAMES)
@@ -201,8 +211,8 @@ def create_h5(args, nsamples):
     #log.info("Done.")
 
 
-def _normalize(args, data, minmax=1):
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+def _normalize(args, data,model ,minmax=1):
+    #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     nsamples = data.shape[0]
     mins = np.array([tup[0] for tup in model.PARAM_RANGES])
     mins = np.tile(mins, (nsamples, 1)) # stacked to same shape as input
@@ -222,8 +232,9 @@ def save_h5(args, buf_vs, buf_stims, params, start, stop,force_serial=False, upa
         log.debug("using serial")
         kwargs = {}
 
+    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     if not os.path.exists(args.outfile):
-        create_h5(args, stop-start)
+        create_h5(args, stop-start,model)
     
     with h5py.File(args.outfile, 'a', **kwargs) as f:
         log.debug("opened h5")
@@ -233,7 +244,7 @@ def save_h5(args, buf_vs, buf_stims, params, start, stop,force_serial=False, upa
         f['stim_par'][start:stop] = stim_params
         if not args.blind:
             f['phys_par'][start:stop, :] = params
-            f['norm_par'][start:stop, :] = (upar*2 - 1) if upar is not None else _normalize(args, params)
+            f['norm_par'][start:stop, :] = (upar*2 - 1) if upar is not None else _normalize(args, params,model)
         #log.info("saved h5")
     #log.info("closed h5")
     os.chmod(args.outfile, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
@@ -267,11 +278,11 @@ def plot(args, data, stim):
         plt.show()
 
 
-def lock_params(args, paramsets):
+def lock_params(args, paramsets,model):
     # DEPRECATED. Create/use Latched model sublcasses (see HHBallStick7ParamLatched)
     assert len(args.locked_params) % 2 == 0
 
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     paramnames = model.PARAM_NAMES
     nsets = len(args.locked_params)//2
     
@@ -324,6 +335,7 @@ def main(args):
                     args.m_type = row[1]
                     args.e_type = row[2]
                     log.info("from rank {} running cell {}".format(rank, bbp_name))
+                    print("from rank {} running cell {}".format(rank, bbp_name))
                     break
 
         # Get param string for holding some params fixed
@@ -338,21 +350,23 @@ def main(args):
     if args.outfile and '{BBP_NAME}' in args.outfile:
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
         #args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
+    
+    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
 
     if args.create:
         if not args.num:
             raise ValueError("Must pass --num when creating h5 file")
-        create_h5(args, args.num)
+        create_h5(args, args.num,model)
         exit()
 
     if args.create_params:
-        np.savetxt(args.param_file, get_random_params(args, n=args.num)[0])
-        exit()
+        np.savetxt(args.param_file, get_random_params(args,model,n=args.num)[0])
+        # exit()
 
     if args.blind and not args.param_file:
         raise ValueError("Must pass --param-file with --blind")
 
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    
     if args.metadata_only:
         write_metadata(args, model)
         exit()
@@ -361,13 +375,23 @@ def main(args):
         all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
         upar = None # TODO: save or generate unnormalized params when using --param-file
         start, stop = get_mpi_idx(args, len(all_paramsets))
+        print("Reading from param_file")
+        print(start,stop)
         if args.num and start > args.num:
             return
-        paramsets = all_paramsets[start:stop, :]
+        if(args.num==1):
+            paramsets=[]
+            paramsets.append(all_paramsets)
+        else:
+            paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
+        print("Param Size",paramsets.size)
+        print("Reading from param_file")
+        print(paramsets.shape)
+
     elif args.num:
         start, stop = get_mpi_idx(args, args.num)
-        paramsets, upar = get_random_params(args, n=stop-start)
+        paramsets, upar = get_random_params(args, model,n=stop-start)
     elif args.params not in (None, [None]):
         #paramsets = np.atleast_2d(np.array(args.params))
         #NEED TO CHANGE THIS
@@ -382,14 +406,16 @@ def main(args):
         start, stop = 0, 1
     stimL = []
 
-   
- 
     # MAIN LOOP   
-    lock_params(args, paramsets)
+    lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset = get_stim(args,0)#only for gettign the length to create the buffer
     buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     print('dd',type(paramsets),paramsets.shape)
+    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    model.set_attachments(stim,len(stim),args.dt)
+    counter_params =0
+    
     for iSamp, params in enumerate(paramsets):
         
         if args.print_every and iSamp % args.print_every == 0:
@@ -401,13 +427,23 @@ def main(args):
             stim,stim_mul,stim_offset = get_stim(args,stim_idx)
             #stimL.append(stim)
             buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])
-            model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i, *params)          
+            #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
+            #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
+            print("Conter Param",counter_params)
+            counter_params+=1
+            print("Simulating for ",params)    
+            model._set_self_params(*params)
+            model.init_parameters()
+            print(model.param_dict())
             data = model.simulate(stim, args.dt)
+            Data = data[list(data.keys())[0]]
+            plt.plot(Data)
             print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
             for iProb,k in enumerate(data):
                 wave=data[k][:-1]
                 print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
+    plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     plot(args, data, stim)
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -415,7 +451,7 @@ def main(args):
 
     # Save to disk
     if args.outfile:
-        myUpar= _normalize(args, paramsets).astype(np.float32)
+        myUpar= _normalize(args, paramsets,model).astype(np.float32)
         buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
         myUpar=myUpar*2 -1
         assert not np.isnan(buf_vs).any()

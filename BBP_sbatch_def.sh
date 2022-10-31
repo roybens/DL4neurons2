@@ -4,9 +4,9 @@
 #SBATCH -q debug
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
-#SBATCH -C knl
+#SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
-#SBATCH --image=balewski/ubu20-neuron8:v3
+#SBATCH --image=balewski/ubu20-neuron8:v5
 #SBATCH --array 1-1 #a
 
 # Stuff for knl
@@ -16,12 +16,12 @@ module unload craype-hugepages2M
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
-OUT_DIR=/global/cscratch1/sd/roybens/bbpexcv3/wrk/
+OUT_DIR=/global/homes/k/ktub1999/testRun/
 # simu run in the dir where  Slurm job was started
 
-CELLS_FILE='excitatorycells.csv'
+CELLS_FILE='testcell.csv'
 START_CELL=0
-NCELLS=1
+NCELLS=2
 END_CELL=$((${START_CELL}+${NCELLS}))
 NSAMPLES=1
 NRUNS=1
@@ -32,7 +32,7 @@ echo "START_CELL" ${START_CELL}
 echo "NCELLS" ${NCELLS}
 echo "END_CELL" ${END_CELL}
 
-export THREADS_PER_NODE=1
+export THREADS_PER_NODE=2
 
 # to prevent: H5-write error: unable to lock file, errno = 524
 export HDF5_USE_FILE_LOCKING=FALSE
@@ -47,13 +47,13 @@ for i in $(seq $((${START_CELL}+1)) ${END_CELL});
 do
     line=$(head -$i ${CELLS_FILE} | tail -1)
     bbp_name=$(echo $line | awk -F "," '{print $1}')
-    for k in {0..4}
+    for k in 1
     do
         mkdir -p $RUNDIR/$bbp_name/c${k}
         chmod a+rx $RUNDIR/$bbp_name/c${k}
     done
 done
-cp BBP_sbatch2.sh $RUNDIR
+cp BBP_sbatch_def.sh $RUNDIR
 chmod a+rx $RUNDIR
 chmod a+rx $RUNDIR/*
 echo done
@@ -81,8 +81,9 @@ FILENAME=\{BBP_NAME\}-v3
 echo "STIM FILE" $stimfile
 echo "SLURM_NODEID" ${SLURM_NODEID}
 echo "SLURM_PROCID" ${SLURM_PROCID}
-
-REMOTE_CELLS_FILE='/tmp/excitatorycells.csv'
+numParamSets=10
+REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv'
+PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
 echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
@@ -93,7 +94,7 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 for j in $(seq 1 ${NRUNS});
 do
     echo "Doing run $j of $NRUNS at" `date`
-    for l in {0..4}
+    for l in 1
     do
         adjustedval=$((l))
         OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
@@ -101,9 +102,9 @@ do
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
-          --cori-csv ${REMOTE_CELLS_FILE} --cori-start ${START_CELL} --cori-end ${END_CELL} \
+          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
-          --stim-noise --dt 0.1"
+          --stim-noise --dt 0.025"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

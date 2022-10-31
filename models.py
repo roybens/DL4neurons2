@@ -7,7 +7,7 @@ import logging as log
 from datetime import datetime
 from argparse import ArgumentParser
 from collections import OrderedDict
-
+from neuron.units import ms, mV
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -71,32 +71,68 @@ class BaseModel(object):
         hoc_vectors['i_leak'].record(h.cell(0.5).pas._ref_i)
         hoc_vectors['i_cap'].record(h.cell(0.5)._ref_i_cap)
 
+
         return hoc_vectors
 
-    def simulate(self, stim, dt=0.025):
-        _start = datetime.now()
-        
-        ntimepts = len(stim)
+    def set_attachments(self,stim,stim_len,dt):
+        ntimepts = stim_len
         tstop = ntimepts * dt
-        # self.init_hoc(dt, tstop)
-
         h('objref cell')
         h.cell = self.create_cell()
         self.attach_clamp()
         self.attach_stim(stim)
-        hoc_vectors = self.attach_recordings(ntimepts)
-
+        self.hoc_vectors = self.attach_recordings(ntimepts)
         self.init_hoc(dt, tstop)
+
+    def simulate(self, stim, dt=0.025):
+        _start = datetime.now()
+        # SYNAPSES, NO_SYNAPSES = 1, 0
+        # template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
+        # hobj = getattr(h, template_name)(NO_SYNAPSES)
+        # self.entire_cell = hobj # do not garbage collect
+        
+        ntimepts = len(stim)
+        tstop = ntimepts * dt
+        # self.init_hoc(dt, tstop)
+        #h.finitialize()
+        # h('objref cell')
+        # h.cell = self.create_cell()
+        
+        # print(1)
+        # self.attach_clamp()
+        # self.attach_stim(stim)
+        # print(2)
+        # hoc_vectors = self.attach_recordings(ntimepts)
+        # self.init_hoc(dt, tstop)
+        #hoc_vectors=self.hoc_vectors
+        #hoc_vectors = self.attach_recordings(ntimepts)
+        #h.frecord_init()
+        #hoc_vector ={}
+        #self.hoc_vectors = self.attach_recordings(ntimepts)
+
+        self.stimvals = h.Vector().from_python(stim)
+        self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
+        h.finitialize()
+        print(self.hoc_vectors)
+        
+
+        print(4)
         h.dt=dt
+        # print("TOPOLOGY",h.topology())
         self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         self.log.debug("({} total timesteps)".format(ntimepts))
         print("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
-        h.run()
+        now = datetime.now()        
+        h.continuerun(tstop*ms)
+        now2 = datetime.now()
+        diff = now2-now
+        print("TIME to sim",diff.total_seconds())
         #print(f"hoc vectors is {hoc_vectors['v']}")
 
         self.log.debug("Time to simulate: {}".format(datetime.now() - _start))
 
-        return OrderedDict([(k, np.array(v)) for (k, v) in hoc_vectors.items()])
+        print("After Simulation",self.hoc_vectors)
+        return OrderedDict([(k, np.array(v)) for (k, v) in self.hoc_vectors.items()])
 
 
 class BBP(BaseModel):
@@ -167,6 +203,7 @@ class BBP(BaseModel):
         SYNAPSES, NO_SYNAPSES = 1, 0
         hobj = getattr(h, template_name)(NO_SYNAPSES)
         self.entire_cell = hobj # do not garbage collect
+        print(self.entire_cell,"Created CELL")
 
         os.chdir(cwd)
 
@@ -330,8 +367,21 @@ class BBPExcV2(BBP):
     )
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
+    def init_parameters(self):
+            print("INITIALIZING PARAMETERS")
+            for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+                for sec in seclist:
+                    if hasattr(sec, name):
+                        #print(f'sec is {sec} name is {name} param_name is {param_name} get_attr is {getattr(self, param_name)}')
+                        #print(self.DEFAULT_PARAMS)
+                        setattr(sec, name, getattr(self, param_name))
+                    else:
+                        log.debug("Not setting {} (absent from this cell)".format(param_name))
+                        continue
+        
 
     def _set_self_params(self, *args):
+        print("Setting PARAM Names")
         #print(f'args is {args} param_names are {self.PARAM_NAMES}')
         if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
             args = self.DEFAULT_PARAMS
@@ -344,6 +394,7 @@ class BBPExcV2(BBP):
                 #print(params)
                 #print(f'{var} {cloned_var} ,{params[cloned_var]}')
                 setattr(self,var,params[cloned_var])
+        
             
     def create_cell(self):
         #print('creating BBPExcV2')
@@ -371,9 +422,17 @@ class BBPExcV2(BBP):
         return cell
 
     def _get_rec_pts(self):
-        # if not hasattr(self, 'probes') or self.probes:
-        if True: 
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        
+        #if not hasattr(self, 'probes'):
+        # 
+            # print("HI4")
+            #This should be taken from probes
+            # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+            
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        print(self.probes)
+        print(self.entire_cell)
+
         return self.probes
         
 
