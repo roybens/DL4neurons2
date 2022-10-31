@@ -14,7 +14,7 @@ num_param = 1
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/"
+path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/"
 
 df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/testCell3.csv")
 nregions = 1

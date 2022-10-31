@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 5
+#SBATCH -N 1
 #SBATCH -C cpu
 #SBATCH -q debug
 #SBATCH -t 30:00
@@ -8,7 +8,7 @@
 #SBATCH --image=balewski/ubu20-neuron8:v5
 #SBATCH --array 1-1 #a
 
-INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/excitatorycells.csv
+INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv
 OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
@@ -17,8 +17,8 @@ count=1
 while read name mtype etype
 do
     if [[ $count -gt 0 ]]; then
-        i_cell=1
-        while [ $i_cell -ne 6 ]
+        i_cell=0
+        while [ $i_cell -ne 5 ]
         do
         # echo "Name : $name"
         #Data Generation

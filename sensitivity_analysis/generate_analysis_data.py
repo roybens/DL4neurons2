@@ -27,6 +27,7 @@ plt.subplots_adjust(hspace=0.3)
 times = [0.025*i for i in range(len(stim))]
 templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
 Default_Parameters = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
+Bounds = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/Bounds.csv")
 # Default_Parameters = Default_Parameters['New Base'].tolist()
 
 
@@ -42,13 +43,21 @@ def make_paramset(my_model,param_ind,nsamples):
 def make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cell):
     #def_param_vals = my_model.DEFAULT_PARAMS
     def_param_vals= Default_Parameters[mtype+"_"+etype+"_"+str(i_cell)].tolist()
+    param_name = my_model.PARAM_NAMES[param_ind]
+    bounds = Bounds.loc[Bounds['Parameter']==param_name]
+    LB = bounds['LB']
+    UB = bounds['UB']
+    # TO CALCULATE THE VLAUE :Value = Base* e^(x*a*ln10)
+    #a =(Upper Bound - LowerBound)/2
+    a_value = (UB-LB)/2
+    a_value = float(a_value.iloc[0])
     param_sets = []
     range_to_vary = my_model.PARAM_RANGES[param_ind]
     for curr_region in range(nregions):
         curr_lb = -1 + (curr_region-1)*(4/nregions)
         curr_ub = -1 + (curr_region)*(4/nregions)
         curr_param_set = np.array([def_param_vals]*nsamples)
-        curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*np.log(10))
+        curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*a_value*np.log(10))
         curr_param_set[:,param_ind] = curr_vals_check
         param_sets.append(curr_param_set)
     return param_sets
@@ -134,7 +143,7 @@ def check_param_sensitivity(all_volts,def_volts_probes,adjusted_param,m_type,e_t
 #        ALL_ETYPES = list(set(itertools.chain.from_iterable(mtype.keys() for mtype in cells.values())))
 
 def main_for_all_range():
-    NTHREADS = 128
+    NTHREADS = 1
     m_type = sys.argv[1]
     e_type = sys.argv[2]
     nsamples = int(sys.argv[3])
@@ -169,7 +178,7 @@ def main_for_divided_range():
     i_cell = sys.argv[3]
     nsamples = int(sys.argv[4])
     
-    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/{m_type}_{e_type}_{i_cell}/'
+    files_loc = f'/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/{m_type}_{e_type}_{i_cell}/'
     
     try:
         procid = int(os.environ['SLURM_PROCID'])

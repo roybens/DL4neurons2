@@ -556,7 +556,7 @@ def main_regions():
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/' + m_type + '_' + e_type + '_' + i_cell + '/'
+    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')
@@ -574,6 +574,7 @@ def main_regions():
         curr_region_str = f'region_{curr_lb}_{curr_ub}'
         #print(ECDS[0])
         analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str)
+    print("Done for ",m_type,e_type,i_cell)
 
     
 main_regions()
