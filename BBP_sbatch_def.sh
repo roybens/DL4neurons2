@@ -4,9 +4,9 @@
 #SBATCH -q debug
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
-#SBATCH -C knl
+#SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
-#SBATCH --image=balewski/ubu20-neuron8:v3
+#SBATCH --image=balewski/ubu20-neuron8:v5
 #SBATCH --array 1-1 #a
 
 # Stuff for knl
@@ -21,7 +21,7 @@ OUT_DIR=/global/homes/k/ktub1999/testRun/
 
 CELLS_FILE='testcell.csv'
 START_CELL=0
-NCELLS=1
+NCELLS=2
 END_CELL=$((${START_CELL}+${NCELLS}))
 NSAMPLES=1
 NRUNS=1
@@ -32,7 +32,7 @@ echo "START_CELL" ${START_CELL}
 echo "NCELLS" ${NCELLS}
 echo "END_CELL" ${END_CELL}
 
-export THREADS_PER_NODE=1
+export THREADS_PER_NODE=2
 
 # to prevent: H5-write error: unable to lock file, errno = 524
 export HDF5_USE_FILE_LOCKING=FALSE
