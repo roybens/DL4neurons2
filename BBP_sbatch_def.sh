@@ -61,7 +61,7 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=chaotic3
+export stimname1=chaotic4
 export stimname2=step_200
 export stimname3=ramp
 export stimname4=chirp
@@ -104,7 +104,7 @@ do
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
-          --stim-noise --dt 0.025"
+          --dt 0.1"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

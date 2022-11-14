@@ -61,4 +61,15 @@ def saveNewBase():
     Base = pd.DataFrame(Data)
     Base.to_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv",index=False)    
 
-saveNewBase()
+def changeBase():
+    OldMeanBase = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv")
+    oldParam=OldMeanBase["Values"]
+    param = OldMeanBase["Parameters"]
+    
+    newParams = oldParam*math.sqrt(10)
+    # Base = pd.DataFrame({"Parameters":param,"Values":newParams})
+    # Base.to_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv",index=False)    
+    np.savetxt("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/TEST.csv",list(oldParam))
+
+# saveNewBase()
+changeBase()

@@ -14,7 +14,7 @@ num_param = 1
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/"
+path = "/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana7/"
 
 df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/testCell3.csv")
 nregions = 1
@@ -122,7 +122,7 @@ for param in range(len(Parameters)):
                     # for x1 in x:
                     #     x1 /=2
                     # x = [x1/100-1 for x1 in range(0,200,25)]
-                    x =[x1/10 for x1 in range(-15,25,5)]
+                    x =[x1/10 for x1 in range(-10,20,5)]
                     # print(x)
                     #P.xticks(x,P_names,rotation=90)
                     #P.axis([0,len(all_csv)+1,0, max(y)+1 ])
@@ -130,7 +130,7 @@ for param in range(len(Parameters)):
                     #     y=y[8:]
                     if(len(y)>0):
                         axs[i_cell].set_title(m_type+" "+e_type+" "+str(i_cell) + str(Parameters[param]))
-                        axs[i_cell].plot(x, y, alpha=0.3,color = 'y',label = m_type+" "+e_type+" "+str(i_cell))
+                        axs[i_cell].plot(x, y, alpha=0.3,color = 'b',label = m_type+" "+e_type+" "+str(i_cell))
                     
                     y = param_values_single_mean
                     # if(len(y)>8):

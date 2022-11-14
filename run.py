@@ -41,8 +41,8 @@ from neuron import h, gui
 VOLTS_SCALE = 150
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
-stim_mul_range = [0.9999999999,1]
-stim_offset_range = [-1e-5,0]
+stim_mul_range = [0.7,1.3]
+stim_offset_range = [-0.3,+0.3]
 
 
 def _rangeify_linear(data, _range):
@@ -99,16 +99,75 @@ def report_random_params(args, params, model):
         if param == float('inf'):
             log.debug("Using random values for '{}'".format(name))
 
+def get_random_params2(args,model,n=1):
+    ndim = len(model.DEFAULT_PARAM)
+    rand = np.random.uniform(-1,1,(n,ndim))
     
 def get_random_params(args,model,n=1):
+    ndim = len(model.DEFAULT_PARAMS)
+    rand = np.random.uniform(-1,1,(n,ndim))
+    phy_res=[]
+    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv")
+    for i in range(n):
+        curr_phy_res=[]
+        for j in range(ndim):
+            u = rand[i][j]
+            B=default_params["Values"].iloc[j]
+            pram = default_params["Parameters"].iloc[j]
+
+            if(pram=="e_pas_all"):
+                #P = Base*(A+B*u) because Linear Param, Ranges = -125, -25
+                a_value=1
+                b_value=(-2/3)
+                curr_phy_res.append(B*(a_value+b_value*u))
+                print("epass",B*(a_value+b_value*u),u,B)
+            elif(pram=="cm_somatic" or pram=="cm_axonal"):
+                a_value=1.55
+                b_value=1.45
+                curr_phy_res.append(B*(a_value+b_value*u))
+                print("CM",B*(a_value+b_value*u),u,B)
+            else:
+                a_value=0
+                b_value=1.5                
+                curr_phy_res.append(B*np.exp((a_value+u*b_value)*np.log(10)))
+        phy_res.append(curr_phy_res)
+    return phy_res,rand
+
+def get_random_params2(args,model,n=1):
     #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     ranges = model.PARAM_RANGES
     Default_paramsdf =pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
-    Default_params = Default_paramsdf[args.m_type+"_"+args.e_type+"_"+str(args.cell_i-1)].tolist()
+    Default_params = Default_paramsdf["Values"].tolist()
+    params = list(Default_paramsdf["Parameters"])
+    print(params,"PARAM")
     ranges=[]
+    # Bounds = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/Bounds.csv")
+    pindex=0
     for params_single in Default_params:
-        ranges.append((params_single*np.exp(int(-1)*np.log(10)),params_single*np.exp(int(+1)*np.log(10))))
+        # bounds = Bounds.loc[Bounds['Parameter']==params[pindex]]
+        # LB = bounds['LB']
+        # UB = bounds['UB']
+        LB =-1
+        UB=2
+        # TO CALCULATE THE VLAUE :Value = Base* e^(x*a*ln10)
+        #a =(Upper Bound - LowerBound)/2
+        a_value = 0
+        b_value=1.5
+        if(params[pindex]=="e_pas_all"):#LINEAR parameter
+            a_value =1
+            ranges.append((-25,-125))
+        elif(params[pindex]=="cm_somatic" or params[pindex]=="cm_axonal"):
+            ranges.append((0.1,3))
+        # elif(params[pindex]=="gNaTa_tbar_NaTa_t_axonal"):
+        #     ranges.append((0.3402369775,100))
+        else:
+            # a_value = float(a_value.iloc[0])
+            ranges.append((params_single*np.exp((int(-1)*b_value+a_value)*np.log(10)),params_single*np.exp((int(+1)*b_value+a_value)*np.log(10))))
+            
+        pindex+=1
+    print(ranges,"PRINTING RANGES")
     ranges = tuple(ranges)
+    # ranges = model.PARAM_RANGES
     ndim = len(ranges)
     rand = np.random.rand(n, ndim)
     phys_rand = np.zeros(shape=rand.shape)
@@ -147,18 +206,31 @@ def get_stim(args,idx):
     
     stim_fn = f'./{args.stim_file[idx]}'
     stim = np.genfromtxt(stim_fn, dtype=np.float32)
+    u_offset=0
+    u_mul=0
+    
     if args.stim_multiplier:
         stim_mul = args.stim_multiplier
         print("Taking Sim from ARGS for MUL",args.stim_multiplier)    
     else:
-        stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
+        u_mul=np.random.uniform(-1,1,1)[0]
+        print("UMULLLLLLLLLL",u_mul)
+        a_value=1
+        b_value=0.3
+        stim_mul=a_value+b_value*u_mul
+        # stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
     if args.stim_dc_offset:
         stim_offset = args.stim_dc_offset
         print("Taking Sim from ARGS for OFFSET",args.stim_dc_offset)
     else:
-        stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
+        u_offset=np.random.uniform(-1,1,1)[0]
+        print("UMULLLLLLLLLL",u_offset)
+        a_value=0
+        b_value=0.3
+        stim_offset=a_value+b_value*u_offset
+        # stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
-    return stim,stim_mul,stim_offset
+    return stim,stim_mul,stim_offset,u_mul,u_offset
         
 def get_mpi_idx(args, nsamples):
     if args.trivial_parallel:
@@ -294,7 +366,7 @@ def lock_params(args, paramsets,model):
         target_i = paramnames.index(target)
         paramsets[:, target_i] = paramsets[:, source_i]
 
-def template_present(cellName,i_cell):
+def template_present(cellName,i_cell=0):
     
     i_cell = str(int(i_cell)+1)
     # template_cell = templates_dir+"/"+cellName
@@ -318,14 +390,16 @@ def main(args):
     if (not args.outfile) and (not args.force) and (args.plot is None) and (not args.create_params):
         raise ValueError("You didn't choose to plot or save anything. "
                          + "Pass --force to continue anyways")
-    cellName = args.m_type+"_"+args.e_type
-    # template_cell = templates_dir+"/"+cellName
-    if(not template_present(cellName,args.cell_i)):
-        return
+    
     if args.cori_csv:
-        cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
-        if cori_i == 9:
-            return
+        if(args.generate_all):
+            cori_i = int(os.environ.get('SLURM_PROCID')) /5
+            args.cell_i = int(os.environ.get('SLURM_PROCID')) %5
+            args.cell_i=str(args.cell_i)
+        else :
+            cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
+            if cori_i == 9:
+                return
         with open(args.cori_csv, 'r') as infile:
             allcells = csv.reader(infile, delimiter=',')
             for i, row in enumerate(allcells):
@@ -338,6 +412,7 @@ def main(args):
                     print("from rank {} running cell {}".format(rank, bbp_name))
                     break
 
+         
         # Get param string for holding some params fixed
         #paramuse = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1] \
         paramuse = [1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1,1,1,1,1] if args.e_type == 'cADpyr' else [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]
@@ -346,6 +421,11 @@ def main(args):
         if args.e_type in ('bIR', 'bAC'):
             paramuse[20] = 0
             log.info('Not varying negative parameters for e-type {}'.format(args.e_type))
+    
+    cellName = args.m_type+"_"+args.e_type
+    # template_cell = templates_dir+"/"+cellName
+    if(not template_present(cellName,args.cell_i)):
+        return
 
     if args.outfile and '{BBP_NAME}' in args.outfile:
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
@@ -360,7 +440,8 @@ def main(args):
         exit()
 
     if args.create_params:
-        np.savetxt(args.param_file, get_random_params(args,model,n=args.num)[0])
+        paramsets,rand= get_random_params(args,model,n=args.num)
+        np.savetxt(args.param_file,paramsets)
         # exit()
 
     if args.blind and not args.param_file:
@@ -391,7 +472,7 @@ def main(args):
 
     elif args.num:
         start, stop = get_mpi_idx(args, args.num)
-        paramsets, upar = get_random_params(args, model,n=stop-start)
+        paramsets, rand = get_random_params(args, model,n=stop-start)
     elif args.params not in (None, [None]):
         #paramsets = np.atleast_2d(np.array(args.params))
         #NEED TO CHANGE THIS
@@ -408,9 +489,10 @@ def main(args):
 
     # MAIN LOOP   
     lock_params(args, paramsets,model)
-    stim,stim_mul,stim_offset = get_stim(args,0)#only for gettign the length to create the buffer
+    stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,0)#only for gettign the length to create the buffer
     buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
+    buf_stims_unit = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     print('dd',type(paramsets),paramsets.shape)
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     model.set_attachments(stim,len(stim),args.dt)
@@ -424,9 +506,10 @@ def main(args):
         
         #print(f'printing buf {buf}, printing shape{buf.shape}')
         for stim_idx in range(len(args.stim_file)):
-            stim,stim_mul,stim_offset = get_stim(args,stim_idx)
+            stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,stim_idx)
             #stimL.append(stim)
             buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])
+            buf_stims_unit[iSamp,:,stim_idx]=np.array([u_mul,u_offset])
             #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
             #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
             print("Conter Param",counter_params)
@@ -456,9 +539,15 @@ def main(args):
         myUpar=myUpar*2 -1
         assert not np.isnan(buf_vs).any()
         assert not np.isnan(buf_stims).any()
+        assert not np.isnan(buf_stims_unit).any()
         bbp_name = model.cell_kwargs['model_directory']
-        outD={'volts':buf_vs,'stim_par':buf_stims,'phys_par':paramsets.astype(np.float32),'unit_par':myUpar}
+        if(len(rand)>0):
+            outD={'volts':buf_vs,'phys_stim_adjust':buf_stims,'unit_stim_adjust':buf_stims_unit,'phys_par':paramsets.astype(np.float32),'unit_par':rand.astype(np.float32)}
+        else:
+            outD={'volts':buf_vs,'phys_stim_adjust':buf_stims,'unit_stim_adjust':buf_stims_unit,'phys_par':paramsets.astype(np.float32),'unit_par':myUpar}
         outF=args.outfile
+        if(args.generate_all):
+            outF+str(args.cell_i)+".h5"
         
         metadata = {
         'timeAxis': {'step': args.dt, 'unit': "(ms)"},
@@ -511,6 +600,11 @@ if __name__ == '__main__':
         '--create-params', action='store_true', default=False,
         help="create the params file (--param-file) and exit. Must use with --num"
     )
+    parser.add_argument(
+        '--generate-all',action='store_true', default=False,
+        help='Generate Data for all Cells including clones, There is no need to pass the i_cell, Should be used with a CSV and num'
+    )
+    
 
     parser.add_argument(
         '--plot', nargs='*',
@@ -581,11 +675,11 @@ if __name__ == '__main__':
         help="csv to use as the stimulus")
     
     parser.add_argument(
-        '--stim-dc-offset', type=float, default=0.0,
+        '--stim-dc-offset', type=float,
         help="apply a DC offset to the stimulus (shift it). Happens after --stim-multiplier"
     )
     parser.add_argument(
-        '--stim-multiplier',  type=float, default=1,
+        '--stim-multiplier',  type=float,
         help="scale the stimulus amplitude by this factor. Happens before --stim-dc-offset"
     )
     parser.add_argument(

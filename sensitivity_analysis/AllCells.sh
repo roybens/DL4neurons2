@@ -8,7 +8,7 @@
 #SBATCH --image=balewski/ubu20-neuron8:v5
 #SBATCH --array 1-1 #a
 
-INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell2.csv
+INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv
 OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }

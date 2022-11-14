@@ -1,0 +1,18 @@
+Cells,L6_TPC_L1 cADpyr 1L,L6_TPC_L1 cADpyr 1U,L5_UTPC cADpyr 3L,L5_UTPC cADpyr 3U,L5_UTPC cADpyr 4L,L5_UTPC cADpyr 4L,L5_STPC cADpyr 1L,L5_STPC cADpyr 1U,L5_STPC cADpyr 4L,L5_STPC cADpyr 4U,L23_PC cADpyrL,L23_PC cADpyrU
+gNaTs2_tbar_NaTs2_t_apical,-1,3,-1,3,-1,3,-1,3,-1,3,-1,1
+gSKv3_1bar_SKv3_1_apical,-1,2,-1,4,0,4,-1,4,-1,4,,
+gImbar_Im_apical,-1,2,-1,4,-1,4,-1,4,-1,4,,
+gIhbar_Ih_dend,0,4,1,4,1,3,0,4,-1,5,,
+gNaTa_tbar_NaTa_t_axonal,-1,2,-1,2,-1,2,-1,2,-1,2,,
+gK_Tstbar_K_Tst_axonal,1,5,0,5,0,5,0,4,0,4,,
+gNap_Et2bar_Nap_Et2_axonal,0,3,-1,1,-1,1,-1,1,-1,1,,
+gSK_E2bar_SK_E2_axonal,-1,4,-1,5,-1,5,-1,5,-1,5,,
+gCa_HVAbar_Ca_HVA_axonal,-1,3,-1,2,-1,2,-1,2,-1,2,,
+gK_Pstbar_K_Pst_axonal,-1,3,-1,3,-1,3,-1,3,-1,3,,
+gCa_LVAstbar_Ca_LVAst_axonal,-1,7,-1,4,-1,4,-1,4,-1,4,,
+g_pas_axonal,-1,3,-1,3,-1,3,-1,3,-1,3,,
+cm_axonal,-1,3,-1,4,-1,4,-1,3,-1,3,,
+gSKv3_1bar_SKv3_1_somatic,-1,3,-1,3,-1,2,-1,2,-1,3,,
+gNaTs2_tbar_NaTs2_t_somatic,-1,1,-1,2,-1,2,-1,2,-1,2,,
+gCa_LVAstbar_Ca_LVAst_somatic,-1,4,-1,4,-1,5,-1,5,1,6,,
+g_pas_somatic,-1,2,-1,3,-1,3,-1,3,-1,3,,

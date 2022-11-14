@@ -61,15 +61,15 @@ do
     bbp_name=$(echo $line | awk -F "," '{print $1}')
     
             
-    for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
-    do
-                adjustedval=1+$STIM_OFFSET
-                mkdir -p $RUNDIR/$bbp_name/c${adjustedval}
-                chmod a+rx $RUNDIR/$bbp_name/c${adjustedval}
+    # for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
+    # do
+    #             adjustedval=1+$STIM_OFFSET
+    #             mkdir -p $RUNDIR/$bbp_name/c${adjustedval}
+    #             chmod a+rx $RUNDIR/$bbp_name/c${adjustedval}
 
-    done
+    # done
 
-    for STIM_MUL in 0.7 0.9 1.1 1.3
+    for STIM_MUL in 1 2 3 4 5 6
     do
                 adjustedval=$STIM_MUL+0
                 mkdir -p $RUNDIR/$bbp_name/c${adjustedval}
@@ -120,26 +120,26 @@ do
     l=1
    
         
-    for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
-    do
+    # for STIM_OFFSET in -0.3 -0.2 0.1 0 0.1 0.2 0.3
+    # do
           
             
-            adjustedval=1+$STIM_OFFSET
-            OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
-            FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
-            OUTFILE=$OUT_DIR/$FILE_NAME
-            args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --stim-multiplier 1 --stim-dc-offset ${STIM_OFFSET} --model BBP --cell-i ${l} \
-            --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --num 1 --cori-start ${START_CELL} --cori-end ${END_CELL} \
-            --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
-            --stim-noise --dt 0.025"
+    #         adjustedval=1+$STIM_OFFSET
+    #         OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/
+    #         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
+    #         OUTFILE=$OUT_DIR/$FILE_NAME
+    #         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --stim-multiplier 1 --stim-dc-offset ${STIM_OFFSET} --model BBP --cell-i ${l} \
+    #         --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --num 1 --cori-start ${START_CELL} --cori-end ${END_CELL} \
+    #         --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
+    #         --stim-noise --dt 0.025"
 
-            echo "args" $args
-            srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
+    #         echo "args" $args
+    #         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
             
             
-    done
+    # done
 
-    for STIM_MUL in 0.7 0.9 1.1 1.3
+    for STIM_MUL in 1 2 3 4 5 6
     do  
             adjustedval=$STIM_MUL+0
             OUT_DIR=$RUNDIR/\{BBP_NAME\}/c${adjustedval}/

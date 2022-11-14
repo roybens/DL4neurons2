@@ -77,6 +77,7 @@ class BaseModel(object):
     def set_attachments(self,stim,stim_len,dt):
         ntimepts = stim_len
         tstop = ntimepts * dt
+        
         h('objref cell')
         h.cell = self.create_cell()
         self.attach_clamp()
@@ -93,6 +94,7 @@ class BaseModel(object):
         
         ntimepts = len(stim)
         tstop = ntimepts * dt
+        
         # self.init_hoc(dt, tstop)
         #h.finitialize()
         # h('objref cell')
@@ -110,6 +112,7 @@ class BaseModel(object):
         #hoc_vector ={}
         #self.hoc_vectors = self.attach_recordings(ntimepts)
 
+        h.dt=dt
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
         h.finitialize()
@@ -117,7 +120,7 @@ class BaseModel(object):
         
 
         print(4)
-        h.dt=dt
+        
         # print("TOPOLOGY",h.topology())
         self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         self.log.debug("({} total timesteps)".format(ntimepts))

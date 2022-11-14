@@ -22,10 +22,10 @@ import random
 import ruamel.yaml as yaml
 import sys
 import csv
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic3.csv'
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic4.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
-times = [0.025*i for i in range(len(stim))]
+times = [0.1*i for i in range(len(stim))]
 create_pdfs = True
 def get_ml_results(short_name,pnames):
     #data_loc = '/project/m2043/ML4neuron2b/' +short_name +'/cellSpike.sum_pred.yaml
@@ -546,7 +546,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
 #     else:
 #         analyze_ecds_no_ML(ECDS,def_vals,files_loc)
 def main_regions():
-    nregions = 8
+    nregions = 6
     short_name = None
     m_type = sys.argv[1]
     e_type = sys.argv[2]
@@ -556,7 +556,7 @@ def main_regions():
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana3/' + m_type + '_' + e_type + '_' + i_cell + '/'
+    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana7/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')
@@ -569,8 +569,8 @@ def main_regions():
     
     ECDS = test_sensitivity_regions(files_loc,my_model,nregions)
     for curr_region in range(nregions):
-        curr_lb = -1 + (curr_region-1)*(4/nregions)
-        curr_ub = -1 + (curr_region)*(4/nregions)
+        curr_lb = -1 + (curr_region-1)*(3/nregions)
+        curr_ub = -1 + (curr_region)*(3/nregions)
         curr_region_str = f'region_{curr_lb}_{curr_ub}'
         #print(ECDS[0])
         analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str)
