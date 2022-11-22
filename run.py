@@ -38,11 +38,11 @@ except:
     
 from neuron import h, gui
 
-VOLTS_SCALE = 150
+VOLTS_SCALE = 1
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
-stim_mul_range = [0.7,1.3]
-stim_offset_range = [-0.3,+0.3]
+stim_mul_range = [1,0.3]
+stim_offset_range = [0,0.3]
 
 
 def _rangeify_linear(data, _range):
@@ -99,15 +99,36 @@ def report_random_params(args, params, model):
         if param == float('inf'):
             log.debug("Using random values for '{}'".format(name))
 
-def get_random_params2(args,model,n=1):
-    ndim = len(model.DEFAULT_PARAM)
-    rand = np.random.uniform(-1,1,(n,ndim))
-    
+
+def get_ranges(args):
+    cell_count=0
+    if(args.cell_count):
+        cell_count=args.cell_count
+    res=[]
+    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    params=list(default_params["Parameters"])
+    for i in range(len(params)):
+        param=params[i]
+        Base = default_params["Values"].iloc[i]
+        if(param=="e_pas_all"):
+            a_value=50
+            
+        elif(param=="cm_somatic" or param=="cm_axonal"):
+            a_value=1.45
+        else:
+            a_value=1.5
+        res.append([Base,a_value])
+    return res
+
 def get_random_params(args,model,n=1):
     ndim = len(model.DEFAULT_PARAMS)
     rand = np.random.uniform(-1,1,(n,ndim))
     phy_res=[]
-    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv")
+    count_cell=0
+    if(args.cell_count):
+        count_cell=args.cell_count
+    
+    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     for i in range(n):
         curr_phy_res=[]
         for j in range(ndim):
@@ -117,19 +138,19 @@ def get_random_params(args,model,n=1):
 
             if(pram=="e_pas_all"):
                 #P = Base*(A+B*u) because Linear Param, Ranges = -125, -25
-                a_value=1
+                a_value=50
                 b_value=(-2/3)
-                curr_phy_res.append(B*(a_value+b_value*u))
-                print("epass",B*(a_value+b_value*u),u,B)
+                curr_phy_res.append(B+a_value*u)
+                # curr_phy_res.append(B*(a_value+b_value*u))
             elif(pram=="cm_somatic" or pram=="cm_axonal"):
-                a_value=1.55
+                a_value=1.45
                 b_value=1.45
-                curr_phy_res.append(B*(a_value+b_value*u))
-                print("CM",B*(a_value+b_value*u),u,B)
+                curr_phy_res.append(B+a_value*u)
+                # curr_phy_res.append(B*(a_value+b_value*u))
             else:
-                a_value=0
+                a_value=1.5 
                 b_value=1.5                
-                curr_phy_res.append(B*np.exp((a_value+u*b_value)*np.log(10)))
+                curr_phy_res.append(B*np.exp((u*a_value)*np.log(10)))
         phy_res.append(curr_phy_res)
     return phy_res,rand
 
@@ -139,7 +160,6 @@ def get_random_params2(args,model,n=1):
     Default_paramsdf =pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv") 
     Default_params = Default_paramsdf["Values"].tolist()
     params = list(Default_paramsdf["Parameters"])
-    print(params,"PARAM")
     ranges=[]
     # Bounds = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/Bounds.csv")
     pindex=0
@@ -165,7 +185,6 @@ def get_random_params2(args,model,n=1):
             ranges.append((params_single*np.exp((int(-1)*b_value+a_value)*np.log(10)),params_single*np.exp((int(+1)*b_value+a_value)*np.log(10))))
             
         pindex+=1
-    print(ranges,"PRINTING RANGES")
     ranges = tuple(ranges)
     # ranges = model.PARAM_RANGES
     ndim = len(ranges)
@@ -209,25 +228,25 @@ def get_stim(args,idx):
     u_offset=0
     u_mul=0
     
-    if args.stim_multiplier:
+    if (args.stim_multiplier!=None):
         stim_mul = args.stim_multiplier
-        print("Taking Sim from ARGS for MUL",args.stim_multiplier)    
+        # print("Taking Sim from ARGS for MUL",args.stim_multiplier)    
     else:
         u_mul=np.random.uniform(-1,1,1)[0]
-        print("UMULLLLLLLLLL",u_mul)
-        a_value=1
-        b_value=0.3
-        stim_mul=a_value+b_value*u_mul
+        b_value=1
+        a_value=0.3
+        stim_mul=b_value+a_value*u_mul
         # stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
-    if args.stim_dc_offset:
+    if (args.stim_dc_offset!=None):
         stim_offset = args.stim_dc_offset
-        print("Taking Sim from ARGS for OFFSET",args.stim_dc_offset)
+        # print("Taking Sim from ARGS for OFFSET",args.stim_dc_offset)
     else:
+        # print(args.stim_dc_offset,"Offset")
+        
         u_offset=np.random.uniform(-1,1,1)[0]
-        print("UMULLLLLLLLLL",u_offset)
-        a_value=0
-        b_value=0.3
-        stim_offset=a_value+b_value*u_offset
+        b_value=0
+        a_value=0.3
+        stim_offset=b_value+a_value*u_offset
         # stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
     return stim,stim_mul,stim_offset,u_mul,u_offset
@@ -255,7 +274,7 @@ def get_mpi_idx(args, nsamples):
 
 
 def create_h5(args, nsamples,model):
-    print(f'in crate h5 we have {nsamples} nsamples ')
+    # print(f'in crate h5 we have {nsamples} nsamples ')
     #log.info("Creating h5 file {}".format(args.outfile))
     #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     with h5py.File(args.outfile, 'w') as f:
@@ -373,7 +392,7 @@ def template_present(cellName,i_cell=0):
     cell_clones =  os.listdir(templates_dir)
     cell_clones =[x for x in cell_clones if cellName in x]
     cell_is=[]
-    print(i_cell)
+    # print(i_cell)
     for x in cell_clones:
         cell_is.append(x.split('_')[-1])
     if(i_cell not in cell_is):
@@ -382,23 +401,44 @@ def template_present(cellName,i_cell=0):
         return False
     return True
 
+def get_init_volts(args,model,simTime,dt):
+    fig = plt.figure()
+    stim = np.zeros(int(simTime/dt))
+    data = model.simulate(stim, dt)
+    Data = data[list(data.keys())[0]]
+    plt.plot(Data)
+    plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/init.png")
+    v_init= np.median(Data[150:])
+    f = open("Vinits.txt", "a")
+    f.write(args.m_type+args.e_type+str(model.cell_i)+":"+str(v_init)+"\n")
+    f.close()
+    return v_init
+
+    
+
+
 def main(args):
-    print(args)
+    tot_time = datetime.now()
+    # print(args)
     if args.trivial_parallel and args.outfile and '{NODEID}' in args.outfile:
         args.outfile = args.outfile.replace('{NODEID}', os.environ['SLURM_PROCID'])
 
     if (not args.outfile) and (not args.force) and (args.plot is None) and (not args.create_params):
         raise ValueError("You didn't choose to plot or save anything. "
                          + "Pass --force to continue anyways")
-    
+    if(args.m_type and args.e_type):
+        if(not args.cell_i):
+            args.cell_i=0
+        bbp_name=args.m_type+"_"+args.e_type+"_"+str(args.cell_i)
+        
     if args.cori_csv:
-        if(args.generate_all):
-            cori_i = int(os.environ.get('SLURM_PROCID')) /5
-            args.cell_i = int(os.environ.get('SLURM_PROCID')) %5
-            args.cell_i=str(args.cell_i)
-        else :
-            cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
-            if cori_i == 9:
+        # if(args.generate_all):
+        #     cori_i = int(os.environ.get('SLURM_PROCID')) /5
+        #     args.cell_i = int(os.environ.get('SLURM_PROCID')) %5
+        #     args.cell_i=str(args.cell_i)
+        # else :
+        cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
+        if cori_i == 9:
                 return
         with open(args.cori_csv, 'r') as infile:
             allcells = csv.reader(infile, delimiter=',')
@@ -438,7 +478,7 @@ def main(args):
             raise ValueError("Must pass --num when creating h5 file")
         create_h5(args, args.num,model)
         exit()
-
+    rand =[]
     if args.create_params:
         paramsets,rand= get_random_params(args,model,n=args.num)
         np.savetxt(args.param_file,paramsets)
@@ -473,6 +513,7 @@ def main(args):
     elif args.num:
         start, stop = get_mpi_idx(args, args.num)
         paramsets, rand = get_random_params(args, model,n=stop-start)
+        paramsets = np.atleast_2d(paramsets)
     elif args.params not in (None, [None]):
         #paramsets = np.atleast_2d(np.array(args.params))
         #NEED TO CHANGE THIS
@@ -486,24 +527,32 @@ def main(args):
         upar = None
         start, stop = 0, 1
     stimL = []
-
     # MAIN LOOP   
     lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,0)#only for gettign the length to create the buffer
     buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     buf_stims_unit = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
-    print('dd',type(paramsets),paramsets.shape)
+    # print('dd',type(paramsets),paramsets.shape)
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
     
     for iSamp, params in enumerate(paramsets):
-        
+        curr_time = datetime.now()
+        min28=28*60
+        min10=60*60*10
+        if((curr_time-tot_time).total_seconds()>=min28):
+            print("TIMELIMIT,BREAKING after",iSamp)
+            break
         if args.print_every and iSamp % args.print_every == 0:
-            log.info("Processed {} samples".format(i))
+            log.info("Processed {} samples".format(iSamp))
         log.debug("About to run with params = {}".format(params))
         
+        model._set_self_params(*params)
+        model.init_parameters()
+        v_init = get_init_volts(args,model,500,2)
+        # v_init=-74
         #print(f'printing buf {buf}, printing shape{buf.shape}')
         for stim_idx in range(len(args.stim_file)):
             stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,stim_idx)
@@ -512,19 +561,16 @@ def main(args):
             buf_stims_unit[iSamp,:,stim_idx]=np.array([u_mul,u_offset])
             #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
             #model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)   
-            print("Conter Param",counter_params)
-            counter_params+=1
-            print("Simulating for ",params)    
-            model._set_self_params(*params)
-            model.init_parameters()
-            print(model.param_dict())
-            data = model.simulate(stim, args.dt)
+            # print("Counter Param",counter_params)
+            counter_params+=1 
+            
+            data = model.simulate(stim, args.dt,v_init)
             Data = data[list(data.keys())[0]]
             plt.plot(Data)
-            print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
+            # print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
             for iProb,k in enumerate(data):
                 wave=data[k][:-1]
-                print('bbb',iProb,k,wave.shape)
+                # print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
     plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     plot(args, data, stim)
@@ -546,20 +592,28 @@ def main(args):
         else:
             outD={'volts':buf_vs,'phys_stim_adjust':buf_stims,'unit_stim_adjust':buf_stims_unit,'phys_par':paramsets.astype(np.float32),'unit_par':myUpar}
         outF=args.outfile
-        if(args.generate_all):
-            outF+str(args.cell_i)+".h5"
-        
+        # if(args.generate_all):
+        #     outF+str(args.cell_i)+".h5"
+        # if(args.thread_number):
+        #     outF+str(os.environ.get('SLURM_PROCID'))+".h5"
+        stim_names=[]
+        for stim in args.stim_file:
+            ind =stim.rfind('/')
+            stim_names.append(stim[ind+1:])
+
         metadata = {
         'timeAxis': {'step': args.dt, 'unit': "(ms)"},
         'voltsScale': VOLTS_SCALE,
-        'probeName': str(model.get_probe_names()),
+        'probeName': list(model.get_probe_names()),
         'bbpName': bbp_name,
         'parName': model.PARAM_NAMES,
         'linearParIdx': args.linear_params_inds,
         'stimParRange':[stim_mul_range,stim_offset_range],
-        'physParRange':model.PARAM_RANGES,
+        'stimParRangeExp':[['Mul_Base','Mul_A_value'],['Offset_Base','Offset_A_value']],
+        'physParRange':get_ranges(args),
+        'physParRangeExp':['Base','A_value'],
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
-        'stimName': args.stim_file, 
+        'stimName': stim_names, 
         'neuronSimVer': neuron.__version__
     }
         write3_data_hdf5(outD,outF,metaD=metadata)
@@ -604,7 +658,10 @@ if __name__ == '__main__':
         '--generate-all',action='store_true', default=False,
         help='Generate Data for all Cells including clones, There is no need to pass the i_cell, Should be used with a CSV and num'
     )
-    
+    parser.add_argument(
+        '--thread-number',action='store_true', default=False,
+        help='Adds the thread number at the end of the hdf5 file'
+    )
 
     parser.add_argument(
         '--plot', nargs='*',
@@ -700,6 +757,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--locked-params', '--lock-params', type=str, nargs='+', default=[])
     
+    parser.add_argument(
+        '--cell-count', type=int, default=None, required=False,
+        help='count of the cells already issued. Used for paralleised reading from csvs'
+    )
+    
+
     args = parser.parse_args()
 
     if args.tstart or args.tstop:

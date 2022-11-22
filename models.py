@@ -85,7 +85,7 @@ class BaseModel(object):
         self.hoc_vectors = self.attach_recordings(ntimepts)
         self.init_hoc(dt, tstop)
 
-    def simulate(self, stim, dt=0.025):
+    def simulate(self, stim, dt=0.025,v_init=-68):
         _start = datetime.now()
         # SYNAPSES, NO_SYNAPSES = 1, 0
         # template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
@@ -115,7 +115,7 @@ class BaseModel(object):
         h.dt=dt
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
-        h.finitialize()
+        h.finitialize(v_init)
         print(self.hoc_vectors)
         
 

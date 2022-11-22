@@ -32,7 +32,7 @@ for cell in range(len(cells)):
             current_time = now.strftime("%H:%M:%S")
             print("Before Sim =", current_time)
             all_paramsets = np.genfromtxt("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv", dtype=np.float32)
-            all_paramsets = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams.csv")
+            all_paramsets = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv")
             all_paramsets=list(all_paramsets["Values"])
             my_model = get_model('BBP',log,mtype,etype,itype)
             a = my_model.PARAM_RANGES

@@ -22,4 +22,12 @@ def UpdateChaotic():
         myfile.write(str(yU)+"\n")
     pdf.close()
 
-UpdateChaotic()
+def add150():
+   
+   Stims=["chaotic4.csv","step_200.csv","chirp.csv","ramp.csv","step_500.csv"]
+   for sim in Stims:
+        a= np.zeros(1000)
+        data = np.genfromtxt("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/"+sim)
+        a=np.append(a,data)
+        np.savetxt("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0"+sim,a)
+add150()
