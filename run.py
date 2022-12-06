@@ -41,8 +41,8 @@ from neuron import h, gui
 VOLTS_SCALE = 1
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
-stim_mul_range = [1,0.3]
-stim_offset_range = [0,0.3]
+stim_mul_range = [1,0.03]
+stim_offset_range = [0,0.03]
 
 
 def _rangeify_linear(data, _range):
@@ -105,7 +105,7 @@ def get_ranges(args):
     if(args.cell_count):
         cell_count=args.cell_count
     res=[]
-    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
     params=list(default_params["Parameters"])
     for i in range(len(params)):
         param=params[i]
@@ -128,7 +128,7 @@ def get_random_params(args,model,n=1):
     if(args.cell_count):
         count_cell=args.cell_count
     
-    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     for i in range(n):
         curr_phy_res=[]
         for j in range(ndim):
@@ -234,7 +234,7 @@ def get_stim(args,idx):
     else:
         u_mul=np.random.uniform(-1,1,1)[0]
         b_value=1
-        a_value=0.3
+        a_value=0.03
         stim_mul=b_value+a_value*u_mul
         # stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
     if (args.stim_dc_offset!=None):
@@ -245,7 +245,7 @@ def get_stim(args,idx):
         
         u_offset=np.random.uniform(-1,1,1)[0]
         b_value=0
-        a_value=0.3
+        a_value=0.03
         stim_offset=b_value+a_value*u_offset
         # stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
@@ -402,16 +402,16 @@ def template_present(cellName,i_cell=0):
     return True
 
 def get_init_volts(args,model,simTime,dt):
-    fig = plt.figure()
+    # fig = plt.figure()
     stim = np.zeros(int(simTime/dt))
     data = model.simulate(stim, dt)
     Data = data[list(data.keys())[0]]
-    plt.plot(Data)
-    plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/init.png")
+    # plt.plot(Data)
+    # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/init.png")
     v_init= np.median(Data[150:])
-    f = open("Vinits.txt", "a")
-    f.write(args.m_type+args.e_type+str(model.cell_i)+":"+str(v_init)+"\n")
-    f.close()
+    # f = open("Vinits.txt", "a")
+    # f.write(args.m_type+args.e_type+str(model.cell_i)+":"+str(v_init)+"\n")
+    # f.close()
     return v_init
 
     
@@ -500,7 +500,7 @@ def main(args):
         print(start,stop)
         if args.num and start > args.num:
             return
-        if(args.num==1):
+        if(args.num==1 or all_paramsets.shape[0]==1):
             paramsets=[]
             paramsets.append(all_paramsets)
         else:
@@ -530,7 +530,7 @@ def main(args):
     # MAIN LOOP   
     lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,0)#only for gettign the length to create the buffer
-    buf_vs = np.zeros(shape=(stop-start, len(stim), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
+    buf_vs = np.zeros(shape=(stop-start, len(stim[1000:]), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     buf_stims_unit = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     # print('dd',type(paramsets),paramsets.shape)
@@ -541,7 +541,7 @@ def main(args):
     for iSamp, params in enumerate(paramsets):
         curr_time = datetime.now()
         min28=28*60
-        min10=60*60*10
+        min10=60*60*4
         if((curr_time-tot_time).total_seconds()>=min28):
             print("TIMELIMIT,BREAKING after",iSamp)
             break
@@ -566,14 +566,16 @@ def main(args):
             
             data = model.simulate(stim, args.dt,v_init)
             Data = data[list(data.keys())[0]]
-            plt.plot(Data)
+            # plt.plot(Data)
             # print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
             for iProb,k in enumerate(data):
-                wave=data[k][:-1]
+                print("DATA SHAPE",data[k][:-1].shape)
+                print("DATA SHAPE",data[k][1000:-1].shape)
+                wave=data[k][1000:-1]
                 # print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
-    plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
-    plot(args, data, stim)
+    # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
+    # plot(args, data, stim)
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     print("COMPLETED ALL SIMULATIONS",dt_string)
@@ -581,7 +583,7 @@ def main(args):
     # Save to disk
     if args.outfile:
         myUpar= _normalize(args, paramsets,model).astype(np.float32)
-        buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.int16)
+        buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.float16)
         myUpar=myUpar*2 -1
         assert not np.isnan(buf_vs).any()
         assert not np.isnan(buf_stims).any()
@@ -603,15 +605,13 @@ def main(args):
 
         metadata = {
         'timeAxis': {'step': args.dt, 'unit': "(ms)"},
-        'voltsScale': VOLTS_SCALE,
         'probeName': list(model.get_probe_names()),
         'bbpName': bbp_name,
         'parName': model.PARAM_NAMES,
         'linearParIdx': args.linear_params_inds,
         'stimParRange':[stim_mul_range,stim_offset_range],
-        'stimParRangeExp':[['Mul_Base','Mul_A_value'],['Offset_Base','Offset_A_value']],
+        'stimParName': ['stim_mult','stim_offset'],
         'physParRange':get_ranges(args),
-        'physParRangeExp':['Base','A_value'],
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
         'neuronSimVer': neuron.__version__

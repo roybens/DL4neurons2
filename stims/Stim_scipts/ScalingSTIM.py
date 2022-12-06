@@ -24,31 +24,31 @@ def resample_by_interpolation(signal, input_fs, output_fs):
     )
     return resampled_signal
 
-stims = ['chaotic3.csv','step_200.csv','ramp.csv','chirp.csv','step_500.csv']
-pdf = matplotlib.backends.backend_pdf.PdfPages("/global/homes/k/ktub1999/mainDL4/DL4neurons2/UpdatedSTIM.pdf") 
-x = np.linspace(0,4001,4000,endpoint=False)
+stims = ['chaotic_50khz.csv','step_200_50khz.csv','ramp_50khz.csv','chirp_50khz.csv','step_500_50khz.csv']
+pdf = matplotlib.backends.backend_pdf.PdfPages("/pscratch/sd/k/ktub1999/main/DL4neurons2/UpdatedSTIM.pdf") 
+x = np.linspace(0,20001,20000,endpoint=False)
 
 for stim in stims:
-    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/"+stim,"r")
+    file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/50khz_stims/"+stim,"r")
     data = list(csv.reader(file, delimiter=","))
     file.close()
     y = [float(row[0]) for row in data]
 
-    yUpdated = resample_by_interpolation(y, 4000, 2000)
-    xUpdated = np.linspace(0,2001,2000,endpoint=False)
+    yUpdated = resample_by_interpolation(y, 20000, 4000)
+    xUpdated = np.linspace(0,20000,4000,endpoint=False)
     fig = plt.figure()
     plt.plot(x,y,'b')
     pdf.savefig(fig)
-    fig = plt.figure()
-    plt.clf()
+    # fig = plt.figure()
+    # plt.clf()
     plt.plot(xUpdated,yUpdated,'r')
     pdf.savefig(fig)
-    myfile = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/2k"+stim,"w")
+    myfile = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/4k50kInter"+stim,"w")
     for yU in yUpdated:
         myfile.write(str(yU)+"\n")
         
 pdf.close()
 
-plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/UpdatedSTIM.png")
+plt.savefig("/pscratch/sd/k/ktub1999/main/DL4neurons2/UpdatedSTIM.png")
 
 

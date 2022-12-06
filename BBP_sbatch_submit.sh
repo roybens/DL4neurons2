@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH -N 8
-#SBATCH -t 30:00
-#SBATCH -q debug
+#SBATCH -t 03:00:00
+#SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -17,10 +17,10 @@ module unload craype-hugepages2M
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST1/
+OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST2/
 # simu run in the dir where  Slurm job was started
 
-CELLS_FILE='testcell.csv'
+CELLS_FILE='excitatorycells.csv'
 START_CELL=0
 NCELLS=2
 END_CELL=$((${START_CELL}+${NCELLS}))
@@ -66,11 +66,11 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=chaotic4
-export stimname2=step_200
-export stimname3=ramp
-export stimname4=chirp
-export stimname5=step_500
+export stimname1=5k0chaotic4
+export stimname2=5k0step_200
+export stimname3=5k0ramp
+export stimname4=5k0chirp
+export stimname5=5k0step_500
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -95,7 +95,7 @@ echo "numParamSets" $numParamSets
 
 
 echo "numParamSets" $numParamSets
-REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv'
+REMOTE_CELLS_FILE='/pscratch/sd/k/ktub1999/main/DL4neurons2/excitatorycells.csv'
 PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
