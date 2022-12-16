@@ -18,7 +18,7 @@ from get_rec_points import get_rec_points,get_rec_pts_from_distances
 class BaseModel(object):
     def __init__(self, *args, **kwargs):
         h.celsius = kwargs.pop('celsius', 34)
-        self.log = kwargs.pop('log', print)
+        # self.log = kwargs.pop('log', print)
         self._set_self_params(*args)
 
     def _set_self_params(self, *args):
@@ -43,7 +43,7 @@ class BaseModel(object):
 
     def attach_clamp(self):
         h('objref clamp')
-        print(h.cell)
+        # print(h.cell)
         clamp = h.IClamp(h.cell(0.5))
         clamp.delay = 0
         clamp.dur = h.tstop
@@ -116,25 +116,25 @@ class BaseModel(object):
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
         h.finitialize(v_init)
-        print(self.hoc_vectors)
+        # print(self.hoc_vectors)
         
 
-        print(4)
+        # print(4)
         
         # print("TOPOLOGY",h.topology())
-        self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
-        self.log.debug("({} total timesteps)".format(ntimepts))
-        print("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
+        # self.log.debug("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
+        # self.log.debug("({} total timesteps)".format(ntimepts))
+        # print("Running simulation for {} ms with dt = {}".format(h.tstop, h.dt))
         now = datetime.now()        
         h.continuerun(tstop*ms)
         now2 = datetime.now()
         diff = now2-now
-        print("TIME to sim",diff.total_seconds())
+        # print("TIME to sim",diff.total_seconds())
         #print(f"hoc vectors is {hoc_vectors['v']}")
 
-        self.log.debug("Time to simulate: {}".format(datetime.now() - _start))
+        # self.log.debug("Time to simulate: {}".format(datetime.now() - _start))
 
-        print("After Simulation",self.hoc_vectors)
+        # print("After Simulation",self.hoc_vectors)
         return OrderedDict([(k, np.array(v)) for (k, v) in self.hoc_vectors.items()])
 
 
@@ -170,7 +170,8 @@ class BBP(BaseModel):
             hoc_vectors[sec.hname()].record(sec(0.5)._ref_v)
 
         return hoc_vectors
-
+    def quit(self):
+        h.quit()
     def create_cell(self):
         h.load_file('stdrun.hoc')
         h.load_file('import3d.hoc')
@@ -183,17 +184,17 @@ class BBP(BaseModel):
         log.debug(constants)
         h.load_file(constants)
 
-        morpho_template = '/'.join([templates_dir, cell_dir, 'morphology.hoc'])
-        log.debug(morpho_template)
-        h.load_file(morpho_template)
+        # morpho_template = '/'.join([templates_dir, cell_dir, 'morphology.hoc'])
+        # log.debug(morpho_template)
+        # h.load_file(morpho_template)
         
-        biophys_template = '/'.join([templates_dir, cell_dir, 'biophysics.hoc'])
-        log.debug(biophys_template)
-        h.load_file(biophys_template)
+        # biophys_template = '/'.join([templates_dir, cell_dir, 'biophysics.hoc'])
+        # log.debug(biophys_template)
+        # h.load_file(biophys_template)
         
-        synapse_template = '/'.join([templates_dir, cell_dir, 'synapses/synapses.hoc'])
-        log.debug(synapse_template)
-        h.load_file(synapse_template)
+        # synapse_template = '/'.join([templates_dir, cell_dir, 'synapses/synapses.hoc'])
+        # log.debug(synapse_template)
+        # h.load_file(synapse_template)
         
         cell_template = '/'.join([templates_dir, cell_dir, 'template.hoc'])
         log.debug(cell_template)
@@ -206,7 +207,7 @@ class BBP(BaseModel):
         SYNAPSES, NO_SYNAPSES = 1, 0
         hobj = getattr(h, template_name)(NO_SYNAPSES)
         self.entire_cell = hobj # do not garbage collect
-        print(self.entire_cell,"Created CELL")
+        # print(self.entire_cell,"Created CELL")
 
         os.chdir(cwd)
 
@@ -371,7 +372,7 @@ class BBPExcV2(BBP):
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
     def init_parameters(self):
-            print("INITIALIZING PARAMETERS")
+            # print("INITIALIZING PARAMETERS")
             for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
                 for sec in seclist:
                     if hasattr(sec, name):
@@ -384,7 +385,7 @@ class BBPExcV2(BBP):
         
 
     def _set_self_params(self, *args):
-        print("Setting PARAM Names")
+        # print("Setting PARAM Names")
         #print(f'args is {args} param_names are {self.PARAM_NAMES}')
         if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
             args = self.DEFAULT_PARAMS
@@ -433,8 +434,8 @@ class BBPExcV2(BBP):
             # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
             
         self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-        print(self.probes)
-        print(self.entire_cell)
+        # print(self.probes)
+        # print(self.entire_cell)
 
         return self.probes
         

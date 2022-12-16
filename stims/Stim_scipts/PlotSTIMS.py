@@ -5,12 +5,19 @@ import matplotlib.backends.backend_pdf
 
 
 stims1 = ['chaotic_50khz.csv','step_200_50khz.csv','ramp_50khz.csv','chirp_50khz.csv','step_500_50khz.csv']
+stims1 = ['chaotic_50khz.csv']
+
 stims2 = ['chaotic4.csv','step_200.csv','ramp.csv','chirp.csv','step_500.csv']
-pdf = matplotlib.backends.backend_pdf.PdfPages("/pscratch/sd/k/ktub1999/main/DL4neurons2/UpdatedSTIM.pdf") 
+pdf = matplotlib.backends.backend_pdf.PdfPages("UpdatedSTIM.pdf") 
 x = np.linspace(0,4001,4000,endpoint=False)
 
+x = np.linspace(0,5001,5000,endpoint=False)
+
 for stim in range(len(stims1)):
-    file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/4k50kInter"+stims1[stim],"r")
+    # file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/4k50kInter"+stims1[stim],"r")
+    # file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/4k50kInter"+stims1[stim],"r")
+    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/5kchaotic_kevin.csv","r")
+    
     data = list(csv.reader(file, delimiter=","))
     file.close()
     y = [float(row[0]) for row in data]
@@ -18,11 +25,13 @@ for stim in range(len(stims1)):
         for y1 in range(len(y)):
             y[y1]=y[y1]/1000
 
-    file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/"+stims2[stim],"r")
+    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/"+stims2[stim],"r")
     data2 = list(csv.reader(file, delimiter=","))
     file.close()
     y2 = [float(row[0]) for row in data2]
-
+    y22 = [0]*1000
+    y22.extend(y2)
+    y2=y22
     fig = plt.figure()
     plt.plot(x,y,'b')
     plt.title("From 50K")
@@ -38,6 +47,6 @@ for stim in range(len(stims1)):
         
 pdf.close()
 
-plt.savefig("/pscratch/sd/k/ktub1999/main/DL4neurons2/UpdatedSTIM.png")
+plt.savefig("UpdatedSTIM.png")
 
 

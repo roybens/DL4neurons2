@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
+import sys
 
 #import yaml as yaml
 # import yaml as yaml
@@ -41,8 +42,8 @@ from neuron import h, gui
 VOLTS_SCALE = 1
 
 MODELS_BY_NAME = models.MODELS_BY_NAME
-stim_mul_range = [1,0.03]
-stim_offset_range = [0,0.03]
+stim_mul_range = [1,0.3]
+stim_offset_range = [0,0.1]
 
 
 def _rangeify_linear(data, _range):
@@ -105,7 +106,8 @@ def get_ranges(args):
     if(args.cell_count):
         cell_count=args.cell_count
     res=[]
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
     params=list(default_params["Parameters"])
     for i in range(len(params)):
         param=params[i]
@@ -128,7 +130,8 @@ def get_random_params(args,model,n=1):
     if(args.cell_count):
         count_cell=args.cell_count
     
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     for i in range(n):
         curr_phy_res=[]
         for j in range(ndim):
@@ -496,7 +499,7 @@ def main(args):
         all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
         upar = None # TODO: save or generate unnormalized params when using --param-file
         start, stop = get_mpi_idx(args, len(all_paramsets))
-        print("Reading from param_file")
+        # print("Reading from param_file")
         print(start,stop)
         if args.num and start > args.num:
             return
@@ -506,9 +509,9 @@ def main(args):
         else:
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
-        print("Param Size",paramsets.size)
-        print("Reading from param_file")
-        print(paramsets.shape)
+        # print("Param Size",paramsets.size)
+        # print("Reading from param_file")
+        # print(paramsets.shape)
 
     elif args.num:
         start, stop = get_mpi_idx(args, args.num)
@@ -534,15 +537,25 @@ def main(args):
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     buf_stims_unit = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     # print('dd',type(paramsets),paramsets.shape)
+    # h.hoc_stdout("Temp"+str(os.environ['SLURM_PROCID']))#Changing the output to temp file
+    sys.stdout = open(os.devnull, 'w')
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
     
+    
     for iSamp, params in enumerate(paramsets):
+        if(os.environ['SLURM_PROCID']==0 and iSamp%100==0):
+            sys.stdout = sys.__stdout__
+            # h.hoc_stdout()
+            print("Executing for ",iSamp)
+            # h.hoc_stdout("Temp")
+            sys.stdout = open(os.devnull, 'w')
+
         curr_time = datetime.now()
         min28=28*60
-        min10=60*60*4
-        if((curr_time-tot_time).total_seconds()>=min28):
+        min10=60*60*5
+        if((curr_time-tot_time).total_seconds()>=min10):
             print("TIMELIMIT,BREAKING after",iSamp)
             break
         if args.print_every and iSamp % args.print_every == 0:
@@ -569,13 +582,12 @@ def main(args):
             # plt.plot(Data)
             # print('aaa',buf_vs[0,:,:,stim_idx].shape,len(data.values()))
             for iProb,k in enumerate(data):
-                print("DATA SHAPE",data[k][:-1].shape)
-                print("DATA SHAPE",data[k][1000:-1].shape)
-                wave=data[k][1000:-1]
+                wave=data[k][1000:-1] ## IGNORING the first 1000 0 values to reduce the size of the HDF5 files.
                 # print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
     # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     # plot(args, data, stim)
+    h.hoc_stdout()
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     print("COMPLETED ALL SIMULATIONS",dt_string)
