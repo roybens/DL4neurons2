@@ -236,8 +236,8 @@ def get_stim(args,idx):
         # print("Taking Sim from ARGS for MUL",args.stim_multiplier)    
     else:
         u_mul=np.random.uniform(-1,1,1)[0]
-        b_value=1
-        a_value=0.03
+        b_value=stim_mul_range[0]
+        a_value=stim_mul_range[1]
         stim_mul=b_value+a_value*u_mul
         # stim_mul = np.random.uniform(stim_mul_range[0],stim_mul_range[1])
     if (args.stim_dc_offset!=None):
@@ -247,8 +247,8 @@ def get_stim(args,idx):
         # print(args.stim_dc_offset,"Offset")
         
         u_offset=np.random.uniform(-1,1,1)[0]
-        b_value=0
-        a_value=0.03
+        b_value=stim_offset_range[0]
+        a_value=stim_offset_range[1]
         stim_offset=b_value+a_value*u_offset
         # stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
@@ -553,9 +553,9 @@ def main(args):
             sys.stdout = open(os.devnull, 'w')
 
         curr_time = datetime.now()
-        min28=28*60
+        min28=27*60
         min10=60*60*5
-        if((curr_time-tot_time).total_seconds()>=min10):
+        if((curr_time-tot_time).total_seconds()>=min28):
             print("TIMELIMIT,BREAKING after",iSamp)
             break
         if args.print_every and iSamp % args.print_every == 0:
