@@ -533,16 +533,21 @@ def main(args):
     # MAIN LOOP   
     lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,0)#only for gettign the length to create the buffer
+    #Skipping the first 1000 zeros in stim.
     buf_vs = np.zeros(shape=(stop-start, len(stim[1000:]), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
     buf_stims = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     buf_stims_unit = np.zeros(shape=(stop-start, 2,len(args.stim_file)), dtype=np.float32)
     # print('dd',type(paramsets),paramsets.shape)
     # h.hoc_stdout("Temp"+str(os.environ['SLURM_PROCID']))#Changing the output to temp file
+    start_stim_time = datetime.now()
+    print("Time to generate Data",(start_stim_time-tot_time).total_seconds())
     sys.stdout = open(os.devnull, 'w')
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
     
+
+
     
     for iSamp, params in enumerate(paramsets):
         if(os.environ['SLURM_PROCID']==0 and iSamp%100==0):
@@ -552,12 +557,7 @@ def main(args):
             # h.hoc_stdout("Temp")
             sys.stdout = open(os.devnull, 'w')
 
-        curr_time = datetime.now()
-        min28=27*60
-        min10=60*60*5
-        if((curr_time-tot_time).total_seconds()>=min28):
-            print("TIMELIMIT,BREAKING after",iSamp)
-            break
+        
         if args.print_every and iSamp % args.print_every == 0:
             log.info("Processed {} samples".format(iSamp))
         log.debug("About to run with params = {}".format(params))
@@ -585,6 +585,14 @@ def main(args):
                 wave=data[k][1000:-1] ## IGNORING the first 1000 0 values to reduce the size of the HDF5 files.
                 # print('bbb',iProb,k,wave.shape)
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
+        curr_time = datetime.now()
+        min28=28*60
+        min10=60*60*5
+        if((curr_time-tot_time).total_seconds()>=min28):
+            sys.stdout = sys.__stdout__
+            print("TIMELIMIT,BREAKING after",iSamp)
+            sys.stdout = open(os.devnull, 'w')
+            break
     # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     # plot(args, data, stim)
     h.hoc_stdout()
@@ -602,9 +610,9 @@ def main(args):
         assert not np.isnan(buf_stims_unit).any()
         bbp_name = model.cell_kwargs['model_directory']
         if(len(rand)>0):
-            outD={'volts':buf_vs,'phys_stim_adjust':buf_stims,'unit_stim_adjust':buf_stims_unit,'phys_par':paramsets.astype(np.float32),'unit_par':rand.astype(np.float32)}
+            outD={'volts':buf_vs[:iSamp+1],'phys_stim_adjust':buf_stims[:iSamp+1],'unit_stim_adjust':buf_stims_unit[:iSamp+1],'phys_par':paramsets[:iSamp+1].astype(np.float32),'unit_par':rand.astype(np.float32)}
         else:
-            outD={'volts':buf_vs,'phys_stim_adjust':buf_stims,'unit_stim_adjust':buf_stims_unit,'phys_par':paramsets.astype(np.float32),'unit_par':myUpar}
+            outD={'volts':buf_vs[:iSamp+1],'phys_stim_adjust':buf_stims[:iSamp+1],'unit_stim_adjust':buf_stims_unit[:iSamp+1],'phys_par':paramsets[:iSamp+1].astype(np.float32),'unit_par':myUpar}
         outF=args.outfile
         # if(args.generate_all):
         #     outF+str(args.cell_i)+".h5"
