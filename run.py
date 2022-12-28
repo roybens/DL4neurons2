@@ -106,8 +106,8 @@ def get_ranges(args):
     if(args.cell_count):
         cell_count=args.cell_count
     res=[]
-    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
-    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
     params=list(default_params["Parameters"])
     for i in range(len(params)):
         param=params[i]
@@ -130,8 +130,8 @@ def get_random_params(args,model,n=1):
     if(args.cell_count):
         count_cell=args.cell_count
     
-    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
-    default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     for i in range(n):
         curr_phy_res=[]
         for j in range(ndim):
@@ -558,8 +558,8 @@ def main(args):
             sys.stdout = open(os.devnull, 'w')
 
         
-        if args.print_every and iSamp % args.print_every == 0:
-            log.info("Processed {} samples".format(iSamp))
+            if args.print_every and iSamp % args.print_every == 0:
+                log.info("Processed {} samples".format(iSamp))
         log.debug("About to run with params = {}".format(params))
         
         model._set_self_params(*params)
@@ -587,25 +587,32 @@ def main(args):
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
         curr_time = datetime.now()
         min28=28*60
-        min10=60*60*5
-        if((curr_time-tot_time).total_seconds()>=min28):
+        min10=60*60*9
+        if((curr_time-tot_time).total_seconds()>=min10):
             sys.stdout = sys.__stdout__
             print("TIMELIMIT,BREAKING after",iSamp)
-            sys.stdout = open(os.devnull, 'w')
+            # sys.stdout = open(os.devnull, 'w')
             break
     # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/TESTING.png")
     # plot(args, data, stim)
     h.hoc_stdout()
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    print("COMPLETED ALL SIMULATIONS",dt_string)
+    sys.stdout = sys.__stdout__
+    print("COMPLETED ALL SIMULATIONS",dt_string,flush=True)
+    log.info("COMPLETED ALL SIMULATIONS {}".format(dt_string))
+    
+    
 
     # Save to disk
     if args.outfile:
         myUpar= _normalize(args, paramsets,model).astype(np.float32)
         buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.float16)
         myUpar=myUpar*2 -1
-        assert not np.isnan(buf_vs).any()
+        if(np.isnan(buf_vs).any()):
+            print("Assertion Error at END")
+            log.info("Assertion Error at END {}".format(dt_string))
+        # assert not np.isnan(buf_vs).any(),np.count_nonzero(np.isnan(buf_vs))
         assert not np.isnan(buf_stims).any()
         assert not np.isnan(buf_stims_unit).any()
         bbp_name = model.cell_kwargs['model_directory']

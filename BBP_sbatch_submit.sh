@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH -N 8
-#SBATCH -t 03:00:00
+#SBATCH -t 10:00:00
 #SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
@@ -66,17 +66,19 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic4
+export stimname1=5k0chaotic5A
 export stimname2=5k0step_200
 export stimname3=5k0ramp
 export stimname4=5k0chirp
 export stimname5=5k0step_500
+export stimname6=5k0chaotic5B
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
 stimfile3=stims/${stimname3}.csv
 stimfile4=stims/${stimname4}.csv
 stimfile5=stims/${stimname5}.csv
+stimfile6=stims/${stimname6}.csv
 echo
 env | grep SLURM
 echo
@@ -114,9 +116,9 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} --model BBP \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 8 --linear-params-inds 12 17 18\
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18\
           --dt 0.1 --cell-count $cell_count"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
@@ -129,6 +131,6 @@ do
 done
 echo ope-read $RUNDIR
 # chmod  a+r $RUNDIR/*/c*/*.h5
-chmod  a+r $RUNDIR/*.h5
+chmod  a+r $RUNDIR/$cell_name/*.h5
 
 #salloc -q debug -C knl --image=balewski/ubu20-neuron8:v2 -t 30:00 -N 1
