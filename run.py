@@ -59,7 +59,7 @@ def _rangeify_exponential(data, _range):
         data * (np.log(_range[1]) - np.log(_range[0])) + np.log(_range[0])
     )
 
-def get_model(model, log, m_type=None, e_type=None, cell_i=0, *params):
+def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*params):
     if model != 'BBP':
         return MODELS_BY_NAME[model](*params, log=log)
     else:
@@ -71,7 +71,11 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, *params):
         else:
             model = models.BBPInh(m_type, e_type, cell_i, *params, log=log)
             
+        if(init_cell):
+            model.create_cell_multi()
         model.create_cell()
+        
+
         return model
 
 def clean_params(args, model):
@@ -106,7 +110,8 @@ def get_ranges(args):
     if(args.cell_count):
         cell_count=args.cell_count
     res=[]
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
     params=list(default_params["Parameters"])
     for i in range(len(params)):
@@ -116,21 +121,28 @@ def get_ranges(args):
             a_value=50
             
         elif(param=="cm_somatic" or param=="cm_axonal"):
-            a_value=1.45
+            # a_value=1.45
+            a_value=0.875
+            Base=1.125
         else:
-            a_value=1.5
+            a_value=1.0
         res.append([Base,a_value])
     return res
+
 
 def get_random_params(args,model,n=1):
     ndim = len(model.DEFAULT_PARAMS)
     rand = np.random.uniform(-1,1,(n,ndim))
+    if(args.def_params):
+        rand = np.zeros([n,ndim],float)
+        # np.random.uniform(-1,1,(n,ndim))
     phy_res=[]
     count_cell=0
     if(args.cell_count):
         count_cell=args.cell_count
     
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     for i in range(n):
         curr_phy_res=[]
@@ -138,20 +150,24 @@ def get_random_params(args,model,n=1):
             u = rand[i][j]
             B=default_params["Values"].iloc[j]
             pram = default_params["Parameters"].iloc[j]
-
-            if(pram=="e_pas_all"):
-                #P = Base*(A+B*u) because Linear Param, Ranges = -125, -25
+            if(args.def_params):
+                curr_phy_res.append(B)
+            elif(pram=="e_pas_all"):
+                #P = Base*(B+A*u) because Linear Param, Ranges = -125, -25
                 a_value=50
                 b_value=(-2/3)
                 curr_phy_res.append(B+a_value*u)
                 # curr_phy_res.append(B*(a_value+b_value*u))
             elif(pram=="cm_somatic" or pram=="cm_axonal"):
-                a_value=1.45
+                a_value = 0.875
+                B=1.125
+                # a_value=1.45
                 b_value=1.45
                 curr_phy_res.append(B+a_value*u)
                 # curr_phy_res.append(B*(a_value+b_value*u))
             else:
-                a_value=1.5 
+
+                a_value=1.0
                 b_value=1.5                
                 curr_phy_res.append(B*np.exp((u*a_value)*np.log(10)))
         phy_res.append(curr_phy_res)
@@ -474,7 +490,7 @@ def main(args):
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
         #args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
     
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
 
     if args.create:
         if not args.num:
@@ -541,8 +557,9 @@ def main(args):
     # h.hoc_stdout("Temp"+str(os.environ['SLURM_PROCID']))#Changing the output to temp file
     start_stim_time = datetime.now()
     print("Time to generate Data",(start_stim_time-tot_time).total_seconds())
-    sys.stdout = open(os.devnull, 'w')
-    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i)
+    f = open(os.devnull, 'w')
+    sys.stdout = f
+    model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
     
@@ -550,12 +567,14 @@ def main(args):
 
     
     for iSamp, params in enumerate(paramsets):
+        print(os.environ['SLURM_PROCID'],"ProcID")
         if(os.environ['SLURM_PROCID']==0 and iSamp%100==0):
             sys.stdout = sys.__stdout__
             # h.hoc_stdout()
             print("Executing for ",iSamp)
             # h.hoc_stdout("Temp")
-            sys.stdout = open(os.devnull, 'w')
+            f = open(os.devnull, 'w')
+            sys.stdout = f
 
         
             if args.print_every and iSamp % args.print_every == 0:
@@ -587,7 +606,7 @@ def main(args):
                 buf_vs[iSamp,:,iProb,stim_idx]=wave#change here!!!!
         curr_time = datetime.now()
         min28=28*60
-        min10=60*60*9
+        min10=60*60*11
         if((curr_time-tot_time).total_seconds()>=min10):
             sys.stdout = sys.__stdout__
             print("TIMELIMIT,BREAKING after",iSamp)
@@ -689,6 +708,17 @@ if __name__ == '__main__':
         '--thread-number',action='store_true', default=False,
         help='Adds the thread number at the end of the hdf5 file'
     )
+
+    parser.add_argument(
+        '--def-params',action='store_true', default=False,
+        help='To be used with create_params, should be used while using default values'
+    )
+    
+    parser.add_argument(
+        '--init-cell',action='store_true', default=False,
+        help='To be used when performing simulations of two different cells in a same run'
+    )
+    
 
     parser.add_argument(
         '--plot', nargs='*',
