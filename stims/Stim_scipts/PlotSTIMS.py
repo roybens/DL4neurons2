@@ -16,30 +16,30 @@ x = np.linspace(0,5001,5000,endpoint=False)
 for stim in range(len(stims1)):
     # file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/4k50kInter"+stims1[stim],"r")
     # file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/4k50kInter"+stims1[stim],"r")
-    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/5kchaotic_kevin.csv","r")
+    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0chaotic5A.csv","r")
     
     data = list(csv.reader(file, delimiter=","))
     file.close()
     y = [float(row[0]) for row in data]
-    if(stim!=0 and stim!=3):
-        for y1 in range(len(y)):
-            y[y1]=y[y1]/1000
+    # if(stim!=0 and stim!=3):
+    #     for y1 in range(len(y)):
+    #         y[y1]=y[y1]/1000
 
-    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/"+stims2[stim],"r")
+    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0chaotic5B.csv","r")
     data2 = list(csv.reader(file, delimiter=","))
     file.close()
     y2 = [float(row[0]) for row in data2]
-    y22 = [0]*1000
-    y22.extend(y2)
-    y2=y22
+    # y22 = [0]*1000
+    # y22.extend(y2)
+    # y2=y22
     fig = plt.figure()
     plt.plot(x,y,'b')
-    plt.title("From 50K")
+    plt.title("ChaoticA")
     pdf.savefig(fig)
     fig = plt.figure()
     plt.clf()
     plt.plot(x,y2,'r')
-    plt.title("Currently used")
+    plt.title("ChaoticB")
     pdf.savefig(fig)
     plt.title("Compare") 
     plt.plot(x,y,'b')

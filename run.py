@@ -152,8 +152,11 @@ def get_random_params(args,model,n=1):
             pram = default_params["Parameters"].iloc[j]
             if(args.def_params):
                 curr_phy_res.append(B)
+            elif(pram in args.exclude):
+                curr_phy_res.append(B)
+                rand[i][j]=0
             elif(pram=="e_pas_all"):
-                #P = Base*(B+A*u) because Linear Param, Ranges = -125, -25
+                #P = Base*(A+B*u) because Linear Param, Ranges = -125, -25
                 a_value=50
                 b_value=(-2/3)
                 curr_phy_res.append(B+a_value*u)
@@ -437,6 +440,8 @@ def get_init_volts(args,model,simTime,dt):
 
 
 def main(args):
+    
+    
     tot_time = datetime.now()
     # print(args)
     if args.trivial_parallel and args.outfile and '{NODEID}' in args.outfile:
@@ -816,6 +821,11 @@ if __name__ == '__main__':
     
     parser.add_argument(
         '--cell-count', type=int, default=None, required=False,
+        help='count of the cells already issued. Used for paralleised reading from csvs'
+    )
+    
+    parser.add_argument(
+        '--exclude',nargs='+' ,type=str, default="", required=False,
         help='count of the cells already issued. Used for paralleised reading from csvs'
     )
     

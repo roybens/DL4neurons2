@@ -115,7 +115,7 @@ class BaseModel(object):
         h.dt=dt
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
-        h.finitialize(v_init)
+        h.finitialize()
         # print(self.hoc_vectors)
         
 
@@ -371,6 +371,7 @@ class BBPExcV2(BBP):
     )
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
+    
     def init_parameters(self):
             # print("INITIALIZING PARAMETERS")
             for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():

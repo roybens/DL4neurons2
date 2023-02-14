@@ -32,13 +32,12 @@ x = np.linspace(0,20001,20000,endpoint=False)
 for stim in stims:
     
     # file = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/Exp50k/"+stim,"r")
-    file = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/"+stim,"r")
+    file = open("/global/homes/k/ktub1999/ExperimentalData/PyForEphys/Data/Stims/cahotic_50khz.csv","r")
     data = list(csv.reader(file, delimiter=","))
     file.close()
     y = [float(row[0]) for row in data]
-
     yUpdated = resample_by_interpolation(y, 20000, 4000)
-    xUpdated = np.linspace(0,20000,4000,endpoint=False)
+    xUpdated = np.linspace(0,4000,4000,endpoint=False)
     fig = plt.figure()
     plt.plot(x,y,'b')
     pdf.savefig(fig)
@@ -46,9 +45,15 @@ for stim in stims:
     plt.clf()
     plt.plot(xUpdated,yUpdated,'r')
     pdf.savefig(fig)
+    yRes=[0]*1000
+    yRes=[*yRes,*yUpdated]
+    plt.clf()
+    xRes = np.linspace(0,5000,5000)
+    plt.plot(xRes,yRes,'r')
+    pdf.savefig(fig)
     # myfile = open("/pscratch/sd/k/ktub1999/main/DL4neurons2/stims/Exp50k/4k50kInter"+stim,"w")
-    myfile = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/Exp50k/4k50kInter"+stim,"w")
-    for yU in yUpdated:
+    myfile = open("/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k50kInterChaoticB.csv","w")
+    for yU in yRes:
         myfile.write(str(yU)+"\n")
         
 pdf.close()

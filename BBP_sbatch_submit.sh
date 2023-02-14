@@ -1,7 +1,13 @@
 #!/bin/bash -l
+<<<<<<< Updated upstream
 #SBATCH -N 8
 #SBATCH -t 10:00:00
 #SBATCH -q regular
+=======
+#SBATCH -N 1
+#SBATCH -t 00:30:00
+#SBATCH -q debug
+>>>>>>> Stashed changes
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -119,7 +125,8 @@ do
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} --model BBP \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18\
-          --dt 0.1 --cell-count $cell_count"
+          --dt 0.1 --cell-count $cell_count --exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all"
+          
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

@@ -16,8 +16,8 @@ module unload craype-hugepages2M
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
-# OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST1/
+OUT_DIR=/global/homes/k/ktub1999/testRun/
+# OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST1/
 # simu run in the dir where  Slurm job was started
 
 CELLS_FILE='testcell.csv'
@@ -62,8 +62,8 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic4
-export stimname2=5k0step_200
+export stimname1=5k0chaotic_kevinA
+export stimname2=5k0chaotic_kevinB
 export stimname3=5k0ramp
 export stimname4=5k0chirp
 export stimname5=5k0step_500
@@ -82,9 +82,9 @@ FILENAME=\{BBP_NAME\}-v3
 echo "STIM FILE" $stimfile
 echo "SLURM_NODEID" ${SLURM_NODEID}
 echo "SLURM_PROCID" ${SLURM_PROCID}
-numParamSets=150
+numParamSets=10
 REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/excitatorycells.csv'
-PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
+PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/TEST.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
 echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
@@ -103,7 +103,7 @@ do
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
-          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
+          --cori-csv ${REMOTE_CELLS_FILE} --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
           --dt 0.1"
         echo "args" $args
