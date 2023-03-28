@@ -103,8 +103,13 @@ do
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model BBP --cell-i ${l} \
+<<<<<<< Updated upstream
           --cori-csv ${REMOTE_CELLS_FILE} --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 8 --linear-params-inds 12 17 18\
+=======
+          --cori-csv ${REMOTE_CELLS_FILE} --param-file $PARAM_VALUE_FILE --create-params --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
+          --trivial-parallel --init-cell --print-every 5 --linear-params-inds 12 17 18\
+>>>>>>> Stashed changes
           --dt 0.1"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args

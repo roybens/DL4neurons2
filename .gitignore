@@ -2,7 +2,10 @@ modfiles/*.c
 modfiles/*.o
 hoc_templates/*
 runs/*
-
+bbpParams/*
+oldL/*
+sensitivity_analysis/SensitivityCSVs/*
+stims/Stims_from_compare/*
 *.yaml
 *.png
 *.h5

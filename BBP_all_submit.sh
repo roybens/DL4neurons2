@@ -9,15 +9,16 @@ numSamples=15
 while read name mtype etype
 do
     if [[ $count -gt 0 ]]; then
-            i_cell=0
-            while [ $i_cell -ne 1 ]
+            i_cell=1
+            while [ $i_cell -ne 3 ]
             do
                 sbatch BBP_sbatch_submit_test.sh $mtype $etype $i_cell $numSamples $count
                 i_cell=$(($i_cell+1))
             done
     fi
-    count=$((count+1))
     echo $count
+    count=$((count+1))
+    
 
 done < $INPUT
 wait

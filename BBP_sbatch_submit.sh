@@ -1,13 +1,7 @@
 #!/bin/bash -l
-<<<<<<< Updated upstream
 #SBATCH -N 8
-#SBATCH -t 10:00:00
+#SBATCH -t 11:30:00
 #SBATCH -q regular
-=======
-#SBATCH -N 1
-#SBATCH -t 00:30:00
-#SBATCH -q debug
->>>>>>> Stashed changes
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -23,7 +17,7 @@ module unload craype-hugepages2M
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST2/
+OUT_DIR=/pscratch/sd/k/ktub1999/Feb24Nrow/
 # simu run in the dir where  Slurm job was started
 
 CELLS_FILE='excitatorycells.csv'
@@ -72,19 +66,20 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic5A
-export stimname2=5k0step_200
-export stimname3=5k0ramp
-export stimname4=5k0chirp
-export stimname5=5k0step_500
-export stimname6=5k0chaotic5B
+export stimname1=5k50kInterChaoticB
+# export stimname1=5k0chaotic5A
+# export stimname2=5k0step_200
+# export stimname3=5k0ramp
+# export stimname4=5k0chirp
+# export stimname5=5k0step_500
+# export stimname6=5k0chaotic5B
 
 stimfile1=stims/${stimname1}.csv
-stimfile2=stims/${stimname2}.csv
-stimfile3=stims/${stimname3}.csv
-stimfile4=stims/${stimname4}.csv
-stimfile5=stims/${stimname5}.csv
-stimfile6=stims/${stimname6}.csv
+# stimfile2=stims/${stimname2}.csv
+# stimfile3=stims/${stimname3}.csv
+# stimfile4=stims/${stimname4}.csv
+# stimfile5=stims/${stimname5}.csv
+# stimfile6=stims/${stimname6}.csv
 echo
 env | grep SLURM
 echo
@@ -122,11 +117,11 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} --model BBP \
+        args="--outfile $OUTFILE --stim-file ${stimfile1}  --model BBP \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18\
-          --dt 0.1 --cell-count $cell_count --exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all"
-          
+          --dt 0.1 --cell-count $cell_count --stim-dc-offset 0 --exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all"
+          # --stim-multiplier 1
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

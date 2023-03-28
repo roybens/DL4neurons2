@@ -34,7 +34,7 @@ for cell in range(len(cells)):
             all_paramsets = np.genfromtxt("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv", dtype=np.float32)
             all_paramsets = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase.csv")
             all_paramsets=list(all_paramsets["Values"])
-            my_model = get_model('BBP',log,mtype,etype,itype)
+            my_model = get_model('BBP',log,mtype,etype,itype,True)
             a = my_model.PARAM_RANGES
             my_model.set_attachments(stim,len(stim),0.025)
             for paramsCount in range(0,1):
