@@ -94,7 +94,7 @@ class BaseModel(object):
         
         ntimepts = len(stim)
         tstop = ntimepts * dt
-        
+        h.cell=self.entire_cell.soma[0]
         # self.init_hoc(dt, tstop)
         #h.finitialize()
         # h('objref cell')

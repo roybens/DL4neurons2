@@ -197,14 +197,23 @@ def get_rec_pts_from_distances(hobj,axon_targets = [],dend_targets = []):
     for curr_sec in sec_somatic:
         rec_list.append(curr_sec)
         dist_list.append(0)
-    for curr_dist in axon_targets:
-        [idx,probe_name,probe_dist] = get_probe_from_dist(axon_dists,sec_axons,curr_dist)
-        rec_list.append(probe_name)
-        dist_list.append(probe_dist)
+    rec_list.append(list(sec_axons)[0])
+    dist_list.append(list(axon_dists)[0])
+    #APIC
+    rec_list.append(list(sec_dends)[1])
+    dist_list.append(list(dend_dists)[1])
+    #DENDS
+    rec_list.append(list(sec_dends)[158])
+    dist_list.append(list(dend_dists)[159])
+
+    # for curr_dist in axon_targets:
+    #     [idx,probe_name,probe_dist] = get_probe_from_dist(axon_dists,sec_axons,curr_dist)
+    #     rec_list.append(probe_name)
+    #     dist_list.append(probe_dist)
     
-    for curr_dist in dend_targets:
-        [idx,probe_name,probe_dist] = get_probe_from_dist(dend_dists,sec_dends,curr_dist)
-        rec_list.append(probe_name)
-        dist_list.append(probe_dist)
-    #print(f'probe names {rec_list} dists {dist_list}')
+    # for curr_dist in dend_targets:
+    #     [idx,probe_name,probe_dist] = get_probe_from_dist(dend_dists,sec_dends,curr_dist)
+    #     rec_list.append(probe_name)
+    #     dist_list.append(probe_dist)
+    # #print(f'probe names {rec_list} dists {dist_list}')
     return rec_list
