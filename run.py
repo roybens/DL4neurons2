@@ -105,7 +105,7 @@ def report_random_params(args, params, model):
             log.debug("Using random values for '{}'".format(name))
 
 
-def get_ranges(args):
+def get_ranges(args,model):
     cell_count=0
     if(args.cell_count):
         cell_count=args.cell_count
@@ -113,13 +113,13 @@ def get_ranges(args):
     # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
     default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
-    params=list(default_params["Parameters"])
-    # params = model.PARAM_NAMES
-    # model_default_params = model.DEFAULT_PARAMS
+    # params=list(default_params["Parameters"])
+    params = model.PARAM_NAMES
+    model_default_params = model.DEFAULT_PARAMS
     for i in range(len(params)):
         param=params[i]
-        # Base = model_default_params[i]
-        Base = default_params["Values"].iloc[i]
+        Base = model_default_params[i]
+        # Base = default_params["Values"].iloc[i]
         if(param=="e_pas_all"):
             a_value=50
             
@@ -146,18 +146,18 @@ def get_random_params(args,model,n=1):
         count_cell=args.cell_count
     
     # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
-    # model_default_params=model.DEFAULT_PARAMS
-    # model_param_names = model.PARAM_NAMES
+    model_default_params=model.DEFAULT_PARAMS
+    model_param_names = model.PARAM_NAMES
     for i in range(n):
         curr_phy_res=[]
         for j in range(ndim):
             u = rand[i][j]
-            # B = model_default_params[j]
-            # pram = model_param_names[j]
-            B=default_params["Values"].iloc[j]
-            pram = default_params["Parameters"].iloc[j]
+            B = model_default_params[j]
+            pram = model_param_names[j]
+            # B=default_params["Values"].iloc[j]
+            # pram = default_params["Parameters"].iloc[j]
             if(args.def_params):
                 curr_phy_res.append(B)
             elif(pram in args.exclude):
@@ -670,7 +670,7 @@ def main(args):
         'linearParIdx': args.linear_params_inds,
         'stimParRange':[stim_mul_range,stim_offset_range],
         'stimParName': ['stim_mult','stim_offset'],
-        'physParRange':get_ranges(args),
+        'physParRange':get_ranges(args,model),
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
         'neuronSimVer': neuron.__version__

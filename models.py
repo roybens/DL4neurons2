@@ -353,6 +353,7 @@ class BBPExcV2(BBP):
         'gSKv3_1bar_SKv3_1_apical',
         'gImbar_Im_apical',
         'gIhbar_Ih_dend',
+        'gIhbar_Ih_somatic',
         'gNaTa_tbar_NaTa_t_axonal',
         'gK_Tstbar_K_Tst_axonal',
         'gNap_Et2bar_Nap_Et2_axonal',
@@ -367,10 +368,11 @@ class BBPExcV2(BBP):
         'gCa_LVAstbar_Ca_LVAst_somatic',
         'g_pas_somatic',
         'cm_somatic',
-        'e_pas_all'
+        'e_pas_all',
     )
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
+    CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic'}
     
     def init_parameters(self):
             # print("INITIALIZING PARAMETERS")
@@ -408,6 +410,7 @@ class BBPExcV2(BBP):
         (1.2E-03,2.6E+00),
         (5.1E-05,4.0E-01),
         (1.4E-05,1.0E-02),
+        (8.0E-07,8.0E-01),
         (8.0E-07,8.0E-01),
         (3.1E-01,4.0E+01),
         (1.0E-04,8.9E-01),
