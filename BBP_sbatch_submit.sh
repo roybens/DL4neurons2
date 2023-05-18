@@ -50,6 +50,7 @@ eType=$2
 i_cell=$3
 numSamples=$4
 cell_count=$5
+wideP=$6
 echo numSamples $numSamples
 
 cell_name=$mType
@@ -68,18 +69,18 @@ echo "Done making outdirs at" `date`
 
 export stimname1=5k50kInterChaoticB
 # export stimname1=5k0chaotic5A
-# export stimname2=5k0step_200
-# export stimname3=5k0ramp
-# export stimname4=5k0chirp
-# export stimname5=5k0step_500
-# export stimname6=5k0chaotic5B
+export stimname2=5k0step_200
+export stimname3=5k0ramp
+export stimname4=5k0chirp
+export stimname5=5k0step_500
+export stimname6=5k0chaotic5B
 
 stimfile1=stims/${stimname1}.csv
-# stimfile2=stims/${stimname2}.csv
-# stimfile3=stims/${stimname3}.csv
-# stimfile4=stims/${stimname4}.csv
-# stimfile5=stims/${stimname5}.csv
-# stimfile6=stims/${stimname6}.csv
+stimfile2=stims/${stimname2}.csv
+stimfile3=stims/${stimname3}.csv
+stimfile4=stims/${stimname4}.csv
+stimfile5=stims/${stimname5}.csv
+stimfile6=stims/${stimname6}.csv
 echo
 env | grep SLURM
 echo
@@ -119,11 +120,23 @@ do
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} --model BBP \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18\
-          --dt 0.1 --cell-count $cell_count --exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all"
-          
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  \
+          --dt 0.1  --cell-count $cell_count \
+          --wide gSKv3_1bar_SKv3_1_apical gImbar_Im_apical gK_Tstbar_K_Tst_axonal \
+          gSK_E2bar_SK_E2_axonal gCa_HVAbar_Ca_HVA_axonal gCa_LVAstbar_Ca_LVAst_axonal g_pas_axonal cm_axonal gSKv3_1bar_SKv3_1_somatic \
+          g_pas_somatic cm_somatic  "
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
+        
+        # --stim-dc-offset 0 --stim-multiplier 1
+        #--exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all
+
+        # --wide gNaTs2_tbar_NaTs2_t_apical gSKv3_1bar_SKv3_1_apical gImbar_Im_apical gIhbar_Ih_dend gNaTa_tbar_NaTa_t_axonal gK_Tstbar_K_Tst_axonal gNap_Et2bar_Nap_Et2_axonal \
+        #   gSK_E2bar_SK_E2_axonal gCa_HVAbar_Ca_HVA_axonal gK_Pstbar_K_Pst_axonal gCa_LVAstbar_Ca_LVAst_axonal g_pas_axonal cm_axonal gSKv3_1bar_SKv3_1_somatic \
+        #   gNaTs2_tbar_NaTs2_t_somatic gCa_LVAstbar_Ca_LVAst_somatic g_pas_somatic cm_somatic e_pas_all
+
+        
+
 
     done
     # run.py sets permissions on the data files themselves (doing them here simultaneously takes forever)

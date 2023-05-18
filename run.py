@@ -110,26 +110,37 @@ def get_ranges(args):
     if(args.cell_count):
         cell_count=args.cell_count
     res=[]
-    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
+    default_params_wide= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
+    default_params_nrow= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(cell_count))+".csv")
-    params=list(default_params["Parameters"])
+    params=list(default_params_wide["Parameters"])
     # params = model.PARAM_NAMES
     # model_default_params = model.DEFAULT_PARAMS
     for i in range(len(params)):
         param=params[i]
         # Base = model_default_params[i]
-        Base = default_params["Values"].iloc[i]
+        if(param in args.wide):
+            Base = default_params_wide["Values"].iloc[i]
+        else:
+            Base = default_params_nrow["Values"].iloc[i]
         if(param=="e_pas_all"):
-            a_value=50
+            if(param in args.wide):
+                a_value=20
+            else:
+                a_value=10
             
         elif(param=="cm_somatic" or param=="cm_axonal"):
-            # a_value=1.45
-            a_value=0.875
-            Base=1.125
+            if(param in args.wide):
+                a_value=1.45
+            else:
+                a_value=0.875
+                Base=1.125
         else:
-            a_value=1.0 #NRow
-            # a_value=1.5  
+            if(param in args.wide):
+            # a_value=1.0 #NRow
+               a_value=1.5  
+            else:
+               a_value=1.0 
         res.append([Base,a_value])
     return res
 
@@ -145,8 +156,8 @@ def get_random_params(args,model,n=1):
     if(args.cell_count):
         count_cell=args.cell_count
     
-    # default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
-    default_params= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    default_params_wide= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params_nrow= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     # model_default_params=model.DEFAULT_PARAMS
     # model_param_names = model.PARAM_NAMES
@@ -156,8 +167,14 @@ def get_random_params(args,model,n=1):
             u = rand[i][j]
             # B = model_default_params[j]
             # pram = model_param_names[j]
-            B=default_params["Values"].iloc[j]
-            pram = default_params["Parameters"].iloc[j]
+
+            
+            pram = default_params_wide["Parameters"].iloc[j]
+            if(pram in args.wide):
+                B=default_params_wide["Values"].iloc[j]
+            else:
+                B=default_params_nrow["Values"].iloc[j]
+
             if(args.def_params):
                 curr_phy_res.append(B)
             elif(pram in args.exclude):
@@ -165,20 +182,32 @@ def get_random_params(args,model,n=1):
                 rand[i][j]=0
             elif(pram=="e_pas_all"):
                 #P = Base*(A+B*u) because Linear Param, Ranges = -125, -25
-                a_value=50
+                # a_value=10 For Narrow
+                if(pram in args.wide):
+                    a_value=20
+                else:
+                    a_value=10
                 b_value=(-2/3)
                 curr_phy_res.append(B+a_value*u)
                 # curr_phy_res.append(B*(a_value+b_value*u))
             elif(pram=="cm_somatic" or pram=="cm_axonal"):
-                a_value = 0.875
-                B=1.125
-                # a_value=1.45
-                b_value=1.45
+                # a_value = 0.875 For Narrow
+                # B=1.125
+                if(pram in args.wide):
+                    a_value=1.45 # For Wide
+                else:
+                    a_value = 0.875
+                    B=1.125
+                # b_value=1.45
                 curr_phy_res.append(B+a_value*u)
                 # curr_phy_res.append(B*(a_value+b_value*u))
             else:
-                # a_value=1.0
-                a_value=1.0
+                # a_value=1.0 #For Narrow
+                # a_value=1.5 # For Wide
+                if(pram in args.wide):
+                    a_value=1.5
+                else:
+                    a_value=1.0
                 b_value=1.5                
                 curr_phy_res.append(B*np.exp((u*a_value)*np.log(10)))
         phy_res.append(curr_phy_res)
@@ -452,6 +481,7 @@ def main(args):
     
     tot_time = datetime.now()
     # print(args)
+    # args.wide = set(args.wide)
     if args.trivial_parallel and args.outfile and '{NODEID}' in args.outfile:
         args.outfile = args.outfile.replace('{NODEID}', os.environ['SLURM_PROCID'])
 
@@ -837,6 +867,11 @@ if __name__ == '__main__':
         help='count of the cells already issued. Used for paralleised reading from csvs'
     )
     
+    parser.add_argument(
+        '--wide',nargs='+' ,type=str, default="", required=False,
+        help='Specify which parameters are to be generated in Wide range, Parameters are by default set to Narrow range'
+    )
+
 
     args = parser.parse_args()
 
