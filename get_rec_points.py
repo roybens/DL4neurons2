@@ -204,7 +204,7 @@ def get_rec_pts_from_distances(hobj,axon_targets = [],dend_targets = []):
     dist_list.append(list(dend_dists)[1])
     #DENDS
     rec_list.append(list(sec_dends)[158])
-    dist_list.append(list(dend_dists)[159])
+    dist_list.append(list(dend_dists)[158])
 
     # for curr_dist in axon_targets:
     #     [idx,probe_name,probe_dist] = get_probe_from_dist(axon_dists,sec_axons,curr_dist)

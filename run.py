@@ -71,8 +71,8 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         else:
             model = models.BBPInh(m_type, e_type, cell_i, *params, log=log)
             
-        if(init_cell):
-            model.create_cell_multi()
+        # if(init_cell):
+        #     model.create_cell_multi() # THE Change has been overwritten :|
         model.create_cell()
         
 
@@ -509,9 +509,12 @@ def main(args):
                     log.debug(row)
                     bbp_name = row[0]
                     args.m_type = row[1]
+                    args.m_type = str(args.m_type)
                     args.e_type = row[2]
+                    args.e_type = str(args.e_type)
                     log.info("from rank {} running cell {}".format(rank, bbp_name))
                     print("from rank {} running cell {}".format(rank, bbp_name))
+                    
                     break
 
          
@@ -523,8 +526,8 @@ def main(args):
         if args.e_type in ('bIR', 'bAC'):
             paramuse[20] = 0
             log.info('Not varying negative parameters for e-type {}'.format(args.e_type))
-    
-    cellName = args.m_type+"_"+args.e_type
+    print(type(args.m_type), type(args.e_type))
+    cellName = str(args.m_type)+"_"+str(args.e_type)
     # template_cell = templates_dir+"/"+cellName
     if(not template_present(cellName,args.cell_i)):
         return
@@ -558,6 +561,7 @@ def main(args):
         all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
         upar = None # TODO: save or generate unnormalized params when using --param-file
         start, stop = get_mpi_idx(args, len(all_paramsets))
+        # start, stop = 0, 1
         # print("Reading from param_file")
         print(start,stop)
         if args.num and start > args.num:
@@ -568,6 +572,7 @@ def main(args):
         else:
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
+        print(paramsets.shape)
         # print("Param Size",paramsets.size)
         # print("Reading from param_file")
         # print(paramsets.shape)
