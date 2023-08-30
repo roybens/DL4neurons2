@@ -60,9 +60,7 @@ def _rangeify_exponential(data, _range):
     )
 
 def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*params):
-    if model != 'BBP':
-        return MODELS_BY_NAME[model](*params, log=log)
-    else:
+    if model == 'BBP':
         if m_type is None or e_type is None:
             raise ValueError('Must specify --m-type and --e-type when using BBP')
         
@@ -74,9 +72,18 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         # if(init_cell):
         #     model.create_cell_multi() # THE Change has been overwritten :|
         model.create_cell()
+        return model
+    elif model == 'M1_TTPC_NA_HH':
+        model = models.M1_TTPC_NA_HH("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
+        model.create_cell()
+        return model
+    else:
+        return MODELS_BY_NAME[model](*params, log=log)
+    
+        
         
 
-        return model
+        
 
 def clean_params(args, model):
     """convert to float, use defaults where requested
@@ -606,7 +613,7 @@ def main(args):
     start_stim_time = datetime.now()
     print("Time to generate Data",(start_stim_time-tot_time).total_seconds())
     f = open(os.devnull, 'w')
-    sys.stdout = f
+    # sys.stdout = f
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
@@ -673,16 +680,20 @@ def main(args):
 
     # Save to disk
     if args.outfile:
-        myUpar= _normalize(args, paramsets,model).astype(np.float32)
+        if(len(rand)==0):
+            myUpar= _normalize(args, paramsets,model).astype(np.float32)
+            myUpar=myUpar*2 -1
         buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.float16)
-        myUpar=myUpar*2 -1
         if(np.isnan(buf_vs).any()):
             print("Assertion Error at END")
             log.info("Assertion Error at END {}".format(dt_string))
         # assert not np.isnan(buf_vs).any(),np.count_nonzero(np.isnan(buf_vs))
         assert not np.isnan(buf_stims).any()
         assert not np.isnan(buf_stims_unit).any()
-        bbp_name = model.cell_kwargs['model_directory']
+        if args.model == 'M1_TTPC_NA_HH':
+            bbp_name = 'M1_TTPC_NA_HH'
+        else:
+            bbp_name = model.cell_kwargs['model_directory']
         if(len(rand)>0):
             outD={'volts':buf_vs[:iSamp+1],'phys_stim_adjust':buf_stims[:iSamp+1],'unit_stim_adjust':buf_stims_unit[:iSamp+1],'phys_par':paramsets[:iSamp+1].astype(np.float32),'unit_par':rand.astype(np.float32)}
         else:

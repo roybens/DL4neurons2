@@ -71,13 +71,34 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic_kevinA
-export stimname2=5k0chaotic_kevinB
-export stimname3=5k0ramp
-export stimname4=5k0chirp
-export stimname5=5k0step_500
-
-export stimname1=5k50kInterChaoticB
+export stimname1=5k0chaotic5A_0.25x
+export stimname2=5k0chaotic5A_0.50x
+export stimname3=5k0chaotic5A_0.75x
+export stimname4=5k0chaotic5A_1.00x
+export stimname5=5k0step_200_0.25x
+export stimname6=5k0step_200_0.50x
+export stimname7=5k0step_200_0.75x
+export stimname8=5k0step_200_1.00x
+export stimname9=5k0ramp_0.25x
+export stimname10=5k0ramp_0.50x
+export stimname11=5k0ramp_0.75x
+export stimname12=5k0ramp_1.00x
+export stimname13=5k0chirp_0.25x
+export stimname14=5k0chirp_0.50x
+export stimname15=5k0chirp_0.75x
+export stimname16=5k0chirp_1.00x
+export stimname17=5k0step_500_0.25x
+export stimname18=5k0step_500_0.50x
+export stimname19=5k0step_500_0.75x
+export stimname20=5k0step_500_1.00x
+export stimname21=5k50kInterChaoticB_0.25x
+export stimname22=5k50kInterChaoticB_0.50x
+export stimname23=5k50kInterChaoticB_0.75x
+export stimname24=5k50kInterChaoticB_1.00x
+export stimname25=5k0chaotic5B_0.25x
+export stimname26=5k0chaotic5B_0.50x
+export stimname27=5k0chaotic5B_0.75x
+export stimname28=5k0chaotic5B_1.00x
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -115,10 +136,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} --model BBP --cell-i ${l} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model M1_TTPC_NA_HH --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --num 11  --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 5 --linear-params-inds 12 17 18 --stim-dc-offset 0 --stim-multiplier 1\
-          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/tmp_neuInv/bbp3/L5_TTPC1cADpyr0/10024729/temp_param_min-1+1.csv"
+          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/main/DL4neurons2/M1Def.csv"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

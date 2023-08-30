@@ -6,7 +6,7 @@ OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 count=1
-numSamples=500
+numSamples=250
 export PYTHONPATH=""
 # Make a copy of run.py to where we are running
 while read name mtype etype
@@ -16,6 +16,7 @@ do
             while [ $i_cell -ne 1 ]
             do
                 sbatch BBP_sbatch_submit.sh $mtype $etype $i_cell $numSamples $count
+                # sbatch BBP_Def_Exp.sh $mtype $etype $i_cell 10 $count
                 i_cell=$(($i_cell+1))
             done
     fi
