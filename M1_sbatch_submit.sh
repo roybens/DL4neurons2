@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH -N 16
 #SBATCH -t 11:30:00
-#SBATCH -q debug
+#SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -19,7 +19,7 @@ module unload craype-hugepages2M
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
 OUT_DIR=/pscratch/sd/k/ktub1999/Feb24Nrow/
 # simu run in the dir where  Slurm job was started
-model='BBP'
+model='M1_TTPC_NA_HH'
 if [ "$model" = "M1_TTPC_NA_HH" ]; then
     shifter nrnivmodl ./Neuron_Model_HH/mechanisms
 else
@@ -122,6 +122,7 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 #( sleep 180; echo `hostname` ; date; free -g; top ibn1) >&L1&
 #( sleep 260; echo `hostname` ; date; free -g; top ibn1) >&L2&
 #( sleep 400; echo `hostname` ; date; free -g; top ibn1) >&L3&
+
 param_lb='-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0.5'
 # param_ub='2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1.45'
 param_ub='1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1'
@@ -138,8 +139,8 @@ do
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile7} --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --exclude g_pas_axonal g_pas_somatic e_pas_all \
-          --dt 0.1  --cell-count $cell_count --unit-param-lower $param_lb --unit-param-upper $param_ub "
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 \
+          --dt 0.1  --cell-count $cell_count --unit-param-lower $param_lb --unit-param-upper $param_ub"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         

@@ -19,7 +19,13 @@ module unload craype-hugepages2M
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
 OUT_DIR=/pscratch/sd/k/ktub1999/BBP_TEST1/
 # simu run in the dir where  Slurm job was started
-
+model='M1_TTPC_NA_HH'
+# model='BBP'
+if [ "$model" = "M1_TTPC_NA_HH" ]; then
+    shifter nrnivmodl ./Neuron_Model_HH/mechanisms
+else
+    shifter nrnivmodl ./modfiles
+fi
 CELLS_FILE='testcell.csv'
 START_CELL=0
 NCELLS=1
@@ -71,34 +77,11 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic5A_0.25x
-export stimname2=5k0chaotic5A_0.50x
-export stimname3=5k0chaotic5A_0.75x
-export stimname4=5k0chaotic5A_1.00x
-export stimname5=5k0step_200_0.25x
-export stimname6=5k0step_200_0.50x
-export stimname7=5k0step_200_0.75x
-export stimname8=5k0step_200_1.00x
-export stimname9=5k0ramp_0.25x
-export stimname10=5k0ramp_0.50x
-export stimname11=5k0ramp_0.75x
-export stimname12=5k0ramp_1.00x
-export stimname13=5k0chirp_0.25x
-export stimname14=5k0chirp_0.50x
-export stimname15=5k0chirp_0.75x
-export stimname16=5k0chirp_1.00x
-export stimname17=5k0step_500_0.25x
-export stimname18=5k0step_500_0.50x
-export stimname19=5k0step_500_0.75x
-export stimname20=5k0step_500_1.00x
-export stimname21=5k50kInterChaoticB_0.25x
-export stimname22=5k50kInterChaoticB_0.50x
-export stimname23=5k50kInterChaoticB_0.75x
-export stimname24=5k50kInterChaoticB_1.00x
-export stimname25=5k0chaotic5B_0.25x
-export stimname26=5k0chaotic5B_0.50x
-export stimname27=5k0chaotic5B_0.75x
-export stimname28=5k0chaotic5B_1.00x
+export stimname1=5k50kInterChaoticB
+export stimname2=5k0chaotic_kevinB
+export stimname3=5k0ramp
+export stimname4=5k0chirp
+export stimname5=5k0step_500
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -106,6 +89,8 @@ stimfile3=stims/${stimname3}.csv
 stimfile4=stims/${stimname4}.csv
 stimfile5=stims/${stimname5}.csv
 echo
+
+
 env | grep SLURM
 echo
 
@@ -124,6 +109,13 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 #( sleep 260; echo `hostname` ; date; free -g; top ibn1) >&L2&
 #( sleep 400; echo `hostname` ; date; free -g; top ibn1) >&L3&
 
+param_lb='-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1.45'
+param_ub='2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1.45'
+
+array_string=$(printf "%s," "${param_lb[@]}")
+array_string=${array_string%,} # Remove the trailing comma
+
+param_array_string=$(printf '%s\n' "${param_array[@]}")
 for j in $(seq 1 ${NRUNS});
 do
     echo "Doing run $j of $NRUNS at" `date`
@@ -136,10 +128,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model M1_TTPC_NA_HH --cell-i ${l} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model $model --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --num 11  --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 5 --linear-params-inds 12 17 18 --stim-dc-offset 0 --stim-multiplier 1\
-          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/main/DL4neurons2/M1Def.csv"
+          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/tmp_neuInv/bbp3/L5_TTPC1cADpyr0/14988293/temp_param_Exact.csv"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

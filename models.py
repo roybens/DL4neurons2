@@ -370,26 +370,49 @@ class BBPExcV2(BBP):
         'e_pas_all'
     )
 
-    UNIT_RANGES = (
-        (-1,+1),
-        (5.1E-05,4.0E-01),
-        (1.4E-05,1.0E-02),
-        (8.0E-07,8.0E-01),
-        (3.1E-01,4.0E+01),
-        (1.0E-04,8.9E-01),
-        (5.6E-06,9.8E-02),
-        (7.1E-04,9.8E-01),
-        (3.1E-05,9.9E-03),
-        (4.3E-02,9.7E+00),
-        (7.0E-07,8.8E-02),
-        (3.0E-07,3.0E-03),
-        (0.5,3),
-        (7.3E-03,3.0E+00),
-        (9.3E-02,1.0E+01),
-        (3.3E-05,6.9E-02),
-        (3.0E-07,3.0E-03),
-        (0.5,3),
-        (-100,-50))
+    UNIT_RANGES = [
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1]]
+    
+    UNIT_PARAMS =[
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1]
+    ]
     
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
@@ -857,6 +880,7 @@ class M1_TTPC_NA_HH(BaseModel):
         0.0000300,
         1 
      )
+    #DUMMY Ranges
     PARAM_RANGES = (
         (1.2E-03,2.6E+00),
         (5.1E-05,4.0E-01),
@@ -877,6 +901,49 @@ class M1_TTPC_NA_HH(BaseModel):
         (3.0E-07,3.0E-03),
         (0.5,3),
         (-100,-50))
+    
+    UNIT_RANGES = [
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1]]
+    
+    UNIT_PARAMS =[
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1]
+    ]
     
     default = {}
     def __init__(self,mod_dir,*args,**kwargs):
@@ -1028,25 +1095,25 @@ class M1_TTPC_NA_HH(BaseModel):
 
 
     def create_cell(self):
-        # self.h = h
-        # run_model = os.path.join(self.mod_dir,"runModel.hoc")
-        # h.load_file(run_model)
-        # self.soma_ref = h.root.sec
-        # self.soma = h.secname(sec=self.soma_ref)
-        # self.sl = h.SectionList()
-        # self.sl.wholetree(sec=self.soma_ref)
-        # self.nexus = h.cell.apic[66]
-        # self.dist_dend = h.cell.apic[91]
-        # self.ais = h.cell.axon[0]
-        # self.axon_proper = h.cell.axon[1]
+        self.h = h
+        run_model = os.path.join(self.mod_dir,"runModel.hoc")
+        h.load_file(run_model)
+        self.soma_ref = h.root.sec
+        self.soma = h.secname(sec=self.soma_ref)
+        self.sl = h.SectionList()
+        self.sl.wholetree(sec=self.soma_ref)
+        self.nexus = h.cell.apic[66]
+        self.dist_dend = h.cell.apic[91]
+        self.ais = h.cell.axon[0]
+        self.axon_proper = h.cell.axon[1]
 
-        # #Setting Fixed parameters
-        # h.naked_axon_na = 0.0196791 #h.naked_axon_na = h.soma_na16/5
-        # h.navshift = -10
-        # h.myelin_na = 0.0196791 #h.myelin_na = h.naked_axon_na
-        # h.myelin_K = 0.303472
-        # h.myelin_scale = 10
-        self.tes1("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
+        #Setting Fixed parameters
+        h.naked_axon_na = 0.0196791 #h.naked_axon_na = h.soma_na16/5
+        h.navshift = -10
+        h.myelin_na = 0.0196791 #h.myelin_na = h.naked_axon_na
+        h.myelin_K = 0.303472
+        h.myelin_scale = 10
+        # self.tes1("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
         hobj = h.cell
         self.entire_cell = hobj
         return h.cell.soma[0]
