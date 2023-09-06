@@ -166,10 +166,10 @@ def get_random_params(args,model,n=1):
     phy_res=[]
 
     if(args.model == "BBP"):
-        base_params = pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     elif(args.model =="M1_TTPC_NA_HH"):
         #SAVE as CSV xander 4
-        base_params = pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
     #for each sample
     # print(model.UNIT_RANGES)
     for i in range(n):

@@ -825,16 +825,16 @@ class HHTwoDend10ParamLatched(HHTwoDend13Param):
         super(HHTwoDend10ParamLatched, self).__init__(*newargs, **kwargs)
         self.gl_apic = self.gl_basal = self.gl_soma
 
-from NeuronModelClass import NeuronModel
-class M2_TTPC_NA_HH:
-    def __init__(self,mod_dir = './Neuron_Model_HH'):
-        self.model = NeuronModel(mod_dir = mod_dir)
+# from NeuronModelClass import NeuronModel
+# class M2_TTPC_NA_HH:
+#     def __init__(self,mod_dir = './Neuron_Model_HH'):
+#         self.model = NeuronModel(mod_dir = mod_dir)
         
-    def _set_self_params(self, param_set):
-        self.model.update_params(param_set)
-    def simulate(self,stim, dt,v_init):
-        data,_,_,_ = self.model.run_model_compare(stim, dt, v_init)
-        return data
+#     def _set_self_params(self, param_set):
+#         self.model.update_params(param_set)
+#     def simulate(self,stim, dt,v_init):
+#         data,_,_,_ = self.model.run_model_compare(stim, dt, v_init)
+#         return data
 
 
 class M1_TTPC_NA_HH(BaseModel):
