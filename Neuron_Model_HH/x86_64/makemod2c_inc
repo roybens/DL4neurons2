@@ -1,0 +1,137 @@
+
+./CaDynamics_E2.c: .././mechanisms//CaDynamics_E2.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) CaDynamics_E2.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./CaDynamics_E2.o: ./CaDynamics_E2.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ca_HVA.c: .././mechanisms//Ca_HVA.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ca_HVA.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./Ca_HVA.o: ./Ca_HVA.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ca_LVAst.c: .././mechanisms//Ca_LVAst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ca_LVAst.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./Ca_LVAst.o: ./Ca_LVAst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./Ih.c: .././mechanisms//Ih.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Ih.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./Ih.o: ./Ih.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./Im.c: .././mechanisms//Im.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) Im.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./Im.o: ./Im.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./K_Pst.c: .././mechanisms//K_Pst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) K_Pst.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./K_Pst.o: ./K_Pst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./K_Tst.c: .././mechanisms//K_Tst.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) K_Tst.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./K_Tst.o: ./K_Tst.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./ProbAMPANMDA_EMS.c: .././mechanisms//ProbAMPANMDA_EMS.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) ProbAMPANMDA_EMS.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./ProbAMPANMDA_EMS.o: ./ProbAMPANMDA_EMS.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./ProbGABAAB_EMS.c: .././mechanisms//ProbGABAAB_EMS.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) ProbGABAAB_EMS.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./ProbGABAAB_EMS.o: ./ProbGABAAB_EMS.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./SK_E2.c: .././mechanisms//SK_E2.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) SK_E2.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./SK_E2.o: ./SK_E2.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./SKv3_1.c: .././mechanisms//SKv3_1.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) SKv3_1.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./SKv3_1.o: ./SKv3_1.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./branching.c: .././mechanisms//branching.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) branching.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./branching.o: ./branching.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./na12.c: .././mechanisms//na12.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) na12.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./na12.o: ./na12.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./na12_mut.c: .././mechanisms//na12_mut.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) na12_mut.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./na12_mut.o: ./na12_mut.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./na16.c: .././mechanisms//na16.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) na16.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./na16.o: ./na16.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./na16_mut.c: .././mechanisms//na16_mut.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) na16_mut.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./na16_mut.o: ./na16_mut.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+
+./vclmp_pl.c: .././mechanisms//vclmp_pl.mod
+	@printf " -> $(C_GREEN)NMODL$(C_RESET) $<\n"
+	(cd ".././mechanisms"; MODLUNIT=$(NRNUNITS) $(NOCMODL) vclmp_pl.mod -o "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/x86_64")
+
+./vclmp_pl.o: ./vclmp_pl.c
+	@printf " -> $(C_GREEN)Compiling$(C_RESET) $<\n"
+	$(COMPILE) -I".././mechanisms" $(INCLUDES) -fPIC -c $< -o $@
+

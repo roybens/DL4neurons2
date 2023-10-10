@@ -16,6 +16,7 @@ import h5py
 from  toolbox.Util_H5io3 import write3_data_hdf5
 import ruamel.yaml as yaml
 import sys
+import ast
 
 #import yaml as yaml
 # import yaml as yaml
@@ -60,9 +61,7 @@ def _rangeify_exponential(data, _range):
     )
 
 def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*params):
-    if model != 'BBP':
-        return MODELS_BY_NAME[model](*params, log=log)
-    else:
+    if model == 'BBP':
         if m_type is None or e_type is None:
             raise ValueError('Must specify --m-type and --e-type when using BBP')
         
@@ -74,9 +73,18 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         # if(init_cell):
         #     model.create_cell_multi() # THE Change has been overwritten :|
         model.create_cell()
+        return model
+    elif model == 'M1_TTPC_NA_HH':
+        model = models.M1_TTPC_NA_HH("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
+        model.create_cell()
+        return model
+    else:
+        return MODELS_BY_NAME[model](*params, log=log)
+    
+        
         
 
-        return model
+        
 
 def clean_params(args, model):
     """convert to float, use defaults where requested
@@ -104,8 +112,11 @@ def report_random_params(args, params, model):
         if param == float('inf'):
             log.debug("Using random values for '{}'".format(name))
 
+def get_ranges(args,model):
+    return model.UNIT_RANGES
 
-def get_ranges(args):
+
+def get_ranges_old(args):
     cell_count=0
     if(args.cell_count):
         cell_count=args.cell_count
@@ -146,6 +157,65 @@ def get_ranges(args):
 
 
 def get_random_params(args,model,n=1):
+    ndim = len(model.DEFAULT_PARAMS)
+    rand = np.random.uniform(-1,1,(n,ndim))
+    set_unit_params=False
+    count_cell=0
+    if(args.cell_count):
+        count_cell=args.cell_count
+    phy_res=[]
+
+    if(args.model == "BBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    elif(args.model =="M1_TTPC_NA_HH"):
+        #SAVE as CSV xander 4
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+    #for each sample
+    # print(model.UNIT_RANGES)
+    for i in range(n):
+        curr_phy_res=[]
+        #for each parameter
+        for j in range(ndim):
+            u = rand[i][j]
+            [uLb, uUb] = model.UNIT_RANGES[j]
+            pram = base_params['Parameters'].iloc[j]
+            if(pram=='e_pass_all'):
+                b_value = (uLb+uUb)/2
+                a_value = (uUb-uLb)/2
+                if(pram in args.exclude or args.def_params):
+                    curr_phy_res.append(base_params['Values'].iloc[j])
+                    rand[i][j]=0
+                    continue
+                P = b_value + a_value * u
+            if(pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all'):
+                b_value = (uLb+uUb)/2
+                a_value = (uUb-uLb)/2
+                if(pram in args.exclude or args.def_params):
+                    curr_phy_res.append(base_params['Values'].iloc[j])
+                    rand[i][j]=0
+                    continue
+                ## ADD a check if A_value  is 0
+                P = b_value + a_value * u
+            else:
+                new_base=base_params['Values'].iloc[j]*10**((uLb+uUb)/2)
+                b_value = 0
+                a_value = (uUb - uLb)/2
+                if(pram in args.exclude or args.def_params):
+                    curr_phy_res.append(base_params['Values'].iloc[j])
+                    rand[i][j]=0
+                    continue
+                P = new_base*10**(b_value+a_value*u)
+            curr_phy_res.append(P)
+            if(not set_unit_params):
+                model.UNIT_PARAMS[j]=[b_value,a_value]
+            #For meta Data
+        set_unit_params=True
+        phy_res.append(curr_phy_res)
+        # print(model.UNIT_PARAMS)
+    return phy_res,rand
+
+
+def get_random_params_old(args,model,n=1):
     ndim = len(model.DEFAULT_PARAMS)
     rand = np.random.uniform(-1,1,(n,ndim))
     if(args.def_params):
@@ -557,6 +627,15 @@ def main(args):
         write_metadata(args, model)
         exit()
     
+    if(args.unit_param_upper!=None and args.unit_param_lower!=None):
+        print(len(args.unit_param_upper),len(args.unit_param_lower),"SIZES")
+        for param_no in range(len(args.unit_param_upper)):
+            #param_no has ['param_name','uLb','uUb']    
+            model.UNIT_RANGES[param_no]=[float(args.unit_param_lower[param_no]),float(args.unit_param_upper[param_no])]
+            # print(model.UNIT_RANGES[param_no])
+
+
+
     if args.param_file:
         all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
         upar = None # TODO: save or generate unnormalized params when using --param-file
@@ -606,7 +685,7 @@ def main(args):
     start_stim_time = datetime.now()
     print("Time to generate Data",(start_stim_time-tot_time).total_seconds())
     f = open(os.devnull, 'w')
-    sys.stdout = f
+    # sys.stdout = f
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
     model.set_attachments(stim,len(stim),args.dt)
     counter_params =0
@@ -673,16 +752,20 @@ def main(args):
 
     # Save to disk
     if args.outfile:
-        myUpar= _normalize(args, paramsets,model).astype(np.float32)
+        if(len(rand)==0):
+            myUpar= _normalize(args, paramsets,model).astype(np.float32)
+            myUpar=myUpar*2 -1
         buf_vs=(buf_vs*VOLTS_SCALE).clip(-32767,32767).astype(np.float16)
-        myUpar=myUpar*2 -1
         if(np.isnan(buf_vs).any()):
             print("Assertion Error at END")
             log.info("Assertion Error at END {}".format(dt_string))
         # assert not np.isnan(buf_vs).any(),np.count_nonzero(np.isnan(buf_vs))
         assert not np.isnan(buf_stims).any()
         assert not np.isnan(buf_stims_unit).any()
-        bbp_name = model.cell_kwargs['model_directory']
+        if args.model == 'M1_TTPC_NA_HH':
+            bbp_name = 'M1_TTPC_NA_HH'
+        else:
+            bbp_name = model.cell_kwargs['model_directory']
         if(len(rand)>0):
             outD={'volts':buf_vs[:iSamp+1],'phys_stim_adjust':buf_stims[:iSamp+1],'unit_stim_adjust':buf_stims_unit[:iSamp+1],'phys_par':paramsets[:iSamp+1].astype(np.float32),'unit_par':rand.astype(np.float32)}
         else:
@@ -705,7 +788,7 @@ def main(args):
         'linearParIdx': args.linear_params_inds,
         'stimParRange':[stim_mul_range,stim_offset_range],
         'stimParName': ['stim_mult','stim_offset'],
-        'physParRange':get_ranges(args),
+        'physParRange':get_ranges(args,model),
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
         'neuronSimVer': neuron.__version__
@@ -877,6 +960,14 @@ if __name__ == '__main__':
         help='Specify which parameters are to be generated in Wide range, Parameters are by default set to Narrow range'
     )
 
+    parser.add_argument(
+        '--unit-param-upper',nargs='+',type=str, default=None, required=False,
+        help='Specify the range for sampling of each params - Upper Bound'
+    )
+    parser.add_argument(
+        '--unit-param-lower',nargs='+',type=str, default=None, required=False,
+        help='Specify the range for sampling of each params - Lower Bound'
+    )
 
     args = parser.parse_args()
 

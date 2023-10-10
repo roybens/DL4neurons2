@@ -1,7 +1,7 @@
 #!/bin/bash -l
-#SBATCH -N 16
-#SBATCH -t 11:30:00
-#SBATCH -q debug
+#SBATCH -N 8
+#SBATCH -t 30:00
+#SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -12,14 +12,14 @@
 # Stuff for knl
 # export OMP_NUM_THREADS=128
 module unload craype-hugepages2M
-
+cd /pscratch/sd/k/ktub1999/main/DL4neurons2
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
 OUT_DIR=/pscratch/sd/k/ktub1999/Feb24Nrow/
 # simu run in the dir where  Slurm job was started
-model='BBP'
+model='M1_TTPC_NA_HH'
 if [ "$model" = "M1_TTPC_NA_HH" ]; then
     shifter nrnivmodl ./Neuron_Model_HH/mechanisms
 else
@@ -65,7 +65,7 @@ cell_name+=$i_cell
 mkdir -p $RUNDIR/$cell_name/
 chmod a+rx $RUNDIR/$cell_name/
 
-cp BBP_sbatch_submit.sh $RUNDIR
+cp $(basename "$0") $RUNDIR
 chmod a+rx $RUNDIR
 chmod a+rx $RUNDIR/*
 echo done
@@ -122,9 +122,15 @@ echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
 #( sleep 180; echo `hostname` ; date; free -g; top ibn1) >&L1&
 #( sleep 260; echo `hostname` ; date; free -g; top ibn1) >&L2&
 #( sleep 400; echo `hostname` ; date; free -g; top ibn1) >&L3&
-param_lb='-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0.5'
-# param_ub='2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1.45'
-param_ub='1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1'
+
+param_lb='0.45 -1.05 -0.05 0.6 -0.3 0.6 -0.3 -0.6 -0.6 -0.1 0.8 -0.35 -0.2 -0.2 0.45 0.15 -0.7 -0.3 1.4'			
+			
+param_ub='0.55 -0.85 0.05 0.8 -0.1 0.8 -0.1 -0.4 -0.4 0.1 1.0 0.25 0.0 0.0 0.65 0.35 -0.5 -0.1 1.8'		
+# --exclude dend_na12 ais_na12 ais_ca ais_KCa axon_HVA axon_LVA node_na gpas_all
+
+param_lb='0	-0.8	0	0	-0.8	-0.6	0	0	-0.6	-0.8	0.2	0	0	-0.4	0	-0.8	0	0.2	0.5'			
+			
+param_ub='1	1	1	1	1	1	1	1	0.8	0.8	1	1	1	1	1	1	1	1	1.8'		
 
 for j in $(seq 1 ${NRUNS});
 do
@@ -136,15 +142,16 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile7} --model $model \
+        args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --exclude g_pas_axonal g_pas_somatic e_pas_all \
-          --dt 0.1  --cell-count $cell_count --unit-param-lower $param_lb --unit-param-upper $param_ub "
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --exclude dend_na12 dend_na16 ais_ca ais_KCa axon_HVA axon_LVA\
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1 --cell-count $cell_count --unit-param-lower $param_lb --unit-param-upper $param_ub"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         
         # --stim-dc-offset 0 --stim-multiplier 1
         #--exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all
+        # --exclude dend_na12 dend_na16 ais_ca ais_KCa axon_HVA axon_LVA node_na
 
         # --wide gNaTs2_tbar_NaTs2_t_apical gSKv3_1bar_SKv3_1_apical gImbar_Im_apical gIhbar_Ih_dend gNaTa_tbar_NaTa_t_axonal gK_Tstbar_K_Tst_axonal gNap_Et2bar_Nap_Et2_axonal \
         #   gSK_E2bar_SK_E2_axonal gCa_HVAbar_Ca_HVA_axonal gK_Pstbar_K_Pst_axonal gCa_LVAstbar_Ca_LVAst_axonal g_pas_axonal cm_axonal gSKv3_1bar_SKv3_1_somatic \
