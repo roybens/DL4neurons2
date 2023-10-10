@@ -3,7 +3,7 @@
 #SBATCH -t 30:00
 #SBATCH -q debug
 #SBATCH -J DL4N_full_prod
-#SBATCH -L SCRATCH,cfs
+#SBATCH -L cfs
 #SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
 #SBATCH --image=balewski/ubu20-neuron8:v5
@@ -12,7 +12,7 @@
 # Stuff for knl
 export OMP_NUM_THREADS=1
 module unload craype-hugepages2M
-
+cd /pscratch/sd/k/ktub1999/main/DL4neurons2
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
@@ -69,7 +69,7 @@ eType=cADpyr
 # mkdir -p $RUNDIR/$cell_name/
 # chmod a+rx $RUNDIR/$cell_name/
 
-cp BBP_sbatch_def.sh $RUNDIR
+cp $(basename "$0") $RUNDIR
 chmod a+rx $RUNDIR
 chmod a+rx $RUNDIR/*
 echo done
@@ -129,9 +129,9 @@ do
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
         args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} --model $model --cell-i ${l} \
-          --cori-csv ${REMOTE_CELLS_FILE} --num 11  --cori-start ${START_CELL} --cori-end ${END_CELL} \
+          --cori-csv ${REMOTE_CELLS_FILE} --num 128  --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 5 --linear-params-inds 12 17 18 --stim-dc-offset 0 --stim-multiplier 1\
-          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/tmp_neuInv/bbp3/L5_TTPC1cADpyr0/14988293/temp_param_Exact.csv"
+          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/tmp_neuInv/bbp3/L5_TTPC1cADpyr0/16642491/ExactSimulated.csv"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

@@ -113,7 +113,7 @@ def report_random_params(args, params, model):
             log.debug("Using random values for '{}'".format(name))
 
 def get_ranges(args,model):
-    return model.UNIT_PARAMS
+    return model.UNIT_RANGES
 
 
 def get_ranges_old(args):
@@ -183,7 +183,7 @@ def get_random_params(args,model,n=1):
                 b_value = (uLb+uUb)/2
                 a_value = (uUb-uLb)/2
                 if(pram in args.exclude or args.def_params):
-                    curr_phy_res.append(b_value)
+                    curr_phy_res.append(base_params['Values'].iloc[j])
                     rand[i][j]=0
                     continue
                 P = b_value + a_value * u
@@ -191,7 +191,7 @@ def get_random_params(args,model,n=1):
                 b_value = (uLb+uUb)/2
                 a_value = (uUb-uLb)/2
                 if(pram in args.exclude or args.def_params):
-                    curr_phy_res.append(b_value)
+                    curr_phy_res.append(base_params['Values'].iloc[j])
                     rand[i][j]=0
                     continue
                 ## ADD a check if A_value  is 0
@@ -201,7 +201,7 @@ def get_random_params(args,model,n=1):
                 b_value = 0
                 a_value = (uUb - uLb)/2
                 if(pram in args.exclude or args.def_params):
-                    curr_phy_res.append(new_base)
+                    curr_phy_res.append(base_params['Values'].iloc[j])
                     rand[i][j]=0
                     continue
                 P = new_base*10**(b_value+a_value*u)
