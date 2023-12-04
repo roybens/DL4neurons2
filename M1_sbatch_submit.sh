@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH -N 8
 #SBATCH -t 30:00
-#SBATCH -q regular
+#SBATCH -q debug
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -12,7 +12,7 @@
 # Stuff for knl
 # export OMP_NUM_THREADS=128
 module unload craype-hugepages2M
-cd /pscratch/sd/k/ktub1999/main/DL4neurons2
+# cd /pscratch/sd/k/ktub1999/main/DL4neurons2
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
@@ -20,11 +20,12 @@ cd /pscratch/sd/k/ktub1999/main/DL4neurons2
 OUT_DIR=/pscratch/sd/k/ktub1999/Feb24Nrow/
 # simu run in the dir where  Slurm job was started
 model='M1_TTPC_NA_HH'
-if [ "$model" = "M1_TTPC_NA_HH" ]; then
-    shifter nrnivmodl ./Neuron_Model_HH/mechanisms
-else
-    shifter nrnivmodl ./modfiles
-fi
+# rm -rf ./x86_64
+# if [ "$model" = "M1_TTPC_NA_HH" ]; then
+#     shifter nrnivmodl ./Neuron_Model_HH/mechanisms
+# else
+#     shifter nrnivmodl ./modfiles
+# fi
 
 CELLS_FILE='excitatorycells.csv'
 START_CELL=0
@@ -65,7 +66,7 @@ cell_name+=$i_cell
 mkdir -p $RUNDIR/$cell_name/
 chmod a+rx $RUNDIR/$cell_name/
 
-cp $(basename "$0") $RUNDIR
+cp M1_sbatch_submit.sh $RUNDIR
 chmod a+rx $RUNDIR
 chmod a+rx $RUNDIR/*
 echo done
@@ -128,9 +129,9 @@ param_lb='0.45 -1.05 -0.05 0.6 -0.3 0.6 -0.3 -0.6 -0.6 -0.1 0.8 -0.35 -0.2 -0.2 
 param_ub='0.55 -0.85 0.05 0.8 -0.1 0.8 -0.1 -0.4 -0.4 0.1 1.0 0.25 0.0 0.0 0.65 0.35 -0.5 -0.1 1.8'		
 # --exclude dend_na12 ais_na12 ais_ca ais_KCa axon_HVA axon_LVA node_na gpas_all
 
-param_lb='0	-0.8	0	0	-0.8	-0.6	0	0	-0.6	-0.8	0.2	0	0	-0.4	0	-0.8	0	0.2	0.5'			
+param_lb='-1	-0.8	0	0	-0.8	-0.6	0	0.2	-0.6	-0.8	0.2	0	0.2	-0.4	-1	-0.8	0 -1	0.2	0.5'			
 			
-param_ub='1	1	1	1	1	1	1	1	0.8	0.8	1	1	1	1	1	1	1	1	1.8'		
+param_ub='1	1	1	1	1	1	1	1	0.8	0.8	1	1	1	1	1	1	1	1 1	1.8'	
 
 for j in $(seq 1 ${NRUNS});
 do
@@ -144,8 +145,8 @@ do
 	
         args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --exclude dend_na12 dend_na16 ais_ca ais_KCa axon_HVA axon_LVA\
-          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1 --cell-count $cell_count --unit-param-lower $param_lb --unit-param-upper $param_ub"
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --unit-param-lower $param_lb --unit-param-upper $param_ub \
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude dend_na12 node_na axon_HVA"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         

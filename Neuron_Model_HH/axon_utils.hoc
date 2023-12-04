@@ -26,6 +26,8 @@ proc initial_values(){
 	myelin_scale = 10
 	gpas_all = 3e-5
 	cm_all = 1
+	dend_Ih = 0.00008
+	soma_Ih = 0.00008
 }
 
 // modify the axon for Roy's purposes (whole thing)
@@ -60,7 +62,7 @@ proc populate_axon(){
 proc create_ais(){
 access cell.axon[0]
 
-	
+	L=90	//To Create 19 Segments
 	nseg = int(L/10)*2 +1  // create 19 segments from this axon section
 	ais_end = 10/nseg // specify the end of the AIS as halfway down this section
 	ais_mid = 4/nseg // specify the middle of the AIS as 1/5 of this section 
@@ -100,10 +102,14 @@ access cell.soma
 	gbar_na16 = soma_na16/2
 	gbar_na16mut = soma_na16/2
 	gSKv3_1bar_SKv3_1 = soma_K
+	gIhbar_Ih = soma_Ih
+	//distance(0)
 
 
 }
-proc update_dend(){
+
+proc update_dend(){local x localobj sl
+strdef stmp,distfunc,mech
 forsec cell.apical{
 	
 	gbar_na12 = dend_na12/2
@@ -111,11 +117,35 @@ forsec cell.apical{
 	gbar_na16 = dend_na16/2
 	gbar_na16mut = dend_na16/2
 	gSKv3_1bar_SKv3_1 = dend_k
-	
+		
 	}
+	
+    //Setting Im with a gradient.
+    sl = cell.apical
+    mech = "gIhbar_Ih"
+    distfunc = "(-0.869600 + 2.087000*exp((%g-0.000000)*0.003100))*%g"
+    sprint(distfunc,"%%s %s(%%f) = %s",mech, distfunc)
+    forsec sl for(x) {
+            sprint (stmp,distfunc,secname(),x,distance(x),dend_Ih)
+            execute(stmp)
+    }
+
+
+forsec cell.basal{
+	gIhbar_Ih = dend_Ih
+}
 
 }
 
+//proc inserting(){
+//print "Inside Inserting"
+//forsec cell.apical{
+  //      insert na12
+	//	gbar_na12 =0
+		
+//	}
+
+//}
 
 
 proc working(){
@@ -147,5 +177,6 @@ access cell.axon[0]
 	L=90
 		
 access cell.soma
+//inserting()
 working()
 

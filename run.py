@@ -75,7 +75,8 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         model.create_cell()
         return model
     elif model == 'M1_TTPC_NA_HH':
-        model = models.M1_TTPC_NA_HH("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
+        mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/Neuron_Model_HH"
+        model = models.M1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
         return model
     else:

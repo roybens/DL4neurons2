@@ -856,9 +856,13 @@ class M1_TTPC_NA_HH(BaseModel):
             'node_na',
             'soma_K',
             'dend_k',
+            'dend_Ih',
             'gpas_all',
             'cm_all'
         )
+    CLONED_PARAMS={
+        'soma_Ih' : 'dend_Ih'
+    }
     DEFAULT_PARAMS = (
         0.006,
         0.0983955,
@@ -877,6 +881,7 @@ class M1_TTPC_NA_HH(BaseModel):
         2,
         0.0840,
         0.004226,
+        0.00008,
         0.0000300,
         1 
      )
@@ -899,6 +904,7 @@ class M1_TTPC_NA_HH(BaseModel):
         (9.3E-02,1.0E+01),
         (3.3E-05,6.9E-02),
         (3.0E-07,3.0E-03),
+        (0.000008,0.0008),
         (0.5,3),
         (-100,-50))
     
@@ -921,9 +927,11 @@ class M1_TTPC_NA_HH(BaseModel):
         [-1,+1],
         [-1,+1],
         [-1,+1],
-        [-1,+1]]
+        [-1,+1],
+        [0.5,1.8]]
     
     UNIT_PARAMS =[
+        [0,1],
         [0,1],
         [0,1],
         [0,1],
@@ -946,9 +954,16 @@ class M1_TTPC_NA_HH(BaseModel):
     ]
     
     default = {}
-    def __init__(self,mod_dir,*args,**kwargs):
-        
+    def __init__(self,mod_dir,m_type, e_type, cell_i,*args,**kwargs):
+       
         self.mod_dir = mod_dir
+        with open('cells.json') as infile:
+            cells = json.load(infile)
+        self.args = args
+        self.e_type = e_type
+        self.m_type = m_type
+        self.cell_i = cell_i
+        self.cell_kwargs = cells[m_type][e_type][cell_i]
         # S, self.DEFAULT_PARAMS = [], []
         super(M1_TTPC_NA_HH, self).__init__(*args, **kwargs)
     def update_params(self, params):
@@ -970,6 +985,8 @@ class M1_TTPC_NA_HH(BaseModel):
             h.node_na = params['node_na']
             h.soma_K = params['soma_K']
             h.dend_k = params['dend_K']
+            h.dend_Ih = params['dend_Ih']
+            # h.soma_Ih = params['soma_Ih']
             h.gpas_all = params['gpas_all']
             h.cm_all = params['cm_all']
         elif type(params) == list or type(params) == np.ndarray:
@@ -990,129 +1007,114 @@ class M1_TTPC_NA_HH(BaseModel):
             h.node_na = params[14]
             h.soma_K = params[15]
             h.dend_k = params[16]
-            h.gpas_all = params[17]
-            h.cm_all = params[18]
-            if len(params) > 19:
-                h.cell.soma[0].e_pas = params[19]
-                h.cell.axon[0].e_pas = params[19]
-                h.cell.axon[1].e_pas = params[19]
+            h.dend_Ih = params[17]
+            h.gpas_all = params[18]
+            h.cm_all = params[19]
+            if len(params) > 20:
+                h.cell.soma[0].e_pas = params[20]
+                h.cell.axon[0].e_pas = params[20]
+                h.cell.axon[1].e_pas = params[20]
                 for i in range(len(h.cell.dend)):
-                    h.cell.dend[i].e_pas = params[19]
+                    h.cell.dend[i].e_pas = params[20]
+            
         h.working()
 
-
-
-    def tes1(self, mod_dir = './neuron_files/M1_TTPC_NA_HH/',#'./Neuron_Model_HH/', 
+    def run_model(self):
+        self.h.load_file("nrngui.hoc")
+        self.h.load_file("import3d.hoc") #stdrun
+        cell_dir = self.cell_kwargs['model_directory']
+        log.debug("cell_dir = {}".format(cell_dir))
     
-    nav12=1,
-                      nav16=1,
-                      dend_nav12=1,
-                      soma_nav12=1,
-                      ais_nav12=1,
-                      dend_nav16=1,
-                      soma_nav16=1,
-                      ais_nav16=1,
-                      ais_ca = 1,
-                      ais_KCa = 1,
-                      axon_Kp=1,
-                      axon_Kt =1,
-                      axon_K=1,
-                      axon_Kca =1,
-                      axon_HVA = 1,
-                      axon_LVA = 1,
-                      node_na = 1,
-                      soma_K=1,
-                      dend_K=1,
-                      gpas_all=1):
-        # print(f"nav12={nav12}, nav16={nav16}, dend_nav12={dend_nav12}, soma_nav12={soma_nav12}, ais_nav12={ais_nav12}, "
-        # f"dend_nav16={dend_nav16}, soma_nav16={soma_nav16}, ais_nav16={ais_nav16}, ais_ca={ais_ca}, ais_KCa={ais_KCa}, "
-        # f"axon_Kp={axon_Kp}, axon_Kt={axon_Kt}, axon_K={axon_K}, axon_Kca={axon_Kca}, axon_HVA={axon_HVA}, "
-        # f"axon_LVA={axon_LVA}, node_na={node_na}, soma_K={soma_K}, dend_K={dend_K}, gpas_all={gpas_all}")
-        run_dir = os.getcwd()
+        
+        template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
 
-        os.chdir(mod_dir)
-        self.h = h  # NEURON h
-        print(f'running model at {os.getcwd()} run dir is {run_dir}')
-        #pdb.set_trace()
-        h.load_file("runModel.hoc")
-        self.soma_ref = h.root.sec
-        self.soma = h.secname(sec=self.soma_ref)
-        self.sl = h.SectionList()
-        self.sl.wholetree(sec=self.soma_ref)
-        self.nexus = h.cell.apic[66]
-        self.dist_dend = h.cell.apic[91]
-        self.ais = h.cell.axon[0]
-        self.axon_proper = h.cell.axon[1]
-        h.dend_na12 = 0.012/2
-        h.dend_na16 = h.dend_na12
-        h.dend_k = 0.004226 * soma_K
+        templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
+        # templates_dir="/global/cfs/cdirs/m2043/hoc_templates/hoc_templates"
+
+        constants = '/'.join([templates_dir,cell_dir,cell_dir, 'constants.hoc'])
+        log.debug(constants)
+        self.h.load_file(constants)
+
+        
+        
+        cell_template = '/'.join([templates_dir,cell_dir,cell_dir, 'template.hoc'])
+        log.debug(cell_template)
+        self.h.load_file(cell_template)
+        # self.h("objref cell")
+
+        #Init cell from the same directory.
+        cwd = os.getcwd()
+        os.chdir(os.path.join(templates_dir, cell_dir,cell_dir))
+
+        SYNAPSES, NO_SYNAPSES = 1, 0
+        
+        self.h("objref cell")
+
+        self.h.cell = getattr(h, template_name)(NO_SYNAPSES)
+        
+        os.chdir(cwd)
 
 
-        h.soma_na12 = 0.983955/10
-        h.soma_na16 = h.soma_na12
-        h.soma_K = 8.396194779331378477e-02 * soma_K
-
-        h.ais_na16 = 4
-        h.ais_na12 = 4
-        h.ais_ca = 0.00990*4*ais_ca
-        h.ais_KCa = 0.007104*ais_KCa
-
-        h.node_na = 2 * node_na
-
-        h.axon_KP = 0.973538 * axon_Kp
-        h.axon_KT = 1.7 * axon_Kt
-        h.axon_K = 1.021945 * axon_K
-        h.axon_LVA = 0.0014 * axon_LVA
-        h.axon_HVA = 0.00012 * axon_HVA
-        h.axon_KCA = 1.8 * axon_Kca
-
-
-        #h.cell.axon[0].gCa_LVAstbar_Ca_LVAst = 0.001376286159287454
-
-        #h.soma_na12 = h.soma_na12/2
-        h.naked_axon_na = h.soma_na16/5
-        h.navshift = -10
-        h.myelin_na = h.naked_axon_na
-        h.myelin_K = 0.303472
-        h.myelin_scale = 10
-        h.gpas_all = 3e-5 * gpas_all
-        h.cm_all = 1
-
-
-        h.dend_na12 = h.dend_na12 * nav12 * dend_nav12
-        h.soma_na12 = h.soma_na12 * nav12 * soma_nav12
-        h.ais_na12 = h.ais_na12 * nav12 * ais_nav12
-
-        h.dend_na16 = h.dend_na16 * nav16 * dend_nav16
-        h.soma_na16 = h.soma_na16 * nav16 * soma_nav16
-        h.ais_na16 = h.ais_na16 * nav16 * ais_nav16
-        h.working()
-        os.chdir(run_dir)
-
-
-    
-
-
-
-    def create_cell(self):
-        self.h = h
-        run_model = os.path.join(self.mod_dir,"runModel.hoc")
-        h.load_file(run_model)
-        self.soma_ref = h.root.sec
-        self.soma = h.secname(sec=self.soma_ref)
-        self.sl = h.SectionList()
-        self.sl.wholetree(sec=self.soma_ref)
-        self.nexus = h.cell.apic[66]
-        self.dist_dend = h.cell.apic[91]
-        self.ais = h.cell.axon[0]
-        self.axon_proper = h.cell.axon[1]
-
-        #Setting Fixed parameters
+        add_m1 = os.path.join(self.mod_dir,"addm1.hoc")
+        self.h.load_file(add_m1)
+        self.h.add_m1()
+        
+        self.plot_Ih("before")
+        axon_utils = os.path.join(self.mod_dir,"axon_utils.hoc")
+        
+        self.h.load_file(axon_utils)
+        
+          #Setting Fixed parameters
         h.naked_axon_na = 0.0196791 #h.naked_axon_na = h.soma_na16/5
         h.navshift = -10
         h.myelin_na = 0.0196791 #h.myelin_na = h.naked_axon_na
         h.myelin_K = 0.303472
         h.myelin_scale = 10
+
+        # self.h.initial_values()
+        self.h.fcurrent()
+        self.h.working()
+        self.plot_Ih("before2")
+        self.h.finitialize()
+
+    def plot_Ih(self,name="before"):
+        apical_Ih=[]
+        h.distance(0,0.5,sec=h.cell.soma[0])
+        for sec in h.cell.apical:
+              # Calculate distance from soma to the midpoint of the section
+            # for x1 in range(10):
+                x= 0.5 #x1/20
+                distance = h.distance(0.5, sec=sec)
+                gIhbar_Ih_value = sec(0.5).gIhbar_Ih  # Get the gIhbar_Ih value at the midpoint
+                apical_Ih.append([distance, gIhbar_Ih_value])
+
+        apical_Ih.sort(key=lambda x: x[0])
+
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        apical_Ih=np.array(apical_Ih)
+        plt.plot(apical_Ih[:,0],apical_Ih[:,1])
+        plt.savefig(name+".png")
+        df = pd.DataFrame(apical_Ih,columns = ['distance','gIhbar_apical'])
+        df.to_csv(name+'gIhapical.csv')
+
+        
+    def create_cell(self):
+        self.h = h
+       
+        runModel = os.path.join(self.mod_dir,"runModel.hoc")
+        # self.h.load_file(runModel)
+        
+        self.run_model()
+
+            
+        print("CELL",h.cell)
+        # self.nexus = h.cell.apic[66]
+        # self.dist_dend = h.cell.apic[91]
+        # self.ais = h.cell.axon[0]
+        # self.axon_proper = h.cell.axon[1]
+        
+      
         # self.tes1("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
         hobj = h.cell
         self.entire_cell = hobj
@@ -1126,6 +1128,11 @@ class M1_TTPC_NA_HH(BaseModel):
         # Model params
         for (var, val) in params.items():
             setattr(self, var, val)
+        #setting the value of somaIh to be same as dend_Ih
+        for cloned,original in self.CLONED_PARAMS.items():
+            setattr(self,cloned,getattr(self,original))    
+
+
 
     def init_parameters(self):
         #iterate over default and fixed params and set the vaues.
@@ -1139,13 +1146,16 @@ class M1_TTPC_NA_HH(BaseModel):
             
             setattr(h,param,getattr(self,param))
             # h.param = getattr(self,param)
+        for cloned,original in self.CLONED_PARAMS.items():
+            setattr(h,cloned,getattr(self,original))    
         h.cell= self.entire_cell
         h.working()
+        self.plot_Ih("after")
         h.cell = self.entire_cell.soma[0]
     
     def _get_rec_pts(self):
         # if not hasattr(self, 'probes'):
-        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell)))
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         return self.probes
     def _n_rec_pts(self):
         return len(self._get_rec_pts())
