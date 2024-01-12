@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH -N 8
+#SBATCH -N 1
 #SBATCH -t 30:00
 #SBATCH -q debug
 #SBATCH -J DL4N_full_prod
@@ -145,8 +145,8 @@ do
 	
         args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --unit-param-lower $param_lb --unit-param-upper $param_ub \
-          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude dend_na12 node_na axon_HVA"
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  --unit-params-csv unit_params.csv \
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude sh_na12 cm_all e_pas_all"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         
