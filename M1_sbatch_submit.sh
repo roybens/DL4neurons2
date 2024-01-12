@@ -146,7 +146,7 @@ do
         args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  --unit-params-csv unit_params.csv \
-          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude dend_na12 node_na axon_HVA "
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude sh_na12 cm_all e_pas_all"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         
