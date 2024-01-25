@@ -213,7 +213,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Im /global/u2/r/roybens/DL4neurons2/modfiles/Im.mod\n");
+ 	ivoc_help("help ?1 Im /pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/Im.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -472,7 +472,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/Im.mod";
+static const char* nmodl_filename = "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/Im.mod";
 static const char* nmodl_file_text = 
   ":Reference : :		Adams et al. 1982 - M-currents and other potassium currents in bullfrog sympathetic neurones\n"
   ":Comment: corrected rates using q10 = 2.3, target temperature 34, orginal 21\n"

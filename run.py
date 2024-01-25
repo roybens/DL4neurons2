@@ -187,12 +187,21 @@ def get_random_params(args,model,n=1):
     elif(args.model =="M1_TTPC_NA_HH"):
         #SAVE as CSV xander 4
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+    # base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    
     #for each sample
-    # print(model.UNIT_RANGES)
+
+    
     for i in range(n):
         curr_phy_res=[]
         #for each parameter
+        if(args.default_base):
+            base_dict={}
+            base_dict['Parameters']=list(model.PARAM_NAMES)
+            base_dict['Values']=list(model.DEFAULT_PARAMS)
+            base_params=pd.DataFrame.from_dict(base_dict)
         for j in range(ndim):
+            
             u = rand[i][j]
             [uLb, uUb] = model.UNIT_RANGES[j]
             pram = base_params['Parameters'].iloc[j]
@@ -221,7 +230,7 @@ def get_random_params(args,model,n=1):
             #For meta Data
         set_unit_params=True
         phy_res.append(curr_phy_res)
-        # print(model.UNIT_PARAMS)
+       
     return phy_res,rand
 
 
@@ -236,8 +245,8 @@ def get_random_params_old(args,model,n=1):
     if(args.cell_count):
         count_cell=args.cell_count
     
-    default_params_wide= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
-    default_params_nrow= pd.read_csv("/pscratch/sd/k/ktub1999/main/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    default_params_wide= pd.read_csv("./sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
+    default_params_nrow= pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     # default_params= pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/NewBase"+str(int(count_cell))+".csv")
     # model_default_params=model.DEFAULT_PARAMS
     # model_param_names = model.PARAM_NAMES
@@ -606,7 +615,7 @@ def main(args):
         if args.e_type in ('bIR', 'bAC'):
             paramuse[20] = 0
             log.info('Not varying negative parameters for e-type {}'.format(args.e_type))
-    print(type(args.m_type), type(args.e_type))
+    # print(type(args.m_type), type(args.e_type))
     cellName = str(args.m_type)+"_"+str(args.e_type)
     # template_cell = templates_dir+"/"+cellName
     if(not template_present(cellName,args.cell_i)):
@@ -615,8 +624,10 @@ def main(args):
     if args.outfile and '{BBP_NAME}' in args.outfile:
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
         #args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
-    
+    f = open(os.devnull, 'w')
+    sys.stdout = f
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
+    sys.stdout = sys.__stdout__
 
     if args.create:
         if not args.num:
@@ -638,7 +649,7 @@ def main(args):
         exit()
     
     if(args.unit_param_upper!=None and args.unit_param_lower!=None):
-        print(len(args.unit_param_upper),len(args.unit_param_lower),"SIZES")
+        # print(len(args.unit_param_upper),len(args.unit_param_lower),"SIZES")
         for param_no in range(len(args.unit_param_upper)):
             #param_no has ['param_name','uLb','uUb']    
             model.UNIT_RANGES[param_no]=[float(args.unit_param_lower[param_no]),float(args.unit_param_upper[param_no])]
@@ -670,7 +681,7 @@ def main(args):
         else:
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
-        print(paramsets.shape)
+        print("Shape of parameters:",paramsets.shape)
         # print("Param Size",paramsets.size)
         # print("Reading from param_file")
         # print(paramsets.shape)
@@ -713,14 +724,14 @@ def main(args):
 
     
     for iSamp, params in enumerate(paramsets):
-        print(os.environ['SLURM_PROCID'],"ProcID")
-        if(os.environ['SLURM_PROCID']==0 and iSamp%100==0):
+        # print(type(os.environ['SLURM_PROCID']),"ProcID")
+        if(os.environ['SLURM_PROCID']=="0" and iSamp%100==0):
             sys.stdout = sys.__stdout__
             # h.hoc_stdout()
             print("Executing for ",iSamp)
             # h.hoc_stdout("Temp")
-            f = open(os.devnull, 'w')
-            sys.stdout = f
+            # f = open(os.devnull, 'w')
+            # sys.stdout = f
 
         
             if args.print_every and iSamp % args.print_every == 0:
@@ -990,6 +1001,11 @@ if __name__ == '__main__':
     parser.add_argument('--unit-params-csv', type=str, required=False, default=None,
                         help='CSV to get unit parameter ranges for parameter variation')
     
+    
+    parser.add_argument(
+        '--default-base',action='store_true', default=False,
+        help='To be used with create_params, should be used while using default values'
+    )
 
     args = parser.parse_args()
 

@@ -217,7 +217,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ca_LVAst /global/u2/r/roybens/DL4neurons2/modfiles/Ca_LVAst.mod\n");
+ 	ivoc_help("help ?1 Ca_LVAst /pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/Ca_LVAst.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -484,7 +484,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/Ca_LVAst.mod";
+static const char* nmodl_filename = "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/Ca_LVAst.mod";
 static const char* nmodl_file_text = 
   ":Comment : LVA ca channel. Note: mtau is an approximation from the plots\n"
   ":Reference : :		Avery and Johnston 1996, tau from Randall 1997\n"

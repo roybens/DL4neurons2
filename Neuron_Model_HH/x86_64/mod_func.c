@@ -25,23 +25,23 @@ void modl_reg(){
   if (!nrn_nobanner_) if (nrnmpi_myid < 1) {
     fprintf(stderr, "Additional mechanisms from files\n");
 
-    fprintf(stderr," \"./mechanisms//CaDynamics_E2.mod\"");
-    fprintf(stderr," \"./mechanisms//Ca_HVA.mod\"");
-    fprintf(stderr," \"./mechanisms//Ca_LVAst.mod\"");
-    fprintf(stderr," \"./mechanisms//Ih.mod\"");
-    fprintf(stderr," \"./mechanisms//Im.mod\"");
-    fprintf(stderr," \"./mechanisms//K_Pst.mod\"");
-    fprintf(stderr," \"./mechanisms//K_Tst.mod\"");
-    fprintf(stderr," \"./mechanisms//ProbAMPANMDA_EMS.mod\"");
-    fprintf(stderr," \"./mechanisms//ProbGABAAB_EMS.mod\"");
-    fprintf(stderr," \"./mechanisms//SK_E2.mod\"");
-    fprintf(stderr," \"./mechanisms//SKv3_1.mod\"");
-    fprintf(stderr," \"./mechanisms//branching.mod\"");
-    fprintf(stderr," \"./mechanisms//na12.mod\"");
-    fprintf(stderr," \"./mechanisms//na12_mut.mod\"");
-    fprintf(stderr," \"./mechanisms//na16.mod\"");
-    fprintf(stderr," \"./mechanisms//na16_mut.mod\"");
-    fprintf(stderr," \"./mechanisms//vclmp_pl.mod\"");
+    fprintf(stderr," \"./mechanisms/CaDynamics_E2.mod\"");
+    fprintf(stderr," \"./mechanisms/Ca_HVA.mod\"");
+    fprintf(stderr," \"./mechanisms/Ca_LVAst.mod\"");
+    fprintf(stderr," \"./mechanisms/Ih.mod\"");
+    fprintf(stderr," \"./mechanisms/Im.mod\"");
+    fprintf(stderr," \"./mechanisms/K_Pst.mod\"");
+    fprintf(stderr," \"./mechanisms/K_Tst.mod\"");
+    fprintf(stderr," \"./mechanisms/ProbAMPANMDA_EMS.mod\"");
+    fprintf(stderr," \"./mechanisms/ProbGABAAB_EMS.mod\"");
+    fprintf(stderr," \"./mechanisms/SK_E2.mod\"");
+    fprintf(stderr," \"./mechanisms/SKv3_1.mod\"");
+    fprintf(stderr," \"./mechanisms/branching.mod\"");
+    fprintf(stderr," \"./mechanisms/na12.mod\"");
+    fprintf(stderr," \"./mechanisms/na12_mut.mod\"");
+    fprintf(stderr," \"./mechanisms/na16.mod\"");
+    fprintf(stderr," \"./mechanisms/na16_mut.mod\"");
+    fprintf(stderr," \"./mechanisms/vclmp_pl.mod\"");
     fprintf(stderr, "\n");
   }
   _CaDynamics_E2_reg();

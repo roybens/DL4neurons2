@@ -46,19 +46,22 @@ extern double hoc_Exp(double);
 #define t _nt->_t
 #define dt _nt->_dt
 #define gK_Tstbar _p[0]
-#define ik _p[1]
-#define gK_Tst _p[2]
-#define m _p[3]
-#define h _p[4]
-#define ek _p[5]
-#define mInf _p[6]
-#define mTau _p[7]
-#define hInf _p[8]
-#define hTau _p[9]
-#define Dm _p[10]
-#define Dh _p[11]
-#define v _p[12]
-#define _g _p[13]
+#define vshift _p[1]
+#define mtau_shift _p[2]
+#define mtau_mul _p[3]
+#define ik _p[4]
+#define gK_Tst _p[5]
+#define m _p[6]
+#define h _p[7]
+#define ek _p[8]
+#define mInf _p[9]
+#define mTau _p[10]
+#define hInf _p[11]
+#define hTau _p[12]
+#define Dm _p[13]
+#define Dh _p[14]
+#define v _p[15]
+#define _g _p[16]
 #define _ion_ek	*_ppvar[0]._pval
 #define _ion_ik	*_ppvar[1]._pval
 #define _ion_dikdv	*_ppvar[2]._pval
@@ -153,6 +156,9 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  "7.7.0",
 "K_Tst",
  "gK_Tstbar_K_Tst",
+ "vshift_K_Tst",
+ "mtau_shift_K_Tst",
+ "mtau_mul_K_Tst",
  0,
  "ik_K_Tst",
  "gK_Tst_K_Tst",
@@ -168,11 +174,14 @@ extern Prop* need_memb(Symbol*);
 static void nrn_alloc(Prop* _prop) {
 	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
- 	_p = nrn_prop_data_alloc(_mechtype, 14, _prop);
+ 	_p = nrn_prop_data_alloc(_mechtype, 17, _prop);
  	/*initialize range parameters*/
  	gK_Tstbar = 1e-05;
+ 	vshift = -10;
+ 	mtau_shift = 0.34;
+ 	mtau_mul = 0.92;
  	_prop->param = _p;
- 	_prop->param_size = 14;
+ 	_prop->param_size = 17;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
  	_prop->dparam = _ppvar;
  	/*connect ionic variables to this model*/
@@ -209,7 +218,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
   hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
   hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
 #endif
-  hoc_register_prop_size(_mechtype, 14, 4);
+  hoc_register_prop_size(_mechtype, 17, 4);
   hoc_register_dparam_semantics(_mechtype, 0, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 2, "k_ion");
@@ -217,7 +226,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 K_Tst /global/u2/r/roybens/DL4neurons2/modfiles/K_Tst.mod\n");
+ 	ivoc_help("help ?1 K_Tst /pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/K_Tst.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -261,12 +270,12 @@ static int _ode_spec1(_threadargsproto_);
 static int  rates ( _threadargsproto_ ) {
    double _lqt ;
  _lqt = pow( 2.3 , ( ( 34.0 - 21.0 ) / 10.0 ) ) ;
-    v = v + 10.0 ;
+    v = v + vshift ;
    mInf = 1.0 / ( 1.0 + exp ( - ( v + 0.0 ) / 19.0 ) ) ;
-   mTau = ( 0.34 + 0.92 * exp ( - pow( ( ( v + 71.0 ) / 59.0 ) , 2.0 ) ) ) / _lqt ;
+   mTau = ( mtau_shift + mtau_mul * exp ( - pow( ( ( v + 71.0 ) / 59.0 ) , 2.0 ) ) ) / _lqt ;
    hInf = 1.0 / ( 1.0 + exp ( - ( v + 66.0 ) / - 10.0 ) ) ;
    hTau = ( 8.0 + 49.0 * exp ( - pow( ( ( v + 73.0 ) / 23.0 ) , 2.0 ) ) ) / _lqt ;
-   v = v - 10.0 ;
+   v = v - vshift ;
      return 0; }
  
 static void _hoc_rates(void) {
@@ -484,7 +493,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/K_Tst.mod";
+static const char* nmodl_filename = "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/K_Tst.mod";
 static const char* nmodl_file_text = 
   ":Comment : The transient component of the K current\n"
   ":Reference : :		Voltage-gated K+ channels in layer 5 neocortical pyramidal neurones from young rats:subtypes and gradients,Korngreen and Sakmann, J. Physiology, 2000\n"
@@ -494,7 +503,8 @@ static const char* nmodl_file_text =
   "NEURON	{\n"
   "	SUFFIX K_Tst\n"
   "	USEION k READ ek WRITE ik\n"
-  "	RANGE gK_Tstbar, gK_Tst, ik\n"
+  "	RANGE gK_Tstbar, gK_Tst, ik, vshift,mtau_shift,mtau_mul\n"
+  "\n"
   "}\n"
   "\n"
   "UNITS	{\n"
@@ -505,6 +515,10 @@ static const char* nmodl_file_text =
   "\n"
   "PARAMETER	{\n"
   "	gK_Tstbar = 0.00001 (S/cm2)\n"
+  "	vshift = -10\n"
+  "	mtau_shift = 0.34\n"
+  "	mtau_mul = 0.92\n"
+  "\n"
   "}\n"
   "\n"
   "ASSIGNED	{\n"
@@ -539,6 +553,7 @@ static const char* nmodl_file_text =
   "	rates()\n"
   "	m = mInf\n"
   "	h = hInf\n"
+  "	\n"
   "}\n"
   "\n"
   "PROCEDURE rates(){\n"
@@ -546,12 +561,12 @@ static const char* nmodl_file_text =
   "  qt = 2.3^((34-21)/10)\n"
   "\n"
   "	UNITSOFF\n"
-  "		v = v + 10\n"
+  "		v = v + vshift\n"
   "		mInf =  1/(1 + exp(-(v+0)/19))\n"
-  "		mTau =  (0.34+0.92*exp(-((v+71)/59)^2))/qt\n"
+  "		mTau =  (mtau_shift+mtau_mul*exp(-((v+71)/59)^2))/qt\n"
   "		hInf =  1/(1 + exp(-(v+66)/-10))\n"
   "		hTau =  (8+49*exp(-((v+73)/23)^2))/qt\n"
-  "		v = v - 10\n"
+  "		v = v - vshift\n"
   "	UNITSON\n"
   "}\n"
   ;

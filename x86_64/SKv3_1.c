@@ -46,15 +46,18 @@ extern double hoc_Exp(double);
 #define t _nt->_t
 #define dt _nt->_dt
 #define gSKv3_1bar _p[0]
-#define ik _p[1]
-#define gSKv3_1 _p[2]
-#define m _p[3]
-#define ek _p[4]
-#define mInf _p[5]
-#define mTau _p[6]
-#define Dm _p[7]
-#define v _p[8]
-#define _g _p[9]
+#define vtau _p[1]
+#define vinf _p[2]
+#define mtaumul _p[3]
+#define ik _p[4]
+#define gSKv3_1 _p[5]
+#define m _p[6]
+#define ek _p[7]
+#define mInf _p[8]
+#define mTau _p[9]
+#define Dm _p[10]
+#define v _p[11]
+#define _g _p[12]
 #define _ion_ek	*_ppvar[0]._pval
 #define _ion_ik	*_ppvar[1]._pval
 #define _ion_dikdv	*_ppvar[2]._pval
@@ -148,6 +151,9 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  "7.7.0",
 "SKv3_1",
  "gSKv3_1bar_SKv3_1",
+ "vtau_SKv3_1",
+ "vinf_SKv3_1",
+ "mtaumul_SKv3_1",
  0,
  "ik_SKv3_1",
  "gSKv3_1_SKv3_1",
@@ -162,11 +168,14 @@ extern Prop* need_memb(Symbol*);
 static void nrn_alloc(Prop* _prop) {
 	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
- 	_p = nrn_prop_data_alloc(_mechtype, 10, _prop);
+ 	_p = nrn_prop_data_alloc(_mechtype, 13, _prop);
  	/*initialize range parameters*/
  	gSKv3_1bar = 1e-05;
+ 	vtau = 18.7;
+ 	vinf = -46.56;
+ 	mtaumul = 4;
  	_prop->param = _p;
- 	_prop->param_size = 10;
+ 	_prop->param_size = 13;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
  	_prop->dparam = _ppvar;
  	/*connect ionic variables to this model*/
@@ -203,7 +212,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
   hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
   hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
 #endif
-  hoc_register_prop_size(_mechtype, 10, 4);
+  hoc_register_prop_size(_mechtype, 13, 4);
   hoc_register_dparam_semantics(_mechtype, 0, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 2, "k_ion");
@@ -211,7 +220,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 SKv3_1 /global/u2/r/roybens/DL4neurons2/modfiles/SKv3_1.mod\n");
+ 	ivoc_help("help ?1 SKv3_1 /pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/SKv3_1.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -250,8 +259,8 @@ static int _ode_spec1(_threadargsproto_);
 }
  
 static int  rates ( _threadargsproto_ ) {
-    mInf = 1.0 / ( 1.0 + exp ( ( ( v - ( 18.700 ) ) / ( - 9.700 ) ) ) ) ;
-   mTau = 0.2 * 20.000 / ( 1.0 + exp ( ( ( v - ( - 46.560 ) ) / ( - 44.140 ) ) ) ) ;
+    mInf = 1.0 / ( 1.0 + exp ( ( ( v - ( vtau ) ) / ( - 9.700 ) ) ) ) ;
+   mTau = mtaumul / ( 1.0 + exp ( ( ( v - ( vinf ) ) / ( - 44.140 ) ) ) ) ;
      return 0; }
  
 static void _hoc_rates(void) {
@@ -466,7 +475,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/SKv3_1.mod";
+static const char* nmodl_filename = "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/SKv3_1.mod";
 static const char* nmodl_file_text = 
   ":Comment :\n"
   ":Reference : :		Characterization of a Shaw-related potassium channel family in rat brain, The EMBO Journal, vol.11, no.7,2473-2486 (1992)\n"
@@ -474,7 +483,7 @@ static const char* nmodl_file_text =
   "NEURON	{\n"
   "	SUFFIX SKv3_1\n"
   "	USEION k READ ek WRITE ik\n"
-  "	RANGE gSKv3_1bar, gSKv3_1, ik \n"
+  "	RANGE gSKv3_1bar, gSKv3_1, ik,vtau,vinf,mtaumul \n"
   "}\n"
   "\n"
   "UNITS	{\n"
@@ -485,6 +494,9 @@ static const char* nmodl_file_text =
   "\n"
   "PARAMETER	{\n"
   "	gSKv3_1bar = 0.00001 (S/cm2) \n"
+  "	vtau = 18.700\n"
+  "	vinf = -46.560\n"
+  "	mtaumul = 4\n"
   "}\n"
   "\n"
   "ASSIGNED	{\n"
@@ -518,8 +530,8 @@ static const char* nmodl_file_text =
   "\n"
   "PROCEDURE rates(){\n"
   "	UNITSOFF\n"
-  "		mInf =  1/(1+exp(((v -(18.700))/(-9.700))))\n"
-  "		mTau =  0.2*20.000/(1+exp(((v -(-46.560))/(-44.140))))\n"
+  "		mInf =  1/(1+exp(((v -(vtau))/(-9.700))))\n"
+  "		mTau =  mtaumul/(1+exp(((v -(vinf))/(-44.140))))\n"
   "	UNITSON\n"
   "}\n"
   "\n"
