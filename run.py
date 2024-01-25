@@ -205,8 +205,11 @@ def get_random_params(args,model,n=1):
             u = rand[i][j]
             [uLb, uUb] = model.UNIT_RANGES[j]
             pram = base_params['Parameters'].iloc[j]
+
                 
             if(pram=='e_pas_all' or pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all' or pram =='sh_na16' or pram=='sh_na16'):
+
+
                 b_value = (uLb+uUb)/2
                 a_value = (uUb-uLb)/2
                 if(pram in args.exclude or args.def_params):
@@ -998,6 +1001,7 @@ if __name__ == '__main__':
         '--unit-param-lower',nargs='+',type=str, default=None, required=False,
         help='Specify the range for sampling of each params - Lower Bound'
     )
+
     parser.add_argument('--unit-params-csv', type=str, required=False, default=None,
                         help='CSV to get unit parameter ranges for parameter variation')
     
@@ -1006,9 +1010,7 @@ if __name__ == '__main__':
         '--default-base',action='store_true', default=False,
         help='To be used with create_params, should be used while using default values'
     )
-    parser.add_argument('--unit-params-csv', type=str, required=False, default=None,
-                        help='CSV to get unit parameter ranges for parameter variation')
-    
+
 
     args = parser.parse_args()
 
