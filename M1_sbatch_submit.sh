@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH -N 8
-#SBATCH -t 30:00
-#SBATCH -q debug
+#SBATCH -t 11:30:00
+#SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
@@ -17,7 +17,7 @@ module unload craype-hugepages2M
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/Feb24Nrow/
+OUT_DIR=/pscratch/sd/k/ktub1999/Jan23Paper/
 # simu run in the dir where  Slurm job was started
 model='M1_TTPC_NA_HH'
 # rm -rf ./x86_64
@@ -145,8 +145,8 @@ do
 	
         args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --unit-param-lower $param_lb --unit-param-upper $param_ub \
-          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude dend_na12 node_na axon_HVA"
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  --unit-params-csv unit_params.csv \
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude sh_na12 cm_all e_pas_all"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         

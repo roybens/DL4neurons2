@@ -383,13 +383,13 @@ class BBPExcV2(BBP):
         [-1,+1],
         [-1,+1],
         [-1,+1],
+        [0.5,1.8],
         [-1,+1],
         [-1,+1],
         [-1,+1],
         [-1,+1],
-        [-1,+1],
-        [-1,+1],
-        [-1,+1]]
+        [0.5,1.8],
+        [-65,-85]]
     
     UNIT_PARAMS =[
         [0,1],
@@ -858,10 +858,20 @@ class M1_TTPC_NA_HH(BaseModel):
             'dend_k',
             'dend_Ih',
             'gpas_all',
-            'cm_all'
+            'sh_na12',
+            'sh_na16',
+            'cm_all',
+            'e_pas_all'
         )
     CLONED_PARAMS={
-        'soma_Ih' : 'dend_Ih'
+        'soma_Ih' : 'dend_Ih',
+        'axon_sh_na12' : 'sh_na12',
+        'axon_sh_na16' : 'sh_na16',
+        'soma_sh_na12' : 'sh_na12',
+        'soma_sh_na16' : 'sh_na16',
+        'dend_sh_na12' : 'sh_na12',
+        'dend_sh_na16' : 'sh_na16'
+
     }
     DEFAULT_PARAMS = (
         0.006,
@@ -882,8 +892,11 @@ class M1_TTPC_NA_HH(BaseModel):
         0.0840,
         0.004226,
         0.00008,
+        8,
+        8,
         0.0000300,
-        1 
+        1,
+        -75
      )
     #DUMMY Ranges
     PARAM_RANGES = (
@@ -905,7 +918,10 @@ class M1_TTPC_NA_HH(BaseModel):
         (3.3E-05,6.9E-02),
         (3.0E-07,3.0E-03),
         (0.000008,0.0008),
+        (1,16),
+        (1,16),
         (0.5,3),
+        (-100,-50),
         (-100,-50))
     
     UNIT_RANGES = [
@@ -928,9 +944,15 @@ class M1_TTPC_NA_HH(BaseModel):
         [-1,+1],
         [-1,+1],
         [-1,+1],
-        [0.5,1.8]]
+        [-1,+1],
+        [-1,+1],
+        [0.5,1.8],
+        [-65,-85]]
     
     UNIT_PARAMS =[
+        [0,1],
+        [0,1],
+        [0,1],
         [0,1],
         [0,1],
         [0,1],

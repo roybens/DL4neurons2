@@ -113,6 +113,22 @@ def report_random_params(args, params, model):
         if param == float('inf'):
             log.debug("Using random values for '{}'".format(name))
 
+def get_included(args):
+    cell_count=0
+    if(args.cell_count):
+        cell_count=args.cell_count
+    if(args.model == "BBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
+    elif(args.model =="M1_TTPC_NA_HH"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(cell_count))+".csv")
+    params=list(base_params["Parameters"])
+    included_index=[]
+    for i in range(len(params)):
+        if(params[i] not in args.exclude):
+            included_index.append(i)
+    return included_index
+
+
 def get_ranges(args,model):
     return model.UNIT_RANGES
 
@@ -189,15 +205,11 @@ def get_random_params(args,model,n=1):
             u = rand[i][j]
             [uLb, uUb] = model.UNIT_RANGES[j]
             pram = base_params['Parameters'].iloc[j]
-            if(pram=='e_pas_all'):
-                b_value = (uLb+uUb)/2
-                a_value = (uUb-uLb)/2
-                if(pram in args.exclude or args.def_params):
-                    curr_phy_res.append(base_params['Values'].iloc[j])
-                    rand[i][j]=0
-                    continue
-                P = b_value + a_value * u
-            if(pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all'):
+
+                
+            if(pram=='e_pas_all' or pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all' or pram =='sh_na16' or pram=='sh_na16'):
+
+
                 b_value = (uLb+uUb)/2
                 a_value = (uUb-uLb)/2
                 if(pram in args.exclude or args.def_params):
@@ -645,6 +657,15 @@ def main(args):
             #param_no has ['param_name','uLb','uUb']    
             model.UNIT_RANGES[param_no]=[float(args.unit_param_lower[param_no]),float(args.unit_param_upper[param_no])]
             # print(model.UNIT_RANGES[param_no])
+    
+    if(args.unit_params_csv!=None):
+        unit_params_lb = pd.read_csv(args.unit_params_csv)['LB']
+        unit_params_ub = pd.read_csv(args.unit_params_csv)['UB']
+        assert len(model.UNIT_RANGES)==len(unit_params_ub),"Unit Prams csv length is wrong"
+        for param_no in range(len(unit_params_ub)):
+            #param_no has ['param_name','uLb','uUb']    
+            model.UNIT_RANGES[param_no]=[float(unit_params_lb[param_no]),float(unit_params_ub[param_no])]
+            # print(model.UNIT_RANGES[param_no])
 
 
 
@@ -803,7 +824,8 @@ def main(args):
         'physParRange':get_ranges(args,model),
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
-        'neuronSimVer': neuron.__version__
+        'neuronSimVer': neuron.__version__,
+        'include': get_included(args)
     }
         write3_data_hdf5(outD,outF,metaD=metadata)
 
@@ -825,7 +847,6 @@ if __name__ == '__main__':
     parser.add_argument('--cori-end', type=int, required=False, default=None, help='end cell')
     parser.add_argument('--cori-csv', type=str, required=False, default=None,
                         help='When running BBP on cori, use SLURM_PROCID to compute m-type and e-type from the given cells csv')
-    
     parser.add_argument('--celsius', type=float, default=34)
     parser.add_argument('--dt', type=float, default=.025)
 
@@ -980,11 +1001,16 @@ if __name__ == '__main__':
         '--unit-param-lower',nargs='+',type=str, default=None, required=False,
         help='Specify the range for sampling of each params - Lower Bound'
     )
+
+    parser.add_argument('--unit-params-csv', type=str, required=False, default=None,
+                        help='CSV to get unit parameter ranges for parameter variation')
+    
     
     parser.add_argument(
         '--default-base',action='store_true', default=False,
         help='To be used with create_params, should be used while using default values'
     )
+
 
     args = parser.parse_args()
 
