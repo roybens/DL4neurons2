@@ -223,7 +223,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 SK_E2 /global/u2/r/roybens/DL4neurons2/modfiles/SK_E2.mod\n");
+ 	ivoc_help("help ?1 SK_E2 /pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/SK_E2.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -486,7 +486,7 @@ _first = 0;
 #endif
 
 #if NMODL_TEXT
-static const char* nmodl_filename = "/global/u2/r/roybens/DL4neurons2/modfiles/SK_E2.mod";
+static const char* nmodl_filename = "/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH/mechanisms/SK_E2.mod";
 static const char* nmodl_file_text = 
   ": SK-type calcium-activated potassium current\n"
   ": Reference : Kohler et al. 1996\n"
