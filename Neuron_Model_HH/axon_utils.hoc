@@ -14,7 +14,14 @@ proc initial_values(){
 	ais_na12		=	5 //3.137968
 	ais_ca = 0.000990
 	ais_KCa = 0.007104
-
+	sh_na12=8
+	sh_na16=8
+	axon_sh_na12=8
+	axon_sh_na16=8
+	soma_sh_na12=8
+	soma_sh_na16=8
+	dend_sh_na12=8
+	dend_sh_na16=8
 
 
 	soma_na16 = soma_na12
@@ -28,6 +35,7 @@ proc initial_values(){
 	cm_all = 1
 	dend_Ih = 0.00008
 	soma_Ih = 0.00008
+	e_pas_all=-75
 }
 
 // modify the axon for Roy's purposes (whole thing)
@@ -47,12 +55,19 @@ proc populate_axon(){
 			gbar_na16mut(0:0.1) = node_na/2:node_na/2
 			gbar_na16(0.1:1) = myelin_na/2:myelin_na/2
 			gbar_na16mut(0.1:1) = myelin_na/2:myelin_na/2
+
+			sh_na12 = axon_sh_na12
+			sh_na12mut = axon_sh_na12
+			sh_na16 = axon_sh_na16
+			sh_na16mut = axon_sh_na16
+
 			gSKv3_1bar_SKv3_1(0:0.1) = axon_K:axon_K
 			gSKv3_1bar_SKv3_1(0.1:1) = myelin_K:myelin_K
 			gK_Pstbar_K_Pst(0:0.1) = axon_KP:axon_KP
 			gK_Pstbar_K_Pst(0.1:1) = axon_KP/10:axon_KP/10
 			gK_Tstbar_K_Tst(0:0.1) = axon_KT:axon_KT
 			gK_Tstbar_K_Tst(0.1:1) = axon_KT/10:axon_KT/10	
+			e_pas = e_pas_all	
 		}
 }
 
@@ -103,6 +118,12 @@ access cell.soma
 	gbar_na16mut = soma_na16/2
 	gSKv3_1bar_SKv3_1 = soma_K
 	gIhbar_Ih = soma_Ih
+	sh_na12 = soma_sh_na12
+	sh_na12mut = soma_sh_na12
+	sh_na16 = soma_sh_na16
+	sh_na16mut = soma_sh_na16
+	cm = cm_all
+	e_pas = e_pas_all
 	//distance(0)
 
 
@@ -118,9 +139,15 @@ forsec cell.apical{
 	gbar_na16mut = dend_na16/2
 	gSKv3_1bar_SKv3_1 = dend_k
 		
+	sh_na12 = dend_sh_na12
+	sh_na12mut = dend_sh_na12
+	sh_na16 = dend_sh_na16
+	sh_na16mut = dend_sh_na16
+	cm = 2*cm_all // dends shoudl have 2x cm compared to soma
+	e_pas = e_pas_all
 	}
 	
-    //Setting Im with a gradient.
+    //Setting Ih with a gradient though all apical sections varying with distance from soma
     sl = cell.apical
     mech = "gIhbar_Ih"
     distfunc = "(-0.869600 + 2.087000*exp((%g-0.000000)*0.003100))*%g"
@@ -133,6 +160,8 @@ forsec cell.apical{
 
 forsec cell.basal{
 	gIhbar_Ih = dend_Ih
+	cm = 2*cm_all // dends shoudl have 2x cm compared to soma
+	e_pas = e_pas_all
 }
 
 }
