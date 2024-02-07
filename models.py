@@ -326,6 +326,93 @@ class BBPInh(BBP):
         'gkbar_KdShu2007_dend',
     )
 
+    UNIT_RANGES=[
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1],
+        [-1,+1]
+
+    ]
+    UNIT_PARAMS=[
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1],
+        [0,1]
+
+    ]
+
+    def init_parameters(self):
+            # print("INITIALIZING PARAMETERS")
+            for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+                for sec in seclist:
+                    if hasattr(sec, name):
+                        #print(f'sec is {sec} name is {name} param_name is {param_name} get_attr is {getattr(self, param_name)}')
+                        #print(self.DEFAULT_PARAMS)
+                        setattr(sec, name, getattr(self, param_name))
+                    else:
+                        log.debug("Not setting {} (absent from this cell)".format(param_name))
+                        continue
+    def _get_rec_pts(self):
+        
+        
+            
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        return self.probes
+
 class BBPExc(BBP):
     PARAM_NAMES = (
         'gNaTs2_tbar_NaTs2_t_apical',
@@ -383,16 +470,15 @@ class BBPExcV2(BBP):
         [-1,+1],
         [-1,+1],
         [-1,+1],
-        [0.5,1.8],
+        [0.5,2],
         [-1,+1],
         [-1,+1],
         [-1,+1],
         [-1,+1],
-        [0.5,1.8],
-        [-65,-85]]
+        [0.5,2],
+        [-85,-65]]
     
     UNIT_PARAMS =[
-        [0,1],
         [0,1],
         [0,1],
         [0,1],
@@ -478,8 +564,10 @@ class BBPExcV2(BBP):
             # print("HI4")
             #This should be taken from probes
             # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-            
-        self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        if(self.m_type=="L5_TTPC1"):
+            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        else:
+            self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         # print(self.probes)
         # print(self.entire_cell)
 

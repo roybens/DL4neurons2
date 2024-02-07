@@ -16,5 +16,6 @@ axon_LVA,0.0004512
 node_na,0.2752364
 soma_K,0.1193942
 dend_k,0.0176729
+dend_Ih,0.000080
 gpas_all,0.0000219
 cm_all,1.4377617

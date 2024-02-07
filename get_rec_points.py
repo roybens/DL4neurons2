@@ -195,7 +195,7 @@ def get_rec_pts_from_distances(hobj,axon_targets = [],dend_targets = []):
     for curr_sec in sec_basal :
         sec_dends.append(sec=curr_sec)
     sec_dends.unique()
-    [distances,axon_dists,dend_dists,] = get_distance(sec_list,sec_dends,sec_axons)
+    [distances,axon_dists,dend_dists,_] = get_distance(sec_list,sec_dends,sec_axons)
     rec_list  = []
     dist_list = []
     for curr_sec in sec_somatic:
@@ -259,8 +259,9 @@ def get_rec_pts_for_M1(hobj,axon_targets = [],dend_targets = []):
     
     for curr_dist in dend_targets:
         [idx,probe_name,probe_dist] = get_probe_from_dist(apical_dists,sec_dends,curr_dist)
-        rec_list.append(probe_name)
-        dist_list.append(probe_dist)
+        if(len(list(probe_name))>0):
+            rec_list.append(probe_name)
+            dist_list.append(probe_dist)
     #print(f'probe names {rec_list} dists {dist_list}')
     return rec_list
 

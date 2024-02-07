@@ -207,7 +207,7 @@ def get_random_params(args,model,n=1):
             pram = base_params['Parameters'].iloc[j]
 
                 
-            if(pram=='e_pas_all' or pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all' or pram =='sh_na16' or pram=='sh_na16'):
+            if(pram=='e_pas_all' or pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all' or pram =='sh_na12' or pram=='sh_na16'):
 
 
                 b_value = (uLb+uUb)/2

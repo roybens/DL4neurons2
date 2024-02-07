@@ -85,7 +85,7 @@ export stimname3=5k0ramp
 export stimname4=5k0chirp
 export stimname5=5k0step_500
 
-export stimname1=CompareTest
+# export stimname1=CompareTest
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -132,10 +132,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2}   --model $model --cell-i ${l} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5}   --model $model --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --num 128  --cori-start ${START_CELL} --cori-end ${END_CELL}  --unit-params-csv unit_params.csv\
           --trivial-parallel --print-every 5 --linear-params-inds 12 17 18 --stim-dc-offset 0 --stim-multiplier 1\
-          --dt 0.1 --param-file /global/homes/k/ktub1999/mainDL4/DL4neurons2/Ptest.csv"
+          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/main/DL4neurons2/M1Def.csv"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 
