@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH -N 5
+#SBATCH -N 4
 #SBATCH -C cpu
 #SBATCH -q debug
 #SBATCH -t 30:00
@@ -10,7 +10,7 @@
 
 echo "Mtype: $1";
 echo "EType: $2";
-nsamp=10
+nsamp=50
 Mtype1=$1
 Etype1=$2
 # Mtype2=$3
@@ -20,11 +20,13 @@ Etype1=$2
 # Mtype2=$3
 # Etype2=$4
 i_cell=0
+nregion=10
+model='newM1'
 #srun -k  -n 640  shifter python3 -u analysis_data_copy_2.py  $Mtype $Etype $i_cell $nsamp&
-while [ $i_cell -ne 5 ]
+while [ $i_cell -ne 1 ]
 do
-    echo "srun -k  -n 128 --exclusive shifter python3 -u generate_analysis_data_copy.py  $Mtype $Etype $i_cell $nsamp"
-    srun -k  -n 128  shifter python3 -u analysis_data_copy_2.py  $Mtype1 $Etype1 $i_cell $nsamp&
+    echo "srun -k  -n 128 --exclusive shifter python3 -u generate_analysis_data.py  $Mtype $Etype $i_cell $nsamp"
+    srun -k  -n 128  shifter python3 -u ./sensitivity_analysis/generate_analysis_data.py  $Mtype1 $Etype1 $i_cell $nsamp $nregion $model 
     # srun -k  -n 128  shifter python3 -u analysis_data_copy_2.py  $Mtype2 $Etype2 $i_cell $nsamp&
     i_cell=$(($i_cell+1))
 done

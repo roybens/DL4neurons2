@@ -1,8 +1,8 @@
 #!/bin/bash -l
-#SBATCH -N 1
-#SBATCH -t 30:00
-#SBATCH -q debug
-#SBATCH -J DL4N_full_prod
+#SBATCH -N 8
+#SBATCH -t 1:30:00
+#SBATCH -q regular
+#SBATCH -J newBBP_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
@@ -17,10 +17,10 @@ module unload craype-hugepages2M
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/Feb13Figure2Data/
+OUT_DIR=/pscratch/sd/k/ktub1999/Jan24PaperData/
 # simu run in the dir where  Slurm job was started
-model='BBP'
-# rm -rf ./x86_64
+model='newBBP'
+
 # if [ "$model" = "M1_TTPC_NA_HH" ]; then
 #     shifter nrnivmodl ./Neuron_Model_HH/mechanisms
 # else
@@ -40,7 +40,7 @@ echo "START_CELL" ${START_CELL}
 echo "NCELLS" ${NCELLS}
 echo "END_CELL" ${END_CELL}
 
-export THREADS_PER_NODE=1
+export THREADS_PER_NODE=128
 
 # to prevent: H5-write error: unable to lock file, errno = 524
 export HDF5_USE_FILE_LOCKING=FALSE
@@ -75,21 +75,20 @@ date
 echo "Done making outdirs at" `date`
 
 
-export stimname1=5kRamp8pA
+export stimname1=5k0chaotic5A
 export stimname2=5k0step_200
 export stimname3=5k0ramp
 export stimname4=5k0chirp
 export stimname5=5k0step_500
 export stimname6=5k50kInterChaoticB
 export stimname7=5k0chaotic5B
-export stimname8=5k0chaotic5A
 # export stimname1=5k50kInterChaoticB
 # export stimname2=5k0chirpScaled
 # export stimname3=5k0rampScaled
 # export stimname4=5kChaoticRamp
 # export stimname5=5k0chaotic5C
 
-# export stimname1=5k50kInterChaoticB
+export stimname1=5k50kInterChaoticB
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
@@ -99,7 +98,6 @@ stimfile5=stims/${stimname5}.csv
 # stimfile5=stims/${stimname5}.csv
 stimfile6=stims/${stimname6}.csv
 stimfile7=stims/${stimname7}.csv
-stimname8=stims/${stimname8}.csv
 echo
 env | grep SLURM
 echo
@@ -140,10 +138,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile7} ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile8}  --model $model \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  \
-          --dt 0.1  --cell-count 0 --default-base"
+          --dt 0.1  --cell-count $cell_count  --default-base --stim-dc-offset 0 --stim-multiplier 1"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         

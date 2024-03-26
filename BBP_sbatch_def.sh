@@ -55,7 +55,7 @@ do
     done
 done
 ##MPT
-mType=L5_TTPC1
+mType=L6_TPC_L1
 eType=cADpyr
 # cell_name=$mType
 # cell_name+=$eType
@@ -71,19 +71,23 @@ date
 
 echo "Done making outdirs at" `date`
 
-export stimname1=5k0chaotic_kevinA
-export stimname2=5k0chaotic_kevinB
+export stimname1=5kRamp8pA
+export stimname2=5k0step_200
 export stimname3=5k0ramp
 export stimname4=5k0chirp
 export stimname5=5k0step_500
-
-export stimname1=5k50kInterChaoticB
+export stimname6=5k50kInterChaoticB
+export stimname7=5k0chaotic5B
+export stimname8=5k0chaotic5A
 
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
 stimfile3=stims/${stimname3}.csv
 stimfile4=stims/${stimname4}.csv
 stimfile5=stims/${stimname5}.csv
+stimfile6=stims/${stimname6}.csv
+stimfile7=stims/${stimname7}.csv
+stimfile8=stims/${stimname8}.csv
 echo
 env | grep SLURM
 echo
@@ -94,7 +98,7 @@ echo "STIM FILE" $stimfile
 echo "SLURM_NODEID" ${SLURM_NODEID}
 echo "SLURM_PROCID" ${SLURM_PROCID}
 numParamSets=10
-REMOTE_CELLS_FILE='/pscratch/sd/k/ktub1999/main/DL4neurons2/testcell.csv'
+REMOTE_CELLS_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv'
 PARAM_VALUE_FILE='/global/homes/k/ktub1999/plots/Exp_Data/temp_param.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
@@ -115,10 +119,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-$j-c${adjustedval}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} --model BBP --cell-i ${l} \
+        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile7} ${stimfile8} --model BBP --cell-i ${l} \
           --cori-csv ${REMOTE_CELLS_FILE} --num 11  --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --print-every 5 --linear-params-inds 12 17 18 --stim-dc-offset 0 --stim-multiplier 1\
-          --dt 0.1 --param-file /pscratch/sd/k/ktub1999/tmp_neuInv/bbp3/L5_TTPC1cADpyr0/10024729/temp_param_min-1+1.csv"
+          --dt 0.1 --param-file /global/homes/k/ktub1999/mainDL4/DL4neurons2/bbpDef.csv"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
 

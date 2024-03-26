@@ -74,6 +74,14 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         #     model.create_cell_multi() # THE Change has been overwritten :|
         model.create_cell()
         return model
+    elif model =='newBBP':
+        model = models.newExcBBP(m_type, e_type, cell_i, *params, log=log)
+        model.create_cell()
+    elif model =='newM1':
+        mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/newM1hocs"
+        model = models.NewM1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params, log=log)
+        model.create_cell()
+        return model
     elif model == 'M1_TTPC_NA_HH':
         mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/Neuron_Model_HH"
         model = models.M1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params)
@@ -121,6 +129,10 @@ def get_included(args):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
     elif(args.model =="M1_TTPC_NA_HH"):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(cell_count))+".csv")
+    elif(args.model =="newBBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(cell_count))+".csv")
+    elif(args.model =="newM1"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(cell_count))+".csv")
     params=list(base_params["Parameters"])
     included_index=[]
     for i in range(len(params)):
@@ -187,6 +199,10 @@ def get_random_params(args,model,n=1):
     elif(args.model =="M1_TTPC_NA_HH"):
         #SAVE as CSV xander 4
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+    elif(args.model=="newBBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
+    elif(args.model =="newM1"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(count_cell))+".csv")
     # base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     
     #for each sample
@@ -628,7 +644,7 @@ def main(args):
         args.outfile = args.outfile.replace('{BBP_NAME}', bbp_name)
         #args.metadata_file = args.metadata_file.replace('{BBP_NAME}', bbp_name)
     f = open(os.devnull, 'w')
-    sys.stdout = f
+    # sys.stdout = f
     model = get_model(args.model, log, args.m_type, args.e_type, args.cell_i,args.init_cell)
     sys.stdout = sys.__stdout__
 

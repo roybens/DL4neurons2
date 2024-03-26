@@ -7,8 +7,10 @@ IFS=','
 
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 count=1
-numSamples=500
+numSamples=250
 export PYTHONPATH=""
+rm -rf ./x86_64
+shifter --image=balewski/ubu20-neuron8:v5  nrnivmodl ./Neuron_Model_HH/mechanisms
 # Make a copy of run.py to where we are running
 while read name mtype etype
 do

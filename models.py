@@ -113,9 +113,11 @@ class BaseModel(object):
         #self.hoc_vectors = self.attach_recordings(ntimepts)
 
         h.dt=dt
+        
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
         h.finitialize()
+        h.v_init = v_init
         # print(self.hoc_vectors)
         
 
@@ -564,15 +566,380 @@ class BBPExcV2(BBP):
             # print("HI4")
             #This should be taken from probes
             # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-        if(self.m_type=="L5_TTPC1"):
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-        else:
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # if(self.m_type=="L5_TTPC1"):
+        #     self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # else:
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         # print(self.probes)
         # print(self.entire_cell)
 
         return self.probes
+
+class newExcBBP(BBPExcV2):
+    PARAM_NAMES =(
+            'gSK_E2bar_SK_E2_somatic',
+            'gK_Tstbar_K_Tst_somatic',
+            'gamma_CaDynamics_DC0_axonal',
+            'gamma_CaDynamics_DC0_apical',
+            'gCa_LVAstbar_Ca_LVAst_somatic',
+            'gNaTgbar_NaTg_apical',
+            'gNaTgbar_NaTg_axonal',
+            'gCa_HVAbar_Ca_HVA2_apical',
+            'gCa_LVAstbar_Ca_LVAst_dend',
+            'gK_Tstbar_K_Tst_axonal',
+            'gCa_LVAstbar_Ca_LVAst_apical',
+            'gCa_LVAstbar_Ca_LVAst_axonal',
+            'gSK_E2bar_SK_E2_axonal',
+            'gNaTgbar_NaTg_somatic',
+            'gamma_CaDynamics_DC0_somatic',
+            'gSKv3_1bar_SKv3_1_somatic',
+            'gamma_CaDynamics_DC0_dend',
+            'g_pas_all',
+            'gK_Pstbar_K_Pst_somatic',
+            'gCa_HVAbar_Ca_HVA2_somatic',
+            'gCa_HVAbar_Ca_HVA2_dend',
+            'gK_Pstbar_K_Pst_axonal',
+            'gIhbar_Ih_dend',
+            'gCa_HVAbar_Ca_HVA2_axonal',
+            'decay_CaDynamics_DC0_axonal',
+            'e_pas_all',
+            'gNap_Et2bar_Nap_Et2_axonal',
+            'gIhbar_Ih_somatic',
+            'gIhbar_Ih_apical',
+            'decay_CaDynamics_DC0_somatic',
+            'gSKv3_1bar_SKv3_1_apical',
+            'gSKv3_1bar_SKv3_1_axonal'
+        )
+       
+    UNIT_RANGES =[
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1],
+            [-1,1]
+        ]
+    
+    UNIT_PARAMS =[
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1],
+            [0,1]
+    ]
+    CLONED_PARAMS = {}
+    def create_cell(self):
+        #print('creating BBPExcV2')
+        h.load_file("nrngui.hoc")
+        h.load_file("import3d.hoc")
+        h.load_file("./newBBPhocs/constants.hoc")
+        h.load_file("./newBBPhocs/template.hoc")
+        template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
+        cell = getattr(h, template_name)(0)
+        self.entire_cell = cell
+        #DUMMY RANGES FOR NOW
+        self.PARAM_RANGES = (        
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+                (-100,-50),
+        )
+        self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+#             default = getattr(seclist[0], name, -1)
+            default = -1
+            if len(seclist) != 0:
+                default = getattr(seclist[0], name, -1)
+            self.DEFAULT_PARAMS.append(default)
+            self.PARAM_RANGES.append((default/10.0, default*10.0) if default != -1 else (0, 0))
+        self.DEFAULT_PARAMS = tuple(self.DEFAULT_PARAMS)
+        self.PARAM_RANGES = tuple(self.PARAM_RANGES)
+        return cell.soma[0]
+
+    def _get_rec_pts(self):
+        hobj = self.entire_cell
+        sec_somatic = hobj.somatic
+        rec_list  = []
+        for curr_sec in sec_somatic:
+            rec_list.append(curr_sec)
+        self.probes =  list(OrderedDict.fromkeys(rec_list))
+
+        #if not hasattr(self, 'probes'):
+        # 
+            # print("HI4")
+            #This should be taken from probes
+            # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # if(self.m_type=="L5_TTPC1"):
+        #     self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # else:
+        #     self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # print(self.probes)
+        # print(self.entire_cell)
+
+        return self.probes
+    def apply_decay_distr(self,sec_list, param, base_value, constant):
+        for sec in sec_list:
+            for seg in sec:
+                dist = h.distance(seg.x, sec=sec)
+                new_value = np.exp(dist * constant) * base_value
+                # cmd = f'{param}_distribute(seg.x) = {new_value}'
+                setattr(seg,param,new_value)
+                # h(seg.x, sec=sec)  # Set the context to the current segment
+                # exec(cmd)
+    def distribute(self,sec_list, mech, value):
+        for sec in sec_list:
+            for seg in sec:
+                dist = h.distance(seg.x, sec=sec)
+                new_value = (-0.869600 + 2.087000*np.exp((dist-0.000000)*4.9710877962221885e-06))*value
+                
+                setattr(seg,mech,new_value)
+                # cmd = f'{mech}({seg.x}).{dist_func} = {eval(dist_func)}'
+                # exec(cmd)
+
+    def init_parameters(self):
+            # print("INITIALIZING PARAMETERS")
+            for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+                for sec in seclist:
+                    if hasattr(sec, name):
+                        #print(f'sec is {sec} name is {name} param_name is {param_name} get_attr is {getattr(self, param_name)}')
+                        #print(self.DEFAULT_PARAMS)
+                        setattr(sec, name, getattr(self, param_name))
+                    else:
+                        log.debug("Not setting {} (absent from this cell)".format(param_name))
+                        continue
+            self.apply_decay_distr(self.entire_cell.apical,'gNaTgbar_NaTg',getattr(self, 'gNaTgbar_NaTg_apical'),-0.004532524861)
+            self.distribute(self.entire_cell.apical,'gIhbar_Ih',4.9710877962221885e-06)
+
+
+class NewM1_TTPC_NA_HH(BBPExcV2):
+
+    #udpated param names, ranges etc
+    #change hoc with new params
+    #change create cell.
+    
+    #Two params. Direct update
+    #2. Update Thorugh M1.
+    PARAM_NAMES = (
+    'dend_na12'	,
+    'soma_na12'	,
+    'ais_na12'	,
+    'dend_na16'	,
+    'soma_na16'	,
+    'ais_na16'	,
+    'ais_ca'	,
+    'ais_KCa'	,
+    'axon_KP'	,
+    'axon_KT'	,
+    'axon_K'	,
+    'axon_KCA'	,
+    'axon_HVA'	,
+    'axon_LVA'	,
+    'node_na'	,
+    'soma_K'	,
+    'dend_k'	,
+    'dend_Ih'	,
+    'gpas_all'	,
+    'sh_na12'	,
+    'sh_na16'	,
+    'cm_all'	,
+    'e_pas_all'	,
+    'gSK_E2bar_SK_E2_somatic'	,
+    'gK_Tstbar_K_Tst_somatic'	,
+    'gamma_CaDynamics_DC0_axonal'	,
+    'gamma_CaDynamics_DC0_apical'	,
+    'gCa_LVAstbar_Ca_LVAst_somatic'	,
+    'gCa_HVAbar_Ca_HVA2_apical'	,
+    'gCa_LVAstbar_Ca_LVAst_dend'	,
+    'gCa_LVAstbar_Ca_LVAst_apical'	,
+    'gamma_CaDynamics_DC0_somatic'	,
+    'gamma_CaDynamics_DC0_dend'	,
+    'gK_Pstbar_K_Pst_somatic'	,
+    'gCa_HVAbar_Ca_HVA2_somatic'	,
+    'gCa_HVAbar_Ca_HVA2_dend'	,
+    'decay_CaDynamics_DC0_axonal'	,
+    'decay_CaDynamics_DC0_somatic'	,
+    'gSKv3_1bar_SKv3_1_axonal'
+    )
+    
+    UNIT_RANGES = []
+
+    UNIT_PARAMS = []
+
+    CLONED_PARAMS={}
+
+    def __init__(self,mod_dir, m_type, e_type, cell_i, *args, **kwargs):
+        self.mod_dir = mod_dir
+        for i in range(len(self.PARAM_NAMES)):
+            self.UNIT_PARAMS.append([0,1])
+            if(self.PARAM_NAMES[i]=='e_pas_all'):
+                self.UNIT_RANGES.append([-85,-65])
+            elif('cm' in self.PARAM_NAMES[i]):
+                self.UNIT_RANGES.append([0.5,2])
+            else:
+                self.UNIT_RANGES.append([-1,+1])
+        super(NewM1_TTPC_NA_HH, self).__init__(m_type, e_type, cell_i, *args, **kwargs)
+
+    def iter_name_sec_param_name_seclist(self):
+        """
+        The param_names for the BBP model are <parameter>_<section>
+        This yields (<parameter>, <section>, <parameter>_<section>, seclist) for each
+        where seclist is a Python list of the Neuron segments in that section
+        """
+        for name, sec, param_name in self.iter_name_sec_param_name():
+            if sec == 'apical':
+                seclist = list(self.entire_cell.apical)
+            elif sec == 'basal':
+                seclist = list(self.entire_cell.basal)
+            elif sec == 'dend':
+                seclist = list(self.entire_cell.basal) + list(self.entire_cell.apical)
+            elif sec == 'somatic':
+                seclist = list(self.entire_cell.somatic)
+            elif sec == 'axonal':
+                seclist = list(self.entire_cell.axonal)
+            # elif sec == 'all':
+            #     seclist = list(self.entire_cell.all)
+            else:
+                #For setting M1 Values
+                seclist = [h]
+                name = param_name
+            yield name, sec, param_name, seclist
+
+
+    def create_cell(self):
+        h.load_file("nrngui.hoc")
+        h.load_file("import3d.hoc")
+        h.load_file("./newM1hocs/constants.hoc")
+        h.load_file("./newM1hocs/template.hoc")
+        template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
         
+        h("objref cell")
+
+        h.cell = getattr(h, template_name)(0)
+        self.entire_cell = h.cell
+        
+        #M1 Ion Channels
+        add_m1 = os.path.join(self.mod_dir,"addm1.hoc")
+        h.load_file(add_m1)
+        h.add_m1()
+        #M1 Ais
+        # self.plot_Ih("before")
+        axon_utils = os.path.join(self.mod_dir,"axon_utils_newM1.hoc")        
+        h.load_file(axon_utils)
+
+        h.naked_axon_na = 0.0196791 #h.naked_axon_na = h.soma_na16/5
+        h.navshift = -10
+        h.myelin_na = 0.0196791 #h.myelin_na = h.naked_axon_na
+        h.myelin_K = 0.303472
+        h.myelin_scale = 10
+
+        h.fcurrent()
+        h.working()
+        h.finitialize()
+
+        self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+#             default = getattr(seclist[0], name, -1)
+            default = -1
+            if len(seclist) != 0:
+                default = getattr(seclist[0], name, -1)
+            self.DEFAULT_PARAMS.append(default)
+            self.PARAM_RANGES.append((default/10.0, default*10.0) if default != -1 else (0, 0))
+        self.DEFAULT_PARAMS = tuple(self.DEFAULT_PARAMS)
+        self.PARAM_RANGES = tuple(self.PARAM_RANGES)
+
+        return h.cell.soma[0]
+    
+    def init_parameters(self):
+        super(NewM1_TTPC_NA_HH,self).init_parameters()
+
+        h.cell= self.entire_cell
+        h.working()
+        # self.plot_Ih("after")
+        h.cell = self.entire_cell.soma[0]
+
+    
+
+
 
 class Mainen(BaseModel):
     PARAM_NAMES = (
@@ -1305,7 +1672,9 @@ MODELS_BY_NAME = {
     'hh_two_dend_10param': HHTwoDend10ParamLatched,
     'mainen': Mainen,
     'BBP': BBP,
-    'M1_TTPC_NA_HH':M1_TTPC_NA_HH
+    'newBBP':newExcBBP,
+    'M1_TTPC_NA_HH':M1_TTPC_NA_HH,
+    'newM1':NewM1_TTPC_NA_HH
 }
 
 
