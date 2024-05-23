@@ -115,7 +115,8 @@ class BaseModel(object):
         h.dt=dt
         self.stimvals = h.Vector().from_python(stim)
         self.stimvals.play("{} = $1".format(self.stim_variable_str), h.dt)
-        h.finitialize()
+        h.finitialize(v_init)
+        # h.v_init = v_init
         # print(self.hoc_vectors)
         
 
@@ -564,10 +565,8 @@ class BBPExcV2(BBP):
             # print("HI4")
             #This should be taken from probes
             # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-        if(self.m_type=="L5_TTPC1"):
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
-        else:
-            self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         # print(self.probes)
         # print(self.entire_cell)
 

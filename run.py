@@ -113,15 +113,16 @@ def report_random_params(args, params, model):
         if param == float('inf'):
             log.debug("Using random values for '{}'".format(name))
 
-def get_included(args):
+def get_included(args,model):
     cell_count=0
-    if(args.cell_count):
-        cell_count=args.cell_count
-    if(args.model == "BBP"):
-        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
-    elif(args.model =="M1_TTPC_NA_HH"):
-        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(cell_count))+".csv")
-    params=list(base_params["Parameters"])
+    # if(args.cell_count):
+    #     cell_count=args.cell_count
+    # if(args.model == "BBP"):
+    #     base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(cell_count))+".csv")
+    # elif(args.model =="M1_TTPC_NA_HH"):
+    #     base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(cell_count))+".csv")
+    params=model.PARAM_NAMES
+    # params=list(base_params["Parameters"])
     included_index=[]
     for i in range(len(params)):
         if(params[i] not in args.exclude):
@@ -553,12 +554,14 @@ def template_present(cellName,i_cell=0):
     return True
 
 def get_init_volts(args,model,simTime,dt):
+    # init_counter=args.init_counter
     # fig = plt.figure()
     stim = np.zeros(int(simTime/dt))
     data = model.simulate(stim, dt)
     Data = data[list(data.keys())[0]]
     # plt.plot(Data)
-    # plt.savefig("/global/homes/k/ktub1999/mainDL4/DL4neurons2/NewBasePlots/init.png")
+    # plt.savefig("init"+str(init_counter)+".png")
+    # init_counter+=1
     v_init= np.median(Data[150:])
     # f = open("Vinits.txt", "a")
     # f.write(args.m_type+args.e_type+str(model.cell_i)+":"+str(v_init)+"\n")
@@ -725,7 +728,7 @@ def main(args):
     
 
 
-    
+    # args.init_counter=0
     for iSamp, params in enumerate(paramsets):
         # print(type(os.environ['SLURM_PROCID']),"ProcID")
         if(os.environ['SLURM_PROCID']=="0" and iSamp%100==0):
@@ -743,7 +746,9 @@ def main(args):
         
         model._set_self_params(*params)
         model.init_parameters()
+        
         v_init = get_init_volts(args,model,500,2)
+        # args.init_counter+=1
         # v_init=-74
         #print(f'printing buf {buf}, printing shape{buf.shape}')
         for stim_idx in range(len(args.stim_file)):
@@ -825,7 +830,7 @@ def main(args):
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
         'neuronSimVer': neuron.__version__,
-        'include': get_included(args)
+        'include': get_included(args,model)
     }
         write3_data_hdf5(outD,outF,metaD=metadata)
 
