@@ -12,20 +12,22 @@ INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv
 OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
-nsamp=10
+nsamp=50
+nregions=10
+model_name='newM1'
 count=1
 while read name mtype etype
 do
     if [[ $count -gt 0 ]]; then
         i_cell=0
-        while [ $i_cell -ne 5 ]
+        while [ $i_cell -ne 1 ]
         do
         # echo "Name : $name"
         #Data Generation
         # args=" $mtype $etype $nsamp"
         # line=" -n 1  shifter python3 -u generate_analysis_data_copy.py $args"
         # echo $line
-            srun -k  -n 1  shifter python3 -u analyze_sensitivity_copy.py $mtype $etype $i_cell&
+            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name &
             i_cell=$(($i_cell+1))
         done   
     fi

@@ -8,7 +8,7 @@ Analyze the sensitivity pkl files created by generate_analysis_data for all the 
 
 """
 import sys
-sys.path.insert(1, '../DL4neurons/')
+sys.path.insert(1, '../DL4neurons2/')
 from run import get_model
 import logging as log
 import models
@@ -22,7 +22,7 @@ import random
 import ruamel.yaml as yaml
 import sys
 import csv
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic4.csv'
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0chaotic5B.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.1*i for i in range(len(stim))]
@@ -223,7 +223,8 @@ def test_sensitivity_regions(files_loc,my_model,nregions):
                         all_volts[curr_region] = all_volts[curr_region] + curr_volts[curr_region]
             else:
                 print(f'{fn} is empty!')
-        if len(all_volts[3])>0:
+        # if len(all_volts[3])>0:
+        if True:
                 curr_errs_regions = check_param_sensitivity_regions(all_volts,adjusted_param,files_loc,nregions)
                 for i in range(nregions):
                     all_ECDS = all_ECDS_regions[i]
@@ -546,17 +547,20 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
 #     else:
 #         analyze_ecds_no_ML(ECDS,def_vals,files_loc)
 def main_regions():
-    nregions = 6
+    
     short_name = None
     m_type = sys.argv[1]
     e_type = sys.argv[2]
     i_cell = sys.argv[3]
+    nregions = int(sys.argv[4])
+    global model_name
+    model_name = sys.argv[5]
     try:
         short_name = sys.argv[4]
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana7/' + m_type + '_' + e_type + '_' + i_cell + '/'
+    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana_NewM1_smChaotic/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')
@@ -564,13 +568,13 @@ def main_regions():
             myfile.write(f'abc {m_type} {e_type}')
         return;
        
-    my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
+    my_model = get_model(model_name,log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
     def_vals = my_model.DEFAULT_PARAMS
     
     ECDS = test_sensitivity_regions(files_loc,my_model,nregions)
     for curr_region in range(nregions):
-        curr_lb = -1 + (curr_region-1)*(3/nregions)
-        curr_ub = -1 + (curr_region)*(3/nregions)
+        curr_lb = -2 + (curr_region)*(0.5)
+        curr_ub = -2 + (curr_region+1)*(0.5)
         curr_region_str = f'region_{curr_lb}_{curr_ub}'
         #print(ECDS[0])
         analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str)

@@ -8,7 +8,12 @@ Created on Wed Dec 11 21:59:43 2019
 
 
 import sys
-sys.path.insert(1, '../DL4neurons/')
+from pathlib import Path
+# sys.path.insert(1, '../DL4neurons2/')
+parent_dir = Path(__file__).resolve().parent.parent
+
+# Append the parent directory to sys.path
+sys.path.append(str(parent_dir))
 
 from run import get_model
 import logging as log
@@ -21,7 +26,7 @@ import itertools
 import pickle as pkl
 import random
 import pandas as pd
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/chaotic4.csv'
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0chaotic5B.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.025*i for i in range(len(stim))]
@@ -42,8 +47,8 @@ def make_paramset(my_model,param_ind,nsamples):
 
 def make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cell):
     def_param_vals = my_model.DEFAULT_PARAMS
-    Mean_param_values=pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams.csv")
-    def_param_vals = Mean_param_values["Values"]
+    # Mean_param_values=pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/MeanParams0.csv")
+    # def_param_vals = Mean_param_values["Values"]
     a_value = 0
     b_value = 1.5
     if(False):    
@@ -59,8 +64,8 @@ def make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cel
     param_sets = []
     range_to_vary = my_model.PARAM_RANGES[param_ind]
     for curr_region in range(nregions):
-        curr_lb = -1 + (curr_region)*(3/nregions)
-        curr_ub = -1 + (curr_region+1)*(3/nregions)
+        curr_lb = -2 + (curr_region)*(0.5)
+        curr_ub = -2 + (curr_region+1)*(0.5)
         curr_param_set = np.array([def_param_vals]*nsamples)
         curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*b_value*np.log(10))
         curr_param_set[:,param_ind] = curr_vals_check
@@ -83,7 +88,7 @@ def get_volts(mtype,etype,param_ind,nsamples):
     return all_volts
 def get_volts_regions(mtype,etype,i_cell,param_ind,nsamples,nregions):
     all_volts = []
-    my_model = get_model('BBP',log,m_type=mtype,e_type=etype,cell_i=int(i_cell)) 
+    my_model = get_model(model_name,log,m_type=mtype,e_type=etype,cell_i=int(i_cell)) 
     my_model.set_attachments(stim,len(stim),0.1)
     param_sets = make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cell)
     param_name = my_model.PARAM_NAMES[param_ind]
@@ -179,14 +184,18 @@ def main_for_all_range():
         
         
 def main_for_divided_range():
-    nregions = 6
+    
     NTHREADS = 128
+    print(sys.argv)
     m_type = sys.argv[1]
     e_type = sys.argv[2]
     i_cell = sys.argv[3]
     nsamples = int(sys.argv[4])
-    
-    files_loc = f'/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana7/{m_type}_{e_type}_{i_cell}/'
+    nregions = int(sys.argv[5])
+    global model_name
+    model_name = sys.argv[6]
+   
+    files_loc = f'/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana_NewM1_smChaotic/{m_type}_{e_type}_{i_cell}/'
     
     try:
         procid = int(os.environ['SLURM_PROCID'])
@@ -208,7 +217,7 @@ def main_for_divided_range():
         return
     os.makedirs(files_loc,exist_ok=True)
     try:
-        my_model = get_model('BBP',log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
+        my_model = get_model(model_name,log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
         
         def_vals = my_model.DEFAULT_PARAMS
         pnames = [my_model.PARAM_NAMES[i] for i in range(len(def_vals)) ]#if def_vals[i]>0]

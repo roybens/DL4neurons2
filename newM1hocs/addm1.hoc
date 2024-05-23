@@ -1,0 +1,64 @@
+proc add_m1(){
+
+	//access cell.soma
+	print "Inserting M1 ion channels"
+    forsec cell.apical{
+        insert na12
+		insert na12mut
+		insert na16
+		insert na16mut
+		gbar_na12 =0
+		gbar_na12mut =0
+		gbar_na16=0
+		gbar_na16mut=0 
+		gbar_NaTs2_t=0
+    }
+	//Inserting for now
+
+
+    forsec cell.somatic{
+        insert na12
+		insert na12mut
+		insert na16
+		insert na16mut
+		gbar_na12 =0
+		gbar_na12mut =0
+		gbar_na16=0
+		gbar_na16mut=0
+    }
+
+    forsec cell.axonal{
+        insert na12
+		insert na12mut
+		insert na16
+		insert na16mut
+		gbar_na12 = 0
+		gbar_na12mut = 0
+		gbar_na16 = 0
+		gbar_na16mut = 0
+    
+    }
+    forsec cell.all {
+		g_pas = 7.120456108418522658e-06
+		//e_pas = -1.354672766109964641e+02
+		e_pas = -100
+		}
+	forsec cell.axonal{
+		gK_Tstbar_K_Tst = 7.057598347931356431e-01
+		gK_Pstbar_K_Pst = 2.995607833249227525e+00
+		gSKv3_1bar_SKv3_1 = 1.795864927118776766e+00 
+		gCa_LVAstbar_Ca_LVAst = 1.376286159287454106e-03
+		gCa_HVAbar_Ca_HVA2 = 1.181439489922307830e-04
+	}
+	forsec cell.somatic{
+		gSKv3_1bar_SKv3_1 = 8.396194779331378477e-02
+		gCa_HVAbar_Ca_HVA2 = 3.124468461012596082e-04
+		gCa_LVAstbar_Ca_LVAst =  1.514478001521781143e-02
+		
+	}
+
+
+}
+//print "Inserting M1 ion channels"
+//access cell
+//add_m1()
