@@ -10,7 +10,7 @@
 
 echo "Mtype: $1";
 echo "EType: $2";
-nsamp=50
+nsamp=10
 Mtype1=$1
 Etype1=$2
 # Mtype2=$3
@@ -20,8 +20,8 @@ Etype1=$2
 # Mtype2=$3
 # Etype2=$4
 i_cell=0
-nregion=10
-model='newM1'
+nregion=1
+model='BBP'
 #srun -k  -n 640  shifter python3 -u analysis_data_copy_2.py  $Mtype $Etype $i_cell $nsamp&
 while [ $i_cell -ne 1 ]
 do
@@ -31,7 +31,7 @@ do
     i_cell=$(($i_cell+1))
 done
 
-wait
+# wait
 
 # while [ $i_cell -ne 6 ]
 # do

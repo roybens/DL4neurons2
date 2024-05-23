@@ -64,8 +64,8 @@ def make_paramset_regions(my_model,param_ind,nsamples,nregions,mtype,etype,i_cel
     param_sets = []
     range_to_vary = my_model.PARAM_RANGES[param_ind]
     for curr_region in range(nregions):
-        curr_lb = -2 + (curr_region)*(0.5)
-        curr_ub = -2 + (curr_region+1)*(0.5)
+        curr_lb = -1 + (curr_region)*(2)
+        curr_ub = -1 + (curr_region+1)*(2)
         curr_param_set = np.array([def_param_vals]*nsamples)
         curr_vals_check=def_param_vals[param_ind]*np.exp(np.random.uniform(curr_lb,curr_ub,size=nsamples)*b_value*np.log(10))
         curr_param_set[:,param_ind] = curr_vals_check
@@ -195,7 +195,7 @@ def main_for_divided_range():
     global model_name
     model_name = sys.argv[6]
    
-    files_loc = f'/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana_NewM1_smChaotic/{m_type}_{e_type}_{i_cell}/'
+    files_loc = f'/global/cfs/cdirs/m2043/roybens/sens_ana/sens_ana_inh_may6/{m_type}_{e_type}_{i_cell}/'
     
     try:
         procid = int(os.environ['SLURM_PROCID'])

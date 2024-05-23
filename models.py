@@ -886,8 +886,10 @@ class NewM1_TTPC_NA_HH(BBPExcV2):
     def create_cell(self):
         h.load_file("nrngui.hoc")
         h.load_file("import3d.hoc")
-        h.load_file("./newM1hocs/constants.hoc")
-        h.load_file("./newM1hocs/template.hoc")
+        constant_h = os.path.join(self.mod_dir,"constants.hoc")
+        h.load_file(constant_h)
+        template_h = os.path.join(self.mod_dir,"template.hoc")
+        h.load_file(template_h)
         template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
         
         h("objref cell")
