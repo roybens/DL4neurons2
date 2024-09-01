@@ -63,16 +63,15 @@ proc init() { local synapses_enabled
 
     // Make sure we start from a clean sheet
 	forall delete_section()
-
+    
     // Load the morphology
     load_morphology()
-
+    
     // Set the number of compartments per section (2 per 40 mum)
     geom_nseg(40)
-
+    
     // Initialise the biophysics 
     biophys()
-
     
     forsec this.all {
         if(diam == 0){
@@ -119,11 +118,12 @@ proc biophys() {localobj bp
     // Initialise distance function to soma
     access soma
     distance()
-
+    
     // Run the biophysics function from the template
     bp = new CustomBiophys()
     bp.biophys(this)
-}
+    
+}   
 
 /** Load the morphology */                                                                             
 proc load_morphology() {localobj m

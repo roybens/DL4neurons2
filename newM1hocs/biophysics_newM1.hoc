@@ -41,13 +41,12 @@ proc distribute(){local x localobj sl
 
 
 proc biophys() {
-
+    
     forsec $o1.all {
         insert pas
 
     }
 
-    
     forsec $o1.somatic {
         insert CaDynamics_DC0
         insert Ca_HVA2
@@ -56,15 +55,14 @@ proc biophys() {
         insert SK_E2
         insert K_Pst
         insert K_Tst
-        insert NaTg 
+        //insert NaTg //include when generalizing?
         insert Ih
          
         
-        ena = 50 // Sodium reversal potential
+        //ena = 50 // Sodium reversal potential
         ek = -90 // Potassium reversal potential
        
     }
-
 
     forsec $o1.axonal {
         insert CaDynamics_DC0
@@ -74,16 +72,15 @@ proc biophys() {
         insert SK_E2
         insert K_Pst
         insert K_Tst
-        insert NaTg
-        insert Nap_Et2
+        //insert NaTg //include when generalizing? for all Excitatory Neurons
+        //insert Nap_Et2  //include when generalizing?
     }
-
 
     forsec $o1.apical {
         insert CaDynamics_DC0
         insert Ca_HVA2
         insert Ca_LVAst
-        insert NaTg
+        //insert NaTg //include when generalizing?
         insert SKv3_1
         insert Ih
 
@@ -126,7 +123,7 @@ forsec $o1.all {
 
 forsec $o1.apical{
     cm = 2
-    ena = 50
+    //ena = 50
     ek = -90
     for (x,0) {
         gamma_CaDynamics_DC0 = 0.04517010601950254 // Updated from JSON
@@ -139,7 +136,7 @@ forsec $o1.apical{
 
 forsec $o1.axonal{
     cm = 1
-    ena = 50
+    //ena = 50
     ek = -90
     for (x,0) {
         gK_Pstbar_K_Pst = 0.9980114074992784 // Updated from JSON
@@ -165,7 +162,7 @@ forsec $o1.basal{
 
 forsec $o1.somatic{
     cm = 1
-    ena = 50
+    //ena = 50
     ek = -90
     for (x,0) {
         gK_Pstbar_K_Pst = 0.10031922891367806 // Updated from JSON
@@ -181,7 +178,7 @@ forsec $o1.somatic{
 }
     distribute($o1.apical,"gIhbar_Ih","(-0.869600 + 2.087000*exp((%g-0.000000)*4.9710877962221885e-06))*4.9710877962221885e-06")
 
-    
+
 
 }
 

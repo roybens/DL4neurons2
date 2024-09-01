@@ -50,18 +50,19 @@ def shorten_param_names(rawMeta):
         outL.append(x)
     return outL
 
-def get_rec_sec(def_volts,adjusted_param):
+def get_rec_sec(def_volts,adjusted_param,probe='soma'):
     probes = list(def_volts.keys())
     rec_sec=adjusted_param
     rec_sec = probes[0]
-    # if 'soma' in adjusted_param:
-    #     rec_sec = probes[0]
-    # if 'apic' in adjusted_param or 'dend' in adjusted_param:
-    #     res = [i for i in probes if 'apic' in i or 'dend' in i]
-    #     rec_sec = res[2]   
-    # if 'axon' in adjusted_param:
-    #     res = [i for i in probes if 'axon' in i]
-    #     rec_sec = res[2]  
+    # print(probes)
+    if 'soma' in probe:
+        rec_sec = probes[0]
+    if 'apic' in probe or 'dend' in probe:
+        res = [i for i in probes if 'apic' in i or 'dend' in i]
+        rec_sec = res[0]   
+    if 'axon' in probe:
+        res = [i for i in probes if 'axon' in i]
+        rec_sec = res[0]  
     dot_ind = rec_sec.find('.')+1
     return rec_sec[dot_ind:],rec_sec[:dot_ind]  
 
@@ -118,12 +119,12 @@ The below function takes in the all Volts which is a 3d array.
 The Difference is computed between the samples. For example if samples = 10, the resultant will be 5 as we are coming the cumulative diff between two samples.
 
 '''
-def check_param_sensitivity_regions(all_volts_regions,adjusted_param,files_loc,nregions):
+def check_param_sensitivity_regions(all_volts_regions,adjusted_param,files_loc,nregions,probe):
     cum_sum_errs_regions = []
     for curr_region in range(nregions): 
         print(f'{adjusted_param} region - {curr_region}')
         all_volts = all_volts_regions[curr_region]
-        def_rec_sec,prefix = get_rec_sec(all_volts[0],adjusted_param)
+        def_rec_sec,prefix = get_rec_sec(all_volts[0],adjusted_param,probe)
          #in probe the first will always be the soma then axon[0] (AIS) then a sec that has mid (0.5) distrance
         #ax1.plot(times,def_volts[:-1],'black')
         volt_debug = []
@@ -138,8 +139,8 @@ def check_param_sensitivity_regions(all_volts_regions,adjusted_param,files_loc,n
             volts1 = all_volts[2*i]
             volts2 = all_volts[2*i + 1]
 
-            curr_rec_sec1,prefix1 = get_rec_sec(volts1,adjusted_param)
-            curr_rec_sec2,prefix2 = get_rec_sec(volts2,adjusted_param)
+            curr_rec_sec1,prefix1 = get_rec_sec(volts1,adjusted_param,probe)
+            curr_rec_sec2,prefix2 = get_rec_sec(volts2,adjusted_param,probe)
             if (curr_rec_sec1 != curr_rec_sec2):
                 print("curr_rec_sec is " + curr_rec_sec1 + 'and curr_rec_sec2  is' + curr_rec_sec2 )
             volts_to_plot1 = volts1.get(prefix1 +def_rec_sec)
@@ -162,7 +163,7 @@ def check_param_sensitivity_regions(all_volts_regions,adjusted_param,files_loc,n
             ax1.set_ylim(-200,+200)
             ax2.title.set_text('error')
             ax3.title.set_text('cum_sum_error')
-            fig_name = f'{adjusted_param}_reg{curr_region}.pdf'
+            fig_name = f'{adjusted_param}_reg{curr_region}+{probe}.pdf'
             fig.savefig(files_loc + fig_name)
         volt_debug = np.array(volt_debug)
         cum_sum_errs_regions.append(cum_sum_errs)
@@ -199,7 +200,7 @@ def test_sensitivity(files_loc,my_model):
         pkl.dump(param_names,output)
     return all_ECDS
 
-def test_sensitivity_regions(files_loc,my_model,nregions):
+def test_sensitivity_regions(files_loc,my_model,nregions,probe):
     old_param_names = my_model.PARAM_NAMES
     param_names = shorten_param_names(old_param_names)
     all_ECDS_regions = []
@@ -225,7 +226,7 @@ def test_sensitivity_regions(files_loc,my_model,nregions):
                 print(f'{fn} is empty!')
         # if len(all_volts[3])>0:
         if True:
-                curr_errs_regions = check_param_sensitivity_regions(all_volts,adjusted_param,files_loc,nregions)
+                curr_errs_regions = check_param_sensitivity_regions(all_volts,adjusted_param,files_loc,nregions,probe)
                 for i in range(nregions):
                     all_ECDS = all_ECDS_regions[i]
                     curr_errs = curr_errs_regions[i]
@@ -233,7 +234,7 @@ def test_sensitivity_regions(files_loc,my_model,nregions):
                     all_ECDS[adjusted_param_new_name]=curr_ECDs
 
     #all_ECDS are not being updated
-    pkl_fn=files_loc + my_model.m_type + my_model.e_type + 'ECDs.pkl'
+    pkl_fn=files_loc + my_model.m_type + my_model.e_type +probe+ 'ECDs.pkl'
     with open(pkl_fn, 'wb') as output:
         pkl.dump(all_ECDS_regions,output)
         pkl.dump(param_names,output)
@@ -393,7 +394,7 @@ def analyze_ecds(ECDS,def_vals,files_loc,ml_results):
    
     return params_sensitivity_dict
 
-def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
+def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region="",probe='soma'):
     ymx = 1000
     threshold = 100
     param_names = list(ECDS.keys())
@@ -435,7 +436,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
         #     pnames_axon.append(param_names[i])
         #     means_axon.append(curr_mean)
         #     STDs_axon.append(curr_std)
-    pkl_fn=files_loc + sys.argv[1] + sys.argv[2] +'mean_std_sensitivity'  + curr_region +  '.pkl'
+    pkl_fn=files_loc + sys.argv[1] + sys.argv[2] +'mean_std_sensitivity'  + curr_region + probe +  '.pkl'
     with open(pkl_fn, 'wb') as output:
         pkl.dump(params_sensitivity_dict,output)
     fig, ((ax_soma,ax_dend),( ax_axon,ax4))= plt.subplots(2,2,figsize=(15,15))
@@ -480,7 +481,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
     ax_dend.set_ylabel('avr/std')
     
     
-    fig_name = sys.argv[1] + sys.argv[2]  + str(nsamples) + 'Analysis_sampling_size' + curr_region +'.pdf'
+    fig_name = sys.argv[1] + sys.argv[2]  + str(nsamples) + 'Analysis_sampling_size' + curr_region+probe +'.pdf'
     fig.savefig(files_loc + fig_name)
     
     fig1, ax = plt.subplots(1,figsize=(15,15))
@@ -500,7 +501,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
     ax.axvline(len(pnames_axon) +len(pnames_soma) + 0.5)
     ax.grid()
     
-    fig_name1 = sys.argv[1] + sys.argv[2]  + str(nsamples) + 'Analysis_sensitivity_threshold' + curr_region  + '.pdf'
+    fig_name1 = sys.argv[1] + sys.argv[2]  + str(nsamples) + 'Analysis_sensitivity_threshold' + curr_region+probe  + '.pdf'
     fig1.savefig(files_loc + fig_name1)
     #plt.show()
     all_means = np.concatenate((means_axon,means_soma,means_dend),axis=None)
@@ -511,7 +512,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region=""):
 #    params_sensitivity_dict_csv['STD_ECD'] = all_STDs
 #    params_sensitivity_dict_csv['Adj_ML_STD'] = raw_ml_stds
     
-    excl_fn=files_loc + 'sensitivity' + curr_region + '_'  + sys.argv[1] + sys.argv[2] + '.csv'
+    excl_fn=files_loc + 'sensitivity' + curr_region + '_'  + sys.argv[1] + sys.argv[2] +probe + '.csv'
     with open(excl_fn, 'w',newline='') as out_file:
         writer = csv.writer(out_file)
         writer.writerow(excl_header)
@@ -555,12 +556,14 @@ def main_regions():
     nregions = int(sys.argv[4])
     global model_name
     model_name = sys.argv[5]
+    probe = sys.argv[6]
+    print("DOUNG FOR Probe",probe)
     try:
         short_name = sys.argv[4]
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sen_ana_NewM1_smChaotic/' + m_type + '_' + e_type + '_' + i_cell + '/'
+    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sens_ana_inh_may6/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')
@@ -571,13 +574,13 @@ def main_regions():
     my_model = get_model(model_name,log,m_type=m_type,e_type=e_type,cell_i=int(i_cell))
     def_vals = my_model.DEFAULT_PARAMS
     
-    ECDS = test_sensitivity_regions(files_loc,my_model,nregions)
+    ECDS = test_sensitivity_regions(files_loc,my_model,nregions,probe)
     for curr_region in range(nregions):
-        curr_lb = -2 + (curr_region)*(0.5)
-        curr_ub = -2 + (curr_region+1)*(0.5)
+        curr_lb = -1 + (curr_region)*(2)
+        curr_ub = -1 + (curr_region+1)*(2)
         curr_region_str = f'region_{curr_lb}_{curr_ub}'
         #print(ECDS[0])
-        analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str)
+        analyze_ecds_no_ML(ECDS[curr_region],def_vals,files_loc,curr_region_str,probe)
     print("Done for ",m_type,e_type,i_cell)
 
     

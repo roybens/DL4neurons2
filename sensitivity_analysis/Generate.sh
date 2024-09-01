@@ -8,13 +8,13 @@
 #SBATCH --image=balewski/ubu20-neuron8:v5
 #SBATCH --array 1-1 #a
 
-INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcell.csv
+INPUT=/global/homes/k/ktub1999/mainDL4/DL4neurons2/testcellInhEtypes.csv
 OLDIFS=$IFS
 IFS=','
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
-nsamp=50
-nregions=10
-model_name='newM1'
+nsamp=10
+nregions=1
+model_name='BBP'
 count=1
 while read name mtype etype
 do
@@ -27,7 +27,11 @@ do
         # args=" $mtype $etype $nsamp"
         # line=" -n 1  shifter python3 -u generate_analysis_data_copy.py $args"
         # echo $line
-            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name &
+            # srun -k  -n 1  shifter python3 -m pdb sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name axon
+            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name soma
+            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name axon
+            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name api
+            srun -k  -n 1  shifter python3 -u ./sensitivity_analysis/analyze_sensitivity.py $mtype $etype $i_cell $nregions $model_name dend
             i_cell=$(($i_cell+1))
         done   
     fi
