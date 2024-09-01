@@ -185,6 +185,29 @@ def get_ranges_old(args):
         res.append([Base,a_value])
     return res
 
+def get_base_values(args,model):
+    count_cell=0
+    if(args.cell_count):
+        count_cell=args.cell_count
+    if(args.model == "BBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+    elif(args.model =="M1_TTPC_NA_HH"):
+        #SAVE as CSV xander 4
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+    elif(args.model=="newBBP"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
+    elif(args.model =="newM1"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(count_cell))+".csv")
+    
+    if(args.base_csv !=None):
+        base_params = pd.read_csv(args.base_csv)
+    
+    if(args.default_base):
+            base_dict={}
+            base_dict['Parameters']=list(model.PARAM_NAMES)
+            base_dict['Values']=list(model.DEFAULT_PARAMS)
+            base_params=pd.DataFrame.from_dict(base_dict)
+    return base_params['Values'].tolist()
 
 def get_random_params(args,model,n=1):
     ndim = len(model.DEFAULT_PARAMS)
@@ -204,6 +227,10 @@ def get_random_params(args,model,n=1):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
     elif(args.model =="newM1"):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(count_cell))+".csv")
+    
+    if(args.base_csv !=None):
+        base_params = pd.read_csv(args.base_csv)
+    
     # base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
     
     #for each sample
@@ -613,6 +640,7 @@ def main(args):
         cori_i = args.cori_start + int(os.environ.get('SLURM_PROCID')) % (args.cori_end - args.cori_start)
         if cori_i == 9:
                 return
+        print(args.cori_csv)
         with open(args.cori_csv, 'r') as infile:
             allcells = csv.reader(infile, delimiter=',')
             for i, row in enumerate(allcells):
@@ -764,6 +792,7 @@ def main(args):
         model.init_parameters()
         
         v_init = get_init_volts(args,model,500,2)
+        print(v_init,"VINIT")
         # args.init_counter+=1
         # v_init=-74
         #print(f'printing buf {buf}, printing shape{buf.shape}')
@@ -846,7 +875,8 @@ def main(args):
         'jobId':os.environ['SLURM_ARRAY_JOB_ID'],
         'stimName': stim_names, 
         'neuronSimVer': neuron.__version__,
-        'include': get_included(args,model)
+        'include': get_included(args,model),
+        'base_values':get_base_values(args,model)
     }
         write3_data_hdf5(outD,outF,metaD=metadata)
 
@@ -1032,6 +1062,9 @@ if __name__ == '__main__':
         help='To be used with create_params, should be used while using default values'
     )
 
+    parser.add_argument('--base-csv', type=str, required=False, default=None,
+                        help='CSV to set custom base values')
+    
 
     args = parser.parse_args()
 
