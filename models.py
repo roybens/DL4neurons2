@@ -180,31 +180,31 @@ class BBP(BaseModel):
         cell_dir = self.cell_kwargs['model_directory']
         log.debug("cell_dir = {}".format(cell_dir))
         template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
-        templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
-        
-        constants = '/'.join([templates_dir, cell_dir, 'constants.hoc'])
+        # templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
+        templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
+        constants = '/'.join([templates_dir, cell_dir,cell_dir, 'constants.hoc'])
         log.debug(constants)
         h.load_file(constants)
 
-        # morpho_template = '/'.join([templates_dir, cell_dir, 'morphology.hoc'])
+        # morpho_template = '/'.join([templates_dir, cell_dir,cell_dir, 'morphology.hoc'])
         # log.debug(morpho_template)
         # h.load_file(morpho_template)
         
-        # biophys_template = '/'.join([templates_dir, cell_dir, 'biophysics.hoc'])
+        # biophys_template = '/'.join([templates_dir, cell_dir,cell_dir, 'biophysics.hoc'])
         # log.debug(biophys_template)
         # h.load_file(biophys_template)
         
-        # synapse_template = '/'.join([templates_dir, cell_dir, 'synapses/synapses.hoc'])
+        # synapse_template = '/'.join([templates_dir, cell_dir,cell_dir, 'synapses/synapses.hoc'])
         # log.debug(synapse_template)
         # h.load_file(synapse_template)
         
-        cell_template = '/'.join([templates_dir, cell_dir, 'template.hoc'])
+        cell_template = '/'.join([templates_dir, cell_dir,cell_dir, 'template.hoc'])
         log.debug(cell_template)
         h.load_file(cell_template)
         
         # For some reason, need to instantiate cell from within the templates directory?
         cwd = os.getcwd()
-        os.chdir(os.path.join(templates_dir, cell_dir))
+        os.chdir(os.path.join(templates_dir, cell_dir,cell_dir))
         
         SYNAPSES, NO_SYNAPSES = 1, 0
         hobj = getattr(h, template_name)(NO_SYNAPSES)
@@ -212,7 +212,7 @@ class BBP(BaseModel):
         # print(self.entire_cell,"Created CELL")
 
         os.chdir(cwd)
-
+        
         # assign self.PARAM_RANGES and self.DEFAULT_PARAMS
         self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
         for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
@@ -567,7 +567,12 @@ class BBPExcV2(BBP):
             #This should be taken from probes
             # self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
         
+        # self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # if(self.m_type=="L5_TTPC1"):
+        #     self.probes = list(OrderedDict.fromkeys(get_rec_pts_from_distances(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        # else:
         self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        
         # print(self.probes)
         # print(self.entire_cell)
 
@@ -1507,6 +1512,7 @@ class M1_TTPC_NA_HH(BaseModel):
 
         templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
         # templates_dir="/global/cfs/cdirs/m2043/hoc_templates/hoc_templates"
+        
 
         constants = '/'.join([templates_dir,cell_dir,cell_dir, 'constants.hoc'])
         log.debug(constants)

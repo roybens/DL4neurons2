@@ -25,6 +25,7 @@ from stimulus import stims, add_stims
 import models
 
 templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
+templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
 
 try:
     from mpi4py import MPI
@@ -37,7 +38,8 @@ except:
     comm = None
     rank = 0
     n_tasks = 1
-    
+    rank = int(os.environ['SLURM_PROCID'])
+    n_tasks = int(os.environ['SLURM_NPROCS'])
 from neuron import h, gui
 
 VOLTS_SCALE = 1
@@ -448,15 +450,19 @@ def get_stim(args,idx):
         
 def get_mpi_idx(args, nsamples):
     if args.trivial_parallel:
-        return 0, args.num
+        return 0, nsamples
     elif args.node_parallel:
         params_per_task = (nsamples // 64) + 1
         task_i = rank % 64
     else:
-        params_per_task = (nsamples // n_tasks) + 1
+        #To divide the csv onto all tasks between all nodes.
+        params_per_task = (nsamples // n_tasks) 
+        if(nsamples%n_tasks!=0):
+            params_per_task+=1
         task_i = rank
     start = params_per_task * task_i
     stop = min(params_per_task * (task_i + 1), nsamples)
+    print("Start Stop RANK",start,stop,rank)
     if args.num:
         stop = min(stop, args.num)
     log.debug("There are {} ranks, so each rank gets {} param sets".format(n_tasks, params_per_task))
@@ -583,7 +589,7 @@ def lock_params(args, paramsets,model):
 def template_present(cellName,i_cell=0):
     
     i_cell = str(int(i_cell)+1)
-    # template_cell = templates_dir+"/"+cellName
+    template_cell = templates_dir+"/"+cellName
     cell_clones =  os.listdir(templates_dir)
     cell_clones =[x for x in cell_clones if cellName in x]
     cell_is=[]
@@ -620,7 +626,7 @@ def main(args):
     tot_time = datetime.now()
     # print(args)
     # args.wide = set(args.wide)
-    if args.trivial_parallel and args.outfile and '{NODEID}' in args.outfile:
+    if args.outfile and '{NODEID}' in args.outfile: #if args.trivial_parallel removed as we dont use without the renaming of files
         args.outfile = args.outfile.replace('{NODEID}', os.environ['SLURM_PROCID'])
 
     if (not args.outfile) and (not args.force) and (args.plot is None) and (not args.create_params):
