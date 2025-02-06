@@ -24,7 +24,7 @@ import ast
 from stimulus import stims, add_stims
 import models
 
-templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
+# templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
 templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
 
 try:
@@ -36,10 +36,13 @@ try:
 except:
     mpi = False
     comm = None
-    rank = 0
-    n_tasks = 1
-    rank = int(os.environ['SLURM_PROCID'])
-    n_tasks = int(os.environ['SLURM_NPROCS'])
+    
+    try:
+        rank = int(os.environ['SLURM_PROCID'])
+        n_tasks = int(os.environ['SLURM_NPROCS'])
+    except KeyError:
+        rank = 0
+        n_tasks = 1
 from neuron import h, gui
 
 VOLTS_SCALE = 1
@@ -192,10 +195,13 @@ def get_base_values(args,model):
     if(args.cell_count):
         count_cell=args.cell_count
     if(args.model == "BBP"):
-        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+        if args.e_type == 'cADpyr':
+                base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+        else:
+                base_params = pd.read_csv("./sensitivity_analysis/NewBase2/InhibitoryMeanParams"+str(int(count_cell))+".csv")
     elif(args.model =="M1_TTPC_NA_HH"):
         #SAVE as CSV xander 4
-        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv") #should also compute for inhibitory for all of these.
     elif(args.model=="newBBP"):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
     elif(args.model =="newM1"):
@@ -221,7 +227,10 @@ def get_random_params(args,model,n=1):
     phy_res=[]
 
     if(args.model == "BBP"):
-        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+        if args.e_type == 'cADpyr':
+            base_params = pd.read_csv("./sensitivity_analysis/NewBase2/MeanParams"+str(int(count_cell))+".csv")
+        else:
+            base_params = pd.read_csv("./sensitivity_analysis/NewBase2/InhibitoryMeanParams"+str(int(count_cell))+".csv")
     elif(args.model =="M1_TTPC_NA_HH"):
         #SAVE as CSV xander 4
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/M1params"+str(int(count_cell))+".csv")

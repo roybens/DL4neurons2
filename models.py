@@ -183,28 +183,31 @@ class BBP(BaseModel):
         # templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
         templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
         constants = '/'.join([templates_dir, cell_dir,cell_dir, 'constants.hoc'])
+        # constants = '/'.join([templates_dir, cell_dir, 'constants.hoc'])
         log.debug(constants)
         h.load_file(constants)
 
-        # morpho_template = '/'.join([templates_dir, cell_dir,cell_dir, 'morphology.hoc'])
-        # log.debug(morpho_template)
-        # h.load_file(morpho_template)
+        morpho_template = '/'.join([templates_dir, cell_dir,cell_dir, 'morphology.hoc'])
+        log.debug(morpho_template)
+        h.load_file(morpho_template)
         
-        # biophys_template = '/'.join([templates_dir, cell_dir,cell_dir, 'biophysics.hoc'])
-        # log.debug(biophys_template)
-        # h.load_file(biophys_template)
+        biophys_template = '/'.join([templates_dir, cell_dir,cell_dir, 'biophysics.hoc'])
+        log.debug(biophys_template)
+        h.load_file(biophys_template)
         
-        # synapse_template = '/'.join([templates_dir, cell_dir,cell_dir, 'synapses/synapses.hoc'])
-        # log.debug(synapse_template)
-        # h.load_file(synapse_template)
+        synapse_template = '/'.join([templates_dir, cell_dir,cell_dir, 'synapses/synapses.hoc'])
+        log.debug(synapse_template)
+        h.load_file(synapse_template)
         
         cell_template = '/'.join([templates_dir, cell_dir,cell_dir, 'template.hoc'])
+        # cell_template = '/'.join([templates_dir, cell_dir, 'template.hoc'])
         log.debug(cell_template)
         h.load_file(cell_template)
         
         # For some reason, need to instantiate cell from within the templates directory?
         cwd = os.getcwd()
         os.chdir(os.path.join(templates_dir, cell_dir,cell_dir))
+        # os.chdir(os.path.join(templates_dir,cell_dir))
         
         SYNAPSES, NO_SYNAPSES = 1, 0
         hobj = getattr(h, template_name)(NO_SYNAPSES)
