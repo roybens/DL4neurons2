@@ -746,6 +746,7 @@ def main(args):
         else:
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
+        upar = np.zeros(shape=paramsets.shape, dtype=np.float32)
         print("Shape of parameters:",paramsets.shape)
         # print("Param Size",paramsets.size)
         # print("Reading from param_file")
