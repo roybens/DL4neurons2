@@ -142,7 +142,7 @@ class BaseModel(object):
 
 class BBP(BaseModel):
     def __init__(self, m_type, e_type, cell_i, *args, **kwargs):
-        with open('cells.json') as infile:
+        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
@@ -1442,12 +1442,14 @@ class M1_TTPC_NA_HH(BaseModel):
     def __init__(self,mod_dir,m_type, e_type, cell_i,*args,**kwargs):
        
         self.mod_dir = mod_dir
-        with open('cells.json') as infile:
+        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
         self.m_type = m_type
         self.cell_i = cell_i
+        print("Available m_types:", cells.keys())
+        print("Available e_types for", m_type, ":", cells.get(m_type, {}).keys())
         self.cell_kwargs = cells[m_type][e_type][cell_i]
         # S, self.DEFAULT_PARAMS = [], []
         super(M1_TTPC_NA_HH, self).__init__(*args, **kwargs)
@@ -1669,6 +1671,120 @@ class M1_TTPC_NA_HH(BaseModel):
                 for sec in self._get_rec_pts()[1:]
             ]
 
+class Na12Model_TF(BBPExcV2):
+    """
+    Template class for integrating a new BBP-style cell model.
+    Inherits from BBPExcV2. 
+    """
+
+    PARAM_NAMES = (
+        'gbar_na12_apical',
+        'gbar_na12mut_apical', 
+        'gbar_na16_apical',
+        'gbar_na16mut_apical',
+        'gbar_na12_somatic',
+        'gbar_na12mut_somatic',
+        'gbar_na16_somatic', 
+        'gbar_na16mut_somatic',
+        'gbar_na12_axonal',
+        'gbar_na12mut_axonal',
+        'gbar_na16_axonal',
+        'gbar_na16mut_axonal',
+        'cm_apical',
+        'cm_basal', 
+        'cm_somatic',
+        'cm_axonal',
+        'Ra_all',
+        'e_pas_all',
+        'g_pas_all'
+    )
+
+    UNIT_RANGES = []
+    UNIT_PARAMS = []
+    CLONED_PARAMS = {}
+
+    def __init__(self, mod_dir, m_type, e_type, cell_i, *args, **kwargs):
+        self.mod_dir = mod_dir
+
+        # Initialize unit ranges and params
+        for i, param in enumerate(self.PARAM_NAMES):
+            self.UNIT_PARAMS.append([0,1])
+            # Default range examples; can be customized per parameter later
+            if 'e_pas' in param:
+                self.UNIT_RANGES.append([-85, -65])
+            elif 'cm' in param:
+                self.UNIT_RANGES.append([0.5, 2])
+            else:
+                self.UNIT_RANGES.append([-1, 1])
+
+        super(Na12Model_TF, self).__init__(m_type, e_type, cell_i, *args, **kwargs)
+
+    def iter_name_sec_param_name_seclist(self):
+        """
+        Yields (parameter, section, full_param_name, seclist) for all parameters.
+        Adjust seclists according to the section type in your template.hoc.
+        """
+        for name, sec, param_name in self.iter_name_sec_param_name():
+            if sec == 'apical':
+                seclist = list(self.entire_cell.apical)
+            elif sec == 'basal':
+                seclist = list(self.entire_cell.basal)
+            elif sec == 'dend':
+                seclist = list(self.entire_cell.basal) + list(self.entire_cell.apical)
+            elif sec == 'somatic':
+                seclist = list(self.entire_cell.soma)
+            elif sec == 'axonal':
+                seclist = list(self.entire_cell.axon)
+            else:
+                seclist = [] 
+            yield name, sec, param_name, seclist
+
+    def create_cell(self):
+        """
+        Load hoc files, instantiate the template, and initialize parameters.
+        """
+        h.load_file("nrngui.hoc")
+        h.load_file("import3d.hoc")
+
+        # Hoc files specific to the model
+        h.load_file(os.path.join(self.mod_dir, "constants.hoc"))
+        # h.load_file(os.path.join(self.mod_dir, "biophysics.hoc"))
+        h.load_file(os.path.join(self.mod_dir, "template.hoc"))
+
+        template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
+        h("objref cell")
+        h.cell = getattr(h, template_name)(0)
+        self.entire_cell = h.cell
+
+        h.load_file(os.path.join(self.mod_dir, "axon_utils.hoc"))
+
+        h.fcurrent()
+        h.working()
+        h.finitialize()
+
+        self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+            default = -1
+            if len(seclist) != 0:
+                default = getattr(seclist[0], name, -1)
+            self.DEFAULT_PARAMS.append(default)
+            self.PARAM_RANGES.append((default/10.0, default*10.0) if default != -1 else (0,0))
+
+        self.DEFAULT_PARAMS = tuple(self.DEFAULT_PARAMS)
+        self.PARAM_RANGES = tuple(self.PARAM_RANGES)
+
+        return h.cell.soma[0]
+
+    def init_parameters(self):
+        """
+        Initialize parameters after cell creation.
+        """
+        super(Na12Model_TF, self).init_parameters()
+        h.cell = self.entire_cell
+        h.working()
+        h.cell = self.entire_cell.soma[0]
+
+
 MODELS_BY_NAME = {
     'izhi': Izhi,
     'hh_point_5param': HHPoint5Param,
@@ -1683,7 +1799,8 @@ MODELS_BY_NAME = {
     'BBP': BBP,
     'newBBP':newExcBBP,
     'M1_TTPC_NA_HH':M1_TTPC_NA_HH,
-    'newM1':NewM1_TTPC_NA_HH
+    'newM1':NewM1_TTPC_NA_HH,
+    'TF_model':Na12Model_TF
 }
 
 
