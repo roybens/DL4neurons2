@@ -92,6 +92,11 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         model = models.M1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
         return model
+    elif model == 'TF_model':
+        mod_path="/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/newDevelopinghocs"
+        model = models.Na12Model_TF(mod_path,m_type, e_type, cell_i, *params)
+        model.create_cell()
+        return model
     else:
         return MODELS_BY_NAME[model](*params, log=log)
     
@@ -455,6 +460,10 @@ def get_stim(args,idx):
         stim_offset=b_value+a_value*u_offset
         # stim_offset = np.random.uniform(stim_offset_range[0],stim_offset_range[1])
     stim = stim*stim_mul+stim_offset
+    #normalize
+    # max_val = np.max(stim)
+    # if max_val > 0:
+    #     stim = stim * (0.044 / max_val)
     return stim,stim_mul,stim_offset,u_mul,u_offset
         
 def get_mpi_idx(args, nsamples):
@@ -732,7 +741,7 @@ def main(args):
 
 
     if args.param_file:
-        all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
+        all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32, delimiter=',', comments=None)
         upar = None # TODO: save or generate unnormalized params when using --param-file
         start, stop = get_mpi_idx(args, len(all_paramsets))
         # start, stop = 0, 1
@@ -744,8 +753,11 @@ def main(args):
             paramsets=[]
             paramsets.append(all_paramsets)
         else:
+            print("all_paramsets.shape =", all_paramsets.shape)
+            print("first element =", all_paramsets[0])
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
+        # paramsets = np.tanh(paramsets)
         print("Shape of parameters:",paramsets.shape)
         # print("Param Size",paramsets.size)
         # print("Reading from param_file")
@@ -813,6 +825,7 @@ def main(args):
         #print(f'printing buf {buf}, printing shape{buf.shape}')
         for stim_idx in range(len(args.stim_file)):
             stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,stim_idx)
+            print(f"Stim min={stim.min()}, max={stim.max()}, mul={stim_mul}, offset={stim_offset}")
             #stimL.append(stim)
             buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])
             buf_stims_unit[iSamp,:,stim_idx]=np.array([u_mul,u_offset])
@@ -899,7 +912,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    with open('cells.json') as infile:
+    with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
         cells = json.load(infile)
         ALL_MTYPES = cells.keys()
         ALL_ETYPES = list(set(itertools.chain.from_iterable(mtype.keys() for mtype in cells.values())))
