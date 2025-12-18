@@ -65,6 +65,55 @@ def _rangeify_exponential(data, _range):
         data * (np.log(_range[1]) - np.log(_range[0])) + np.log(_range[0])
     )
 
+# def export_base_and_kinetics(model, output_path="./sensitivity_analysis/NewBase2/developing_model_base.csv"):
+#     """
+#     Exports model default parameters and mechanism kinetics into a combined CSV.
+#     Works after model.create_cell() has been called.
+#     """
+
+#     # --- Collect base model parameters ---
+#     base_dict = {
+#         "Parameters": list(model.PARAM_NAMES),
+#         "Values": [float(v) for v in model.DEFAULT_PARAMS],
+#     }
+#     base_df = pd.DataFrame(base_dict)
+
+#     # --- Collect kinetics from mechanisms ---
+#     kinetic_entries = []
+#     mech_names = ["na12", "na16"]
+#     kinetic_vars = ["gbar", "tha", "sh", "thi1", "thi2", "qa", "qd",
+#                     "thinf", "qinf", "ar2", "vhalfs"]
+
+#     for mech in mech_names:
+#         found = False
+#         for sec in model.entire_cell.all:
+#             for seg in sec:
+#                 if hasattr(seg, mech):
+#                     m = getattr(seg, mech)
+#                     for kv in kinetic_vars:
+#                         if hasattr(m, kv):
+#                             kinetic_entries.append({
+#                                 "Parameters": f"{kv}_{mech}",
+#                                 "Values": float(getattr(m, kv))
+#                             })
+#                     found = True
+#                     break
+#             if found:
+#                 break
+
+#     kinetic_df = pd.DataFrame(kinetic_entries)
+
+#     # --- Combine ---
+#     combined_df = pd.concat([base_df, kinetic_df], ignore_index=True)
+
+#     # --- Save ---
+#     combined_df.to_csv(output_path, index=False)
+#     print(f"✅ Saved combined parameter and kinetics CSV to {output_path}")
+#     print(f"  ({len(base_df)} base params + {len(kinetic_df)} kinetics)")
+
+#     return combined_df
+
+
 def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*params):
     if model == 'BBP':
         if m_type is None or e_type is None:
@@ -91,6 +140,18 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/Neuron_Model_HH"
         model = models.M1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
+        return model
+    elif model == 'developing_model':
+        mod_path="/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/newDevelopinghocs"
+        model = models.developing_model(mod_path,m_type, e_type, cell_i, *params)
+        model.create_cell()
+        # export_base_and_kinetics(model)
+        return model
+    elif model == 'adult_model':
+        mod_path="/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/newAdulthocs"
+        model = models.adult_model(mod_path,m_type, e_type, cell_i, *params)
+        model.create_cell()
+        # export_base_and_kinetics(model)
         return model
     else:
         return MODELS_BY_NAME[model](*params, log=log)
@@ -206,6 +267,10 @@ def get_base_values(args,model):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
     elif(args.model =="newM1"):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(count_cell))+".csv")
+    elif(args.model =="developing_model"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/developing_model_base.csv")
+    elif(args.model =="adult_model"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/developed_model.csv")
     
     if(args.base_csv !=None):
         base_params = pd.read_csv(args.base_csv)
@@ -215,6 +280,34 @@ def get_base_values(args,model):
             base_dict['Parameters']=list(model.PARAM_NAMES)
             base_dict['Values']=list(model.DEFAULT_PARAMS)
             base_params=pd.DataFrame.from_dict(base_dict)
+
+            # kinetic_entries = []
+            # mech_names = ['na12', 'na16']
+            # kinetic_vars = ['gbar', 'tha', 'sh', 'thi1', 'thi2', 'qa', 'qd', 'thinf', 'qinf', 'ar2', 'vhalfs']
+
+            # # Loop through all sections and find mechanisms
+            # for mech in mech_names:
+            #     found = False
+            #     for sec in model.entire_cell.all:
+            #         for seg in sec:
+            #             if hasattr(seg, mech):
+            #                 m = getattr(seg, mech)
+            #                 for kv in kinetic_vars:
+            #                     if hasattr(m, kv):
+            #                         kinetic_entries.append({
+            #                             "Parameters": f"{kv}_{mech}",
+            #                             "Values": getattr(m, kv)
+            #                         })
+            #                 found = True
+            #                 break
+            #         if found:
+            #             break
+
+            # if kinetic_entries:
+            #     kinetic_df = pd.DataFrame(kinetic_entries)
+            #     base_params = pd.concat([base_params, kinetic_df], ignore_index=True)
+
+            # base_params.to_csv("./sensitivity_analysis/NewBase2/developing_model.csv", index=False)
     return base_params['Values'].tolist()
 
 def get_random_params(args,model,n=1):
@@ -238,6 +331,10 @@ def get_random_params(args,model,n=1):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/NewBBPparams"+str(int(count_cell))+".csv")
     elif(args.model =="newM1"):
         base_params = pd.read_csv("./sensitivity_analysis/NewBase2/newM1params"+str(int(count_cell))+".csv")
+    elif(args.model =="developing_model"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/developing_model_base.csv")
+    elif(args.model =="adult_model"):
+        base_params = pd.read_csv("./sensitivity_analysis/NewBase2/developed_model.csv")
     
     if(args.base_csv !=None):
         base_params = pd.read_csv(args.base_csv)
@@ -262,17 +359,29 @@ def get_random_params(args,model,n=1):
             pram = base_params['Parameters'].iloc[j]
 
                 
-            if(pram=='e_pas_all' or pram=='cm_somatic' or pram =='cm_axonal' or pram=='cm_all' or pram =='sh_na12' or pram=='sh_na16'):
+            ADDITIVE_PARAMS = (
+                'e_pas_all',
+                'cm_somatic', 'cm_axonal', 'cm_all',
+                'sh_na12', 'sh_na16',
+                'tha_na12', 'tha_na16',
+                'thi1_na12', 'thi2_na12',
+                'thi1_na16', 'thi2_na16',
+                'thinf_na12', 'thinf_na16',
+                'vhalfs_na12', 'vhalfs_na16',
+            )
 
+            if pram in ADDITIVE_PARAMS:
+                b_value = (uLb + uUb) / 2
+                a_value = (uUb - uLb) / 2
 
-                b_value = (uLb+uUb)/2
-                a_value = (uUb-uLb)/2
-                if(pram in args.exclude or args.def_params):
+                if pram in args.exclude or args.def_params:
                     curr_phy_res.append(base_params['Values'].iloc[j])
-                    rand[i][j]=0
+                    rand[i][j] = 0
                     continue
-                ## ADD a check if A_value  is 0
+
+                # Absolute (additive) variation
                 P = b_value + a_value * u
+
             else:
                 new_base=base_params['Values'].iloc[j]*10**((uLb+uUb)/2)
                 b_value = 0
@@ -732,7 +841,7 @@ def main(args):
 
 
     if args.param_file:
-        all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32)
+        all_paramsets = np.genfromtxt(args.param_file, dtype=np.float32, delimiter=',', comments=None)
         upar = None # TODO: save or generate unnormalized params when using --param-file
         start, stop = get_mpi_idx(args, len(all_paramsets))
         # start, stop = 0, 1
@@ -744,6 +853,8 @@ def main(args):
             paramsets=[]
             paramsets.append(all_paramsets)
         else:
+            print("all_paramsets.shape =", all_paramsets.shape)
+            print("first element =", all_paramsets[0])
             paramsets = all_paramsets[start:stop, :]
         paramsets = np.atleast_2d(paramsets)
         upar = np.zeros(shape=paramsets.shape, dtype=np.float32)
@@ -814,6 +925,7 @@ def main(args):
         #print(f'printing buf {buf}, printing shape{buf.shape}')
         for stim_idx in range(len(args.stim_file)):
             stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,stim_idx)
+            print(f"Stim min={stim.min()}, max={stim.max()}, mul={stim_mul}, offset={stim_offset}")
             #stimL.append(stim)
             buf_stims[iSamp,:,stim_idx]=np.array([stim_mul,stim_offset])
             buf_stims_unit[iSamp,:,stim_idx]=np.array([u_mul,u_offset])
@@ -900,7 +1012,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    with open('cells.json') as infile:
+    with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
         cells = json.load(infile)
         ALL_MTYPES = cells.keys()
         ALL_ETYPES = list(set(itertools.chain.from_iterable(mtype.keys() for mtype in cells.values())))
