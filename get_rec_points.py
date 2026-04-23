@@ -203,6 +203,12 @@ def get_rec_pts_from_distances(hobj,axon_targets = [],dend_targets = []):
         dist_list.append(0)
     rec_list.append(list(sec_axons)[0])
     dist_list.append(list(axon_dists)[0])
+    if(len(list(sec_axons))>1):
+        rec_list.append(list(sec_axons)[1])
+        dist_list.append(list(axon_dists)[1])
+    if(len(list(sec_axons))>99):
+        rec_list.append(list(sec_axons)[99])
+        dist_list.append(list(axon_dists)[99])
     #APIC
     rec_list.append(list(sec_dends)[1])
     dist_list.append(list(dend_dists)[1])

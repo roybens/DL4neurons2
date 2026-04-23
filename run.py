@@ -647,6 +647,7 @@ def main(args):
         bbp_name=args.m_type+"_"+args.e_type+"_"+str(args.cell_i)
         
     if args.cori_csv:
+        #This is outdated, need to update
         # if(args.generate_all):
         #     cori_i = int(os.environ.get('SLURM_PROCID')) /5
         #     args.cell_i = int(os.environ.get('SLURM_PROCID')) %5
@@ -770,7 +771,7 @@ def main(args):
         start, stop = 0, 1
     stimL = []
     # MAIN LOOP   
-    lock_params(args, paramsets,model)
+    # lock_params(args, paramsets,model)
     stim,stim_mul,stim_offset,u_mul,u_offset = get_stim(args,0)#only for gettign the length to create the buffer
     #Skipping the first 1000 zeros in stim.
     buf_vs = np.zeros(shape=(stop-start, len(stim[1000:]), model._n_rec_pts(),len(args.stim_file)), dtype=np.float32)
@@ -844,6 +845,9 @@ def main(args):
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     sys.stdout = sys.__stdout__
+    sim_done_time = datetime.now()
+    print("Time to simulate Data",(sim_done_time-start_stim_time).total_seconds())
+    print("Total Time",(sim_done_time-tot_time).total_seconds())
     print("COMPLETED ALL SIMULATIONS",dt_string,flush=True)
     log.info("COMPLETED ALL SIMULATIONS {}".format(dt_string))
     
@@ -895,6 +899,10 @@ def main(args):
         'base_values':get_base_values(args,model)
     }
         write3_data_hdf5(outD,outF,metaD=metadata)
+        write_time = datetime.now()
+        print("Time to write h5",(write_time-sim_done_time).total_seconds())
+        print("Total Time to Execute",(write_time-tot_time).total_seconds())
+
 
         
 if __name__ == '__main__':

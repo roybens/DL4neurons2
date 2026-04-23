@@ -14,21 +14,21 @@ num_param = 1
 '''Generate Plots of Cells STD from csv frpm analyze_sensitivity'''
 
 
-path = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana7/"
+path = "/global/cfs/projectdirs/m2043/roybens/sens_ana/sen_ana_bbp_newbaseL6/"
 
 df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/testCell3.csv")
-nregions = 1
-para_df = pd.read_csv("/global/homes/k/ktub1999/mainDL4/DL4neurons2/sen_ana2/L6_TPC_L1_cADpyr_2/sensitivityregion_6.0_7.0_L6_TPC_L1cADpyr.csv")
+shiftnregions = 10
+para_df = pd.read_csv("/global/cfs/projectdirs/m2043/roybens/sens_ana/sen_ana_bbp_newbaseL6/L6_TPC_L1_cADpyr_0/sensitivityregion_-0.5_0.0_L6_TPC_L1cADpyr.csv")
 colour=['r','b','g','y']
 flag = False
 # total_param = []
 Parameters = para_df['param_name']
-Plot_DIR = "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityPlots"
+Plot_DIR = "/global/cfs/projectdirs/m2043/roybens/sens_ana/sen_ana_bbp_newbaseL6/"
 CSV_DIR=    "/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/SensitivityCSVs/"
 right_bound_all_cells = {}
 left_bound_all_cells = {}
 
-AllPlotsPDF = matplotlib.backends.backend_pdf.PdfPages("ALLSTD.pdf")
+AllPlotsPDF = matplotlib.backends.backend_pdf.PdfPages("ALLSTD_L6.pdf")
 for param in range(len(Parameters)):
     ALL_MEAN_PARAMS={}
     ALL_STD_PARAMS={}
@@ -48,7 +48,7 @@ for param in range(len(Parameters)):
             m_type = df.iloc[j]['mType']
             e_type = df.iloc[j]['eType']
             # filenames = listdir(path+m_type+'_'+e_type)
-            for i_cell in range(0,5):
+            for i_cell in range(0,1):
                 search_dir = path+m_type+'_'+e_type+'_'+str(i_cell)
                 if(os.path.exists(search_dir)):
                     fig = P.figure()
@@ -118,17 +118,18 @@ for param in range(len(Parameters)):
                     # for x1 in x:
                     #     x1 /=2
                     # x = [x1/100-1 for x1 in range(0,200,25)]
-                    x =[x1-1 for x1 in range(0,8,1)]
+                    x = np.arange(-2,3.0,0.5)
+                    [x1-1 for x1 in range(0,6,1)]
                     # print(x)
                     #P.xticks(x,P_names,rotation=90)
                     #P.axis([0,len(all_csv)+1,0, max(y)+1 ])
                     if(len(y)>0):
                         P.title(m_type+" "+e_type+" "+str(i_cell) + str(Parameters[param]))
-                        P.plot(x, y, alpha=0.3,color = 'y',label = m_type+" "+e_type+" "+str(i_cell))
+                        P.plot(x, y,'o-' ,alpha=0.3,color = 'y',label = m_type+" "+e_type+" "+str(i_cell))
                     
                     y = param_values_single_mean
                     if(len(y)>0):
-                        P.plot(x, y, alpha=0.3,color = 'r',label = m_type+" "+e_type+" "+str(i_cell))
+                        P.plot(x, y, 'o-',alpha=0.3,color = 'r',label = m_type+" "+e_type+" "+str(i_cell))
                         P.legend(["STD", "Mean"], loc ="lower right")
                         pdf.savefig(fig,bbox_inches="tight")
                         AllPlotsPDF.savefig(fig,bbox_inches="tight")

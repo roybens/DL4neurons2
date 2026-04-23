@@ -1,8 +1,8 @@
 #!/bin/bash -l
-#SBATCH -N 1
-#SBATCH -t 30:00
-#SBATCH -q debug
-#SBATCH -J DL4N_full_prod
+#SBATCH -N 8
+#SBATCH -t 6:30:00
+#SBATCH -q regular
+#SBATCH -J DL4N_full_prod_inh
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
@@ -17,7 +17,13 @@ module unload craype-hugepages2M
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
 # OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/Feb13Figure2Data/
+# OUT_DIR=/pscratch/sd/k/ktub1999/OntraExcRawFeb5thNoNoise
+# OUT_DIR=/pscratch/sd/k/ktub1999/Ontra_Single_Inh_dataMay18th
+if [ ! -z "$6" ]; then
+  OUT_DIR=$6
+else
+  OUT_DIR=/pscratch/sd/k/ktub1999/Ontra_Single_Inh_dataMay18th
+fi
 # simu run in the dir where  Slurm job was started
 model='BBP'
 # rm -rf ./x86_64
@@ -40,7 +46,7 @@ echo "START_CELL" ${START_CELL}
 echo "NCELLS" ${NCELLS}
 echo "END_CELL" ${END_CELL}
 
-export THREADS_PER_NODE=1
+export THREADS_PER_NODE=128
 
 # to prevent: H5-write error: unable to lock file, errno = 524
 export HDF5_USE_FILE_LOCKING=FALSE
@@ -57,7 +63,8 @@ eType=$2
 i_cell=$3
 numSamples=$4
 cell_count=$5
-wideP=$6
+
+
 echo numSamples $numSamples
 
 cell_name=$mType
@@ -91,15 +98,27 @@ export stimname8=5k0chaotic5A
 
 # export stimname1=5k50kInterChaoticB
 
+# export stimname1=BBP_Exp_Step1000
+# export stimname2=BBP_Exp_Step1000_2.00x
+# export stimname3=BBP_Exp_Step1000_4.00x
+# export stimname4=BBP_Exp_Step1000_8.00x
+# export stimname5=BBP_Exp_Step1000
+
+export stimname6=5k50kInterChaoticB
+# export stimname6=step_3200
+
 stimfile1=stims/${stimname1}.csv
 stimfile2=stims/${stimname2}.csv
 stimfile3=stims/${stimname3}.csv
 stimfile4=stims/${stimname4}.csv
 stimfile5=stims/${stimname5}.csv
-# stimfile5=stims/${stimname5}.csv
 stimfile6=stims/${stimname6}.csv
 stimfile7=stims/${stimname7}.csv
-stimname8=stims/${stimname8}.csv
+stimfile8=stims/${stimname8}.csv
+
+
+# export stimname6=modified_chaotic_50khz
+# stimfile6=stims/KevinStimsFeb2024/Exp_Stims_Long/${stimname6}.csv
 echo
 env | grep SLURM
 echo
@@ -140,13 +159,16 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile7} ${stimfile1} ${stimfile2} ${stimfile3} ${stimfile4} ${stimfile5} ${stimfile6} ${stimfile8}  --model $model \
+        args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
           --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  \
-          --dt 0.1  --cell-count 0 --default-base"
+          --dt 0.1  --cell-count 0 --stim-dc-offset 0 --stim-multiplier 1 --default-base \
+         "
+        #  --exclude gNap_Et2bar_Nap_Et2_axonal gImbar_Im_axonal gNap_Et2bar_Nap_Et2_somatic gImbar_Im_somatic gCabar_Ca_somatic gSKv3_1bar_SKv3_1_dend gNap_Et2bar_Nap_Et2_dend gNaTs2_tbar_NaTs2_t_dend g_pas_dend gImbar_Im_dend gkbar_StochKv_somatic gkbar_KdShu2007_somatic gkbar_StochKv_dend gkbar_KdShu2007_dend\
+          
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
-        
+        # --exclude gK_Tstbar_K_Tst_axonal gNap_Et2bar_Nap_Et2_axonal gImbar_Im_axonal gNap_Et2bar_Nap_Et2_somatic gK_Pstbar_K_Pst_somatic gImbar_Im_somatic gCabar_Ca_somatic gSKv3_1bar_SKv3_1_dend gNap_Et2bar_Nap_Et2_dend gImbar_Im_dend gkbar_StochKv_somatic gkbar_KdShu2007_somatic gkbar_StochKv_dend gkbar_KdShu2007_dend
         # --stim-dc-offset 0 --stim-multiplier 1
         #--exclude g_pas_axonal cm_axonal g_pas_somatic cm_somatic e_pas_all
 

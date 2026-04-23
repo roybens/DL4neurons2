@@ -22,7 +22,7 @@ import random
 import ruamel.yaml as yaml
 import sys
 import csv
-stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k0chaotic5B.csv'
+stimfn = '/global/homes/k/ktub1999/mainDL4/DL4neurons2/stims/5k50kInterChaoticB.csv'
 stim =  np.genfromtxt(stimfn, dtype=np.float32) 
 plt.subplots_adjust(hspace=0.3)
 times = [0.1*i for i in range(len(stim))]
@@ -512,7 +512,7 @@ def analyze_ecds_no_ML(ECDS,def_vals,files_loc,curr_region="",probe='soma'):
 #    params_sensitivity_dict_csv['STD_ECD'] = all_STDs
 #    params_sensitivity_dict_csv['Adj_ML_STD'] = raw_ml_stds
     
-    excl_fn=files_loc + 'sensitivity' + curr_region + '_'  + sys.argv[1] + sys.argv[2] +probe + '.csv'
+    excl_fn=files_loc + 'sensitivity' + curr_region + '_'  + sys.argv[1] + sys.argv[2] +probe + '_ECD.csv'
     with open(excl_fn, 'w',newline='') as out_file:
         writer = csv.writer(out_file)
         writer.writerow(excl_header)
@@ -563,7 +563,7 @@ def main_regions():
     except:
         print('no short name')
         short_name = None    
-    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/sens_ana_inh_may6/' + m_type + '_' + e_type + '_' + i_cell + '/'
+    files_loc = '/global/cfs/cdirs/m2043/roybens/sens_ana/Feb26L5TTPCMean/' + m_type + '_' + e_type + '_' + i_cell + '/'
     #files_loc = './'
     if (len(os.listdir(files_loc))<4):
         print(f'{files_loc} has less than 4 files')
