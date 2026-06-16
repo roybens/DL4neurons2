@@ -142,7 +142,7 @@ class BaseModel(object):
 
 class BBP(BaseModel):
     def __init__(self, m_type, e_type, cell_i, *args, **kwargs):
-        with open('cells.json') as infile:
+        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
@@ -504,21 +504,59 @@ class BBPExcV2(BBP):
         [0,1],
         [0,1]
     ]
+    kinetics_map = {
+        'gbar_na12':   ('na12', 'gbar'),
+        'tha_na12':    ('na12', 'tha'),
+        'sh_na12':     ('na12', 'sh'),
+        'thi1_na12':   ('na12', 'thi1'),
+        'thi2_na12':   ('na12', 'thi2'),
+        'qa_na12':     ('na12', 'qa'),
+        'qd_na12':     ('na12', 'qd'),
+        'thinf_na12':  ('na12', 'thinf'),
+        'qinf_na12':   ('na12', 'qinf'),
+        'ar2_na12':    ('na12', 'ar2'),
+        'vhalfs_na12': ('na12', 'vhalfs'),
+        'gbar_na16':   ('na16', 'gbar'),
+        'tha_na16':    ('na16', 'tha'),
+        'sh_na16':     ('na16', 'sh'),
+        'thi1_na16':   ('na16', 'thi1'),
+        'thi2_na16':   ('na16', 'thi2'),
+        'qa_na16':     ('na16', 'qa'),
+        'qd_na16':     ('na16', 'qd'),
+        'thinf_na16':  ('na16', 'thinf'),
+        'qinf_na16':   ('na16', 'qinf'),
+        'ar2_na16':    ('na16', 'ar2'),
+        'vhalfs_na16': ('na16', 'vhalfs'),
+    }
     
     #these params would be assigned from values of other free parameters (parname:cloned_value)
     CLONED_PARAMS = {'g_pas_dend': 'g_pas_somatic', 'cm_dend': 'cm_somatic', 'gIhbar_Ih_somatic': 'gIhbar_Ih_dend'}
     
     def init_parameters(self):
-            # print("INITIALIZING PARAMETERS")
-            for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
-                for sec in seclist:
-                    if hasattr(sec, name):
-                        #print(f'sec is {sec} name is {name} param_name is {param_name} get_attr is {getattr(self, param_name)}')
-                        #print(self.DEFAULT_PARAMS)
-                        setattr(sec, name, getattr(self, param_name))
-                    else:
-                        log.debug("Not setting {} (absent from this cell)".format(param_name))
-                        continue
+        """
+        Assigns parameters to sections and kinetics to segments.
+        Skips NEURON range variables at the section level.
+        """
+        # --- Section-level parameters (non-kinetics) ---
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+            if name in self.kinetics_map:
+                continue  # Skip range variables
+
+            for sec_instance in seclist:
+                if hasattr(sec_instance, name):
+                    setattr(sec_instance, name, getattr(self, param_name))
+                else:
+                    log.debug(f"Not setting {param_name} (absent from this cell)")
+
+        # --- Segment-level kinetics (range variables) ---
+        for kin_name, (mech_name, mech_param_name) in self.kinetics_map.items():
+            val = getattr(self, kin_name)  # safe now, always exists
+            for sec_instance in self.entire_cell.all:
+                for seg in sec_instance:
+                    mech = getattr(seg, mech_name, None)
+                    if mech is not None:
+                        setattr(mech, mech_param_name, val)
+
         
 
     def _set_self_params(self, *args):
@@ -1442,12 +1480,14 @@ class M1_TTPC_NA_HH(BaseModel):
     def __init__(self,mod_dir,m_type, e_type, cell_i,*args,**kwargs):
        
         self.mod_dir = mod_dir
-        with open('cells.json') as infile:
+        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
         self.m_type = m_type
         self.cell_i = cell_i
+        print("Available m_types:", cells.keys())
+        print("Available e_types for", m_type, ":", cells.get(m_type, {}).keys())
         self.cell_kwargs = cells[m_type][e_type][cell_i]
         # S, self.DEFAULT_PARAMS = [], []
         super(M1_TTPC_NA_HH, self).__init__(*args, **kwargs)
@@ -1669,6 +1709,466 @@ class M1_TTPC_NA_HH(BaseModel):
                 for sec in self._get_rec_pts()[1:]
             ]
 
+class developing_model(BBPExcV2):
+    """
+    Template class for integrating a new BBP-style cell model.
+    Inherits from BBPExcV2. 
+    """
+
+    PARAM_NAMES = (
+        'soma_na12',
+        'ais_na12',
+        'soma_na16',
+        'ais_na16',
+        'axon_KP',
+        'axon_K',
+        'axon_KT',
+        'soma_K',
+        'ais_ca',
+        'ais_KCa',
+        'dend_na12',
+        'g_pas_all',
+        'gSKv3_1bar_SKv3_1_apical',         # No senstivity
+        'gSKv3_1bar_SKv3_1_axonal',         # No senstivity
+        'gSKv3_1bar_SKv3_1_somatic',        # No senstivity
+        'gIhbar_Ih_basal',
+        'gIhbar_Ih_apical',
+        'gIhbar_Ih_somatic',
+        'gCa_LVAstbar_Ca_LVAst_axonal',     # No senstivity
+        'gCa_LVAstbar_Ca_LVAst_somatic',
+        'gCa_HVAbar_Ca_HVA_axonal',         # No senstivity
+        'gCa_HVAbar_Ca_HVA_somatic',
+        'gSK_E2bar_SK_E2_axonal',           # No senstivity
+        'gSK_E2bar_SK_E2_somatic',
+        'cm_all', 
+        'Ra_all',
+        'e_pas_all',
+        'node_na',
+        'dend_k',
+
+        'gbar_na12',   
+        'tha_na12',    
+        'sh_na12',     
+        'thi1_na12',
+        'thi2_na12',   
+        'qa_na12',     
+        'qd_na12',     
+        'thinf_na12', 
+        'qinf_na12',  
+        'ar2_na12',   
+        'vhalfs_na12',       # No senstivity
+        'gbar_na16',         # No senstivity 
+        'tha_na16',   
+        'sh_na16',    
+        'thi1_na16',  
+        'thi2_na16',  
+        'qa_na16',    
+        'qd_na16',    
+        'thinf_na16', 
+        'qinf_na16',  
+        'ar2_na16',   
+        'vhalfs_na16',        # No senstivity
+         
+        # 'gImbar_Im_apical',
+        # 'gK_Tstbar_K_Tst_axonal',
+        # 'gamma_CaDynamics_E2_axonal',
+        # 'gK_Pstbar_K_Pst_axonal',
+        # 'decay_CaDynamics_E2_axonal',
+        # 'gamma_CaDynamics_E2_somatic',
+        # 'decay_CaDynamics_E2_somatic',
+        
+        # Ion reversal potentials
+        # 'ena_apical',
+        # 'ek_apical',
+        # 'ena_axonal', 
+        # 'ek_axonal',
+        # 'ena_somatic',
+        # 'ek_somatic'
+
+    )
+
+    kinetics_map = {
+        'gbar_na12':   ('na12', 'gbar'),
+        'tha_na12':    ('na12', 'tha'),
+        'sh_na12':     ('na12', 'sh'),
+        'thi1_na12':   ('na12', 'thi1'),
+        'thi2_na12':   ('na12', 'thi2'),
+        'qa_na12':     ('na12', 'qa'),
+        'qd_na12':     ('na12', 'qd'),
+        'thinf_na12':  ('na12', 'thinf'),
+        'qinf_na12':   ('na12', 'qinf'),
+        'ar2_na12':    ('na12', 'ar2'),
+        'vhalfs_na12': ('na12', 'vhalfs'),
+        'gbar_na16':   ('na16', 'gbar'),
+        'tha_na16':    ('na16', 'tha'),
+        'sh_na16':     ('na16', 'sh'),
+        'thi1_na16':   ('na16', 'thi1'),
+        'thi2_na16':   ('na16', 'thi2'),
+        'qa_na16':     ('na16', 'qa'),
+        'qd_na16':     ('na16', 'qd'),
+        'thinf_na16':  ('na16', 'thinf'),
+        'qinf_na16':   ('na16', 'qinf'),
+        'ar2_na16':    ('na16', 'ar2'),
+        'vhalfs_na16': ('na16', 'vhalfs'),
+    }
+
+
+    UNIT_RANGES = []
+    UNIT_PARAMS = []
+    CLONED_PARAMS = {}
+
+    def __init__(self, mod_dir, m_type, e_type, cell_i, *args, **kwargs):
+        self.mod_dir = mod_dir
+
+        SENSITIVE_MULT_PARAMS = (
+            'qa_na12', 'qa_na16',
+            'qd_na12', 'qd_na16',
+            'qinf_na12', 'qinf_na16',
+        )
+
+        # Initialize unit ranges and params
+        for i, param in enumerate(self.PARAM_NAMES):
+            self.UNIT_PARAMS.append([0,1])
+            # Default range examples; can be customized per parameter later
+            if 'e_pas' in param:
+                self.UNIT_RANGES.append([-85, -65])
+            elif 'cm' in param:
+                self.UNIT_RANGES.append([0.05, 0.2])
+                # self.UNIT_RANGES.append([0.5, 2])
+            elif param in SENSITIVE_MULT_PARAMS:
+                self.UNIT_RANGES.append([-0.3, 0.3])
+            else:
+                self.UNIT_RANGES.append([-1, 1])
+
+        self.create_cell()
+
+        super(developing_model, self).__init__(m_type, e_type, cell_i, *args, **kwargs)
+        
+    def _set_self_params(self, *args):
+        """
+        Assigns parameter values to the model.
+        Ensures that all PARAM_NAMES exist as Python attributes,
+        including kinetics/range variables, so NEURON assignment is safe.
+        """
+        # --- Use defaults if no args provided ---
+        if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
+            args = self.DEFAULT_PARAMS
+
+        # Map parameter names to values from args
+        params = {name: arg for name, arg in zip(self.PARAM_NAMES, args)}
+
+        # --- Assign all parameters as Python attributes ---
+        for name in self.PARAM_NAMES:
+            if name in params:
+                setattr(self, name, params[name])
+            else:
+                # If missing (e.g., kinetics not in CSV), initialize to -1
+                setattr(self, name, -1)
+
+        # --- Handle cloned parameters if needed ---
+        if hasattr(self, "CLONED_PARAMS"):
+            for var, cloned_var in self.CLONED_PARAMS.items():
+                if cloned_var in params:
+                    setattr(self, var, params[cloned_var])
+
+
+
+    def iter_name_sec_param_name_seclist(self):
+        """
+        Yields (parameter, section, full_param_name, seclist) for all parameters.
+        Adjust seclists according to the section type in your template.hoc.
+        """
+        for name, sec, param_name in self.iter_name_sec_param_name():
+            if sec == 'apical':
+                seclist = list(self.entire_cell.apical)
+            elif sec == 'basal':
+                seclist = list(self.entire_cell.basal)
+            elif sec == 'dend':
+                seclist = list(self.entire_cell.basal) + list(self.entire_cell.apical)
+            elif sec == 'somatic':
+                seclist = list(self.entire_cell.soma)
+            elif sec == 'axonal':
+                seclist = list(self.entire_cell.axon)
+            elif sec == 'all':
+                seclist = list(self.entire_cell.all)
+            else:
+                #For setting M1 Values
+                seclist = [h]
+                name = param_name
+            yield name, sec, param_name, seclist
+
+    def create_cell(self):
+        """
+        Load hoc files, instantiate the template, and initialize parameters.
+        """
+        h.load_file("nrngui.hoc")
+        h.load_file("import3d.hoc")
+
+        # Hoc files specific to the model
+        h.load_file(os.path.join(self.mod_dir, "constants.hoc"))
+        # h.load_file(os.path.join(self.mod_dir, "biophysics.hoc"))
+        h.load_file(os.path.join(self.mod_dir, "template.hoc"))
+
+        template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
+        h("objref cell")
+        h.cell = getattr(h, template_name)(0)
+        self.entire_cell = h.cell
+
+        h.load_file(os.path.join(self.mod_dir, "axon_utils.hoc"))
+
+        h.fcurrent()
+        h.working()
+        h.finitialize()
+
+        self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+            if name in self.kinetics_map:
+                default = -1 
+            elif len(seclist) > 0:
+                default = getattr(seclist[0], name, -1)
+            else:
+                default = -1
+
+            self.DEFAULT_PARAMS.append(default)
+            if default != -1:
+                self.PARAM_RANGES.append((default / 10.0, default * 10.0))
+            else:
+                self.PARAM_RANGES.append((0, 0))
+
+
+        self.DEFAULT_PARAMS = tuple(self.DEFAULT_PARAMS)
+        self.PARAM_RANGES = tuple(self.PARAM_RANGES)
+
+        return h.cell.soma[0]
+
+    def init_parameters(self):
+        """
+        Initialize parameters after cell creation.
+        """
+        super(developing_model, self).init_parameters()
+        h.cell = self.entire_cell
+        h.working()
+        h.cell = self.entire_cell.soma[0]
+
+
+class adult_model(BBPExcV2):
+    """
+    Template class for integrating a new BBP-style cell model.
+    Inherits from BBPExcV2. 
+    """
+
+    PARAM_NAMES = (
+        'soma_na12',
+        'ais_na12',
+        'soma_na16',
+        'ais_na16',
+        'axon_KP',
+        'axon_K',
+        'axon_KT',
+        'soma_K',
+        'ais_ca',
+        'ais_KCa',
+        'dend_na12',
+        'g_pas_all',
+        # 'gSKv3_1bar_SKv3_1_apical',         # No senstivity
+        # 'gSKv3_1bar_SKv3_1_axonal',         # No senstivity
+        'gSKv3_1bar_SKv3_1_somatic',          # No senstivity
+        'gIhbar_Ih_basal',
+        'gIhbar_Ih_apical',
+        'gIhbar_Ih_somatic',
+        # 'gCa_LVAstbar_Ca_LVAst_axonal',   # No senstivity
+        'gCa_LVAstbar_Ca_LVAst_somatic',
+        'gCa_HVAbar_Ca_HVA_axonal',       # No senstivity
+        'gCa_HVAbar_Ca_HVA_somatic',
+        'gSK_E2bar_SK_E2_axonal',         # No senstivity
+        'gSK_E2bar_SK_E2_somatic',
+        # 'cm_apical',
+        # 'cm_basal', 
+        # 'cm_somatic',
+        # 'cm_axonal',
+        'cm_all',
+        'Ra_all',
+        'e_pas_all',
+        'node_na',
+        'dend_k',
+        'gbar_na12',   
+        'tha_na12',    
+        'sh_na12',     
+        'thi1_na12',
+        'thi2_na12',   
+        'qa_na12',     
+        'qd_na12',     
+        'thinf_na12', 
+        'qinf_na12',  
+        'ar2_na12',   
+        'vhalfs_na12',    # No senstivity   
+        'gbar_na16',      # No senstivity   
+        'tha_na16',   
+        'sh_na16',    
+        'thi1_na16',  
+        'thi2_na16',  
+        'qa_na16',    
+        'qd_na16',    
+        'thinf_na16', 
+        'qinf_na16',  
+        'ar2_na16',   
+        'vhalfs_na16',    # No senstivity   
+        
+    )
+
+    kinetics_map = {
+        'gbar_na12':   ('na12', 'gbar'),
+        'tha_na12':    ('na12', 'tha'),
+        'sh_na12':     ('na12', 'sh'),
+        'thi1_na12':   ('na12', 'thi1'),
+        'thi2_na12':   ('na12', 'thi2'),
+        'qa_na12':     ('na12', 'qa'),
+        'qd_na12':     ('na12', 'qd'),
+        'thinf_na12':  ('na12', 'thinf'),
+        'qinf_na12':   ('na12', 'qinf'),
+        'ar2_na12':    ('na12', 'ar2'),
+        'vhalfs_na12': ('na12', 'vhalfs'),
+        'gbar_na16':   ('na16', 'gbar'),
+        'tha_na16':    ('na16', 'tha'),
+        'sh_na16':     ('na16', 'sh'),
+        'thi1_na16':   ('na16', 'thi1'),
+        'thi2_na16':   ('na16', 'thi2'),
+        'qa_na16':     ('na16', 'qa'),
+        'qd_na16':     ('na16', 'qd'),
+        'thinf_na16':  ('na16', 'thinf'),
+        'qinf_na16':   ('na16', 'qinf'),
+        'ar2_na16':    ('na16', 'ar2'),
+        'vhalfs_na16': ('na16', 'vhalfs'),
+     }
+
+    UNIT_RANGES = []
+    UNIT_PARAMS = []
+    CLONED_PARAMS = {}
+
+    def __init__(self, mod_dir, m_type, e_type, cell_i, *args, **kwargs):
+        self.mod_dir = mod_dir
+
+        # Initialize unit ranges and params
+        for i, param in enumerate(self.PARAM_NAMES):
+            self.UNIT_PARAMS.append([0,1])
+            # Default range examples; can be customized per parameter later
+            if 'e_pas' in param:
+                self.UNIT_RANGES.append([-85, -65])
+            elif 'cm' in param:
+                self.UNIT_RANGES.append([0.5, 2])
+            else:
+                self.UNIT_RANGES.append([-1, 1])
+
+        self.create_cell()
+
+        super(adult_model, self).__init__(m_type, e_type, cell_i, *args, **kwargs)
+
+    def _set_self_params(self, *args):
+        """
+        Assigns parameter values to the model.
+        Ensures that all PARAM_NAMES exist as Python attributes,
+        including kinetics/range variables, so NEURON assignment is safe.
+        """
+        # --- Use defaults if no args provided ---
+        if len(args) == 0 and hasattr(self, 'DEFAULT_PARAMS'):
+            args = self.DEFAULT_PARAMS
+
+        # Map parameter names to values from args
+        params = {name: arg for name, arg in zip(self.PARAM_NAMES, args)}
+
+        # --- Assign all parameters as Python attributes ---
+        for name in self.PARAM_NAMES:
+            if name in params:
+                setattr(self, name, params[name])
+            else:
+                # If missing (e.g., kinetics not in CSV), initialize to -1
+                setattr(self, name, -1)
+
+        # --- Handle cloned parameters if needed ---
+        if hasattr(self, "CLONED_PARAMS"):
+            for var, cloned_var in self.CLONED_PARAMS.items():
+                if cloned_var in params:
+                    setattr(self, var, params[cloned_var])
+
+
+
+    def iter_name_sec_param_name_seclist(self):
+        """
+        Yields (parameter, section, full_param_name, seclist) for all parameters.
+        Adjust seclists according to the section type in your template.hoc.
+        """
+        for name, sec, param_name in self.iter_name_sec_param_name():
+            if sec == 'apical':
+                seclist = list(self.entire_cell.apical)
+            elif sec == 'basal':
+                seclist = list(self.entire_cell.basal)
+            elif sec == 'dend':
+                seclist = list(self.entire_cell.basal) + list(self.entire_cell.apical)
+            elif sec == 'somatic':
+                seclist = list(self.entire_cell.soma)
+            elif sec == 'axonal':
+                seclist = list(self.entire_cell.axon)
+            elif sec == 'all':
+                seclist = list(self.entire_cell.all)
+            else:
+                #For setting M1 Values
+                seclist = [h]
+                name = param_name
+            yield name, sec, param_name, seclist
+
+    def create_cell(self):
+        """
+        Load hoc files, instantiate the template, and initialize parameters.
+        """
+        h.load_file("nrngui.hoc")
+        h.load_file("import3d.hoc")
+
+        # Hoc files specific to the model
+        h.load_file(os.path.join(self.mod_dir, "constants.hoc"))
+        # h.load_file(os.path.join(self.mod_dir, "biophysics.hoc"))
+        h.load_file(os.path.join(self.mod_dir, "template.hoc"))
+
+        template_name = "cADpyr232_L5_TTPC1_0fb1ca4724"
+        h("objref cell")
+        h.cell = getattr(h, template_name)(0)
+        self.entire_cell = h.cell
+
+        h.load_file(os.path.join(self.mod_dir, "axon_utils.hoc"))
+
+        h.fcurrent()
+        h.working()
+        h.finitialize()
+
+        self.PARAM_RANGES, self.DEFAULT_PARAMS = [], []
+        for name, sec, param_name, seclist in self.iter_name_sec_param_name_seclist():
+            if name in self.kinetics_map:
+                default = -1 
+            elif len(seclist) > 0:
+                default = getattr(seclist[0], name, -1)
+            else:
+                default = -1
+
+            self.DEFAULT_PARAMS.append(default)
+            if default != -1:
+                self.PARAM_RANGES.append((default / 10.0, default * 10.0))
+            else:
+                self.PARAM_RANGES.append((0, 0))
+
+        self.DEFAULT_PARAMS = tuple(self.DEFAULT_PARAMS)
+        self.PARAM_RANGES = tuple(self.PARAM_RANGES)
+
+        return h.cell.soma[0]
+
+    def init_parameters(self):
+        """
+        Initialize parameters after cell creation.
+        """
+        super(adult_model, self).init_parameters()
+        h.cell = self.entire_cell
+        h.working()
+        h.cell = self.entire_cell.soma[0]
+
+
 MODELS_BY_NAME = {
     'izhi': Izhi,
     'hh_point_5param': HHPoint5Param,
@@ -1683,7 +2183,9 @@ MODELS_BY_NAME = {
     'BBP': BBP,
     'newBBP':newExcBBP,
     'M1_TTPC_NA_HH':M1_TTPC_NA_HH,
-    'newM1':NewM1_TTPC_NA_HH
+    'newM1':NewM1_TTPC_NA_HH,
+    'developing_model':developing_model,
+    'adult_model':adult_model
 }
 
 
