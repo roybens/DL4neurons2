@@ -26,6 +26,7 @@ import models
 
 # templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
 templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
+SCRATCH_ROOT = "/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2"
 
 try:
     from mpi4py import MPI
@@ -132,23 +133,23 @@ def get_model(model, log, m_type=None, e_type=None, cell_i=0, init_cell=False,*p
         model = models.newExcBBP(m_type, e_type, cell_i, *params, log=log)
         model.create_cell()
     elif model =='newM1':
-        mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/newM1hocs"
+        mod_path=f"{SCRATCH_ROOT}/newM1hocs"
         model = models.NewM1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params, log=log)
         model.create_cell()
         return model
     elif model == 'M1_TTPC_NA_HH':
-        mod_path="/global/homes/k/ktub1999/mainDL4/DL4neurons2/Neuron_Model_HH"
+        mod_path=f"{SCRATCH_ROOT}/Neuron_Model_HH"
         model = models.M1_TTPC_NA_HH(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
         return model
     elif model == 'developing_model':
-        mod_path="/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/newDevelopinghocs"
+        mod_path=f"{SCRATCH_ROOT}/newDevelopinghocs"
         model = models.developing_model(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
         # export_base_and_kinetics(model)
         return model
     elif model == 'adult_model':
-        mod_path="/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/newAdulthocs"
+        mod_path=f"{SCRATCH_ROOT}/newAdulthocs"
         model = models.adult_model(mod_path,m_type, e_type, cell_i, *params)
         model.create_cell()
         # export_base_and_kinetics(model)
@@ -1012,7 +1013,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
+    with open(f"{SCRATCH_ROOT}/cells.json") as infile:
         cells = json.load(infile)
         ALL_MTYPES = cells.keys()
         ALL_ETYPES = list(set(itertools.chain.from_iterable(mtype.keys() for mtype in cells.values())))

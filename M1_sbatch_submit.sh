@@ -1,23 +1,29 @@
 #!/bin/bash -l
 #SBATCH -N 8
-#SBATCH -t 11:30:00
+#SBATCH -t 13:00:00
 #SBATCH -q regular
 #SBATCH -J DL4N_full_prod
 #SBATCH -L SCRATCH,cfs
 #SBATCH -C cpu
 #SBATCH --output logs/%A_%a  # job-array encodding
 #SBATCH --image=balewski/ubu20-neuron8:v5
+#SBATCH --mail-user=swdougherty@ucdavis.edu
+#SBATCH --mail-type=BEGIN,END
 #SBATCH --array 1-1 #a
 
 # Stuff for knl
 # export OMP_NUM_THREADS=128
 module unload craype-hugepages2M
-# cd /pscratch/sd/k/ktub1999/main/DL4neurons2
+# cd /pscratch/sd/s/sdough/main/DL4neurons2
 # All paths relative to this, prepend this for full path name
 #WORKING_DIR=/global/cscratch1/sd/adisaran/DL4neurons
 #OUT_DIR=/global/cfs/cdirs/m2043/adisaran/wrk/
-# OUT_DIR=/global/homes/k/ktub1999/testRun/
-OUT_DIR=/pscratch/sd/k/ktub1999/Jan23Paper/
+# OUT_DIR=/pscratch/sd/s/sdough/testRun/
+
+SCRATCH_ROOT=/pscratch/sd/s/sdough
+OUT_DIR=${SCRATCH_ROOT}/testRun
+
+# OUT_DIR=/pscratch/sd/s/sdough/Jan23Paper/
 # simu run in the dir where  Slurm job was started
 model='M1_TTPC_NA_HH'
 # rm -rf ./x86_64
@@ -34,6 +40,7 @@ END_CELL=$((${START_CELL}+${NCELLS}))
 NSAMPLES=1
 NRUNS=1
 NSAMPLES_PER_RUN=$(($NSAMPLES/$NRUNS))
+echo "$6"
 
 echo "CELLS_FILE" ${CELLS_FILE}
 echo "START_CELL" ${START_CELL}
@@ -115,8 +122,8 @@ echo "numParamSets" $numParamSets
 
 
 echo "numParamSets" $numParamSets
-REMOTE_CELLS_FILE='/pscratch/sd/k/ktub1999/main/DL4neurons2/excitatorycells.csv'
-PARAM_VALUE_FILE='/global/homes/k/ktub1999/mainDL4/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
+REMOTE_CELLS_FILE='/global/homes/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/excitatorycells.csv'
+PARAM_VALUE_FILE='/global/homes/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/sensitivity_analysis/NewBase2/BaseTest.csv'
 #sbcast ${CELLS_FILE} ${REMOTE_CELLS_FILE}
 REMOTE_CELLS_FILE=${CELLS_FILE}
 echo REMOTE_CELLS_FILE $REMOTE_CELLS_FILE
@@ -143,10 +150,10 @@ do
         FILE_NAME=${FILENAME}-\{NODEID\}-c${i_cell}.h5
         OUTFILE=$OUT_DIR/$FILE_NAME
 	
-        args="--outfile $OUTFILE --stim-file ${stimfile6}  --model $model \
+        args="--outfile $OUTFILE --stim-file $stimfile6  --model $model \
           --m-type $mType --e-type $eType --cell-i $i_cell --num $numParamSets --cori-start ${START_CELL} --cori-end ${END_CELL} \
-          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18  --unit-params-csv unit_params.csv \
-          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count --exclude sh_na12 cm_all e_pas_all"
+          --trivial-parallel --thread-number --print-every 100 --linear-params-inds 12 17 18 --unit-params-csv $wideP \
+          --dt 0.1 --stim-dc-offset 0 --stim-multiplier 1  --cell-count $cell_count"
         echo "args" $args
         srun --input none -k -n $((${SLURM_NNODES}*${THREADS_PER_NODE})) --ntasks-per-node ${THREADS_PER_NODE} shifter python3 -u run.py $args
         

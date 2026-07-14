@@ -15,6 +15,8 @@ from neuron import h, gui
 
 from get_rec_points import get_rec_points,get_rec_pts_from_distances,get_rec_pts_for_M1
 
+SCRATCH_ROOT = "/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2"
+
 class BaseModel(object):
     def __init__(self, *args, **kwargs):
         h.celsius = kwargs.pop('celsius', 34)
@@ -45,6 +47,8 @@ class BaseModel(object):
         h('objref clamp')
         # print(h.cell)
         clamp = h.IClamp(h.cell(0.5))
+        # clamp = h.IClamp(h.cell.soma[0](0.5))
+        print("Clamp section:", clamp.get_segment().sec.name())
         clamp.delay = 0
         clamp.dur = h.tstop
         h.clamp = clamp
@@ -142,7 +146,7 @@ class BaseModel(object):
 
 class BBP(BaseModel):
     def __init__(self, m_type, e_type, cell_i, *args, **kwargs):
-        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
+        with open(f"{SCRATCH_ROOT}/cells.json") as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
@@ -182,31 +186,31 @@ class BBP(BaseModel):
         template_name = self.cell_kwargs['model_template'].split(':', 1)[-1]
         # templates_dir = '/global/cfs/cdirs/m2043/hoc_templates/hoc_templates'
         templates_dir = '/global/cfs/cdirs/m3513/M1_Hoc_template/HocTemplate'
-        constants = '/'.join([templates_dir, cell_dir,cell_dir, 'constants.hoc'])
+        constants = '/'.join([templates_dir, cell_dir, cell_dir, 'constants.hoc'])
         # constants = '/'.join([templates_dir, cell_dir, 'constants.hoc'])
         log.debug(constants)
         h.load_file(constants)
 
-        morpho_template = '/'.join([templates_dir, cell_dir,cell_dir, 'morphology.hoc'])
+        morpho_template = '/'.join([templates_dir, cell_dir, cell_dir, 'morphology.hoc'])
         log.debug(morpho_template)
-        h.load_file(morpho_template)
+        # h.load_file(morpho_template)
         
-        biophys_template = '/'.join([templates_dir, cell_dir,cell_dir, 'biophysics.hoc'])
+        biophys_template = '/'.join([templates_dir, cell_dir, cell_dir, 'biophysics.hoc'])
         log.debug(biophys_template)
-        h.load_file(biophys_template)
-        
-        synapse_template = '/'.join([templates_dir, cell_dir,cell_dir, 'synapses/synapses.hoc'])
+        # h.load_file(biophys_template)
+
+        synapse_template = '/'.join([templates_dir, cell_dir, cell_dir, 'synapses/synapses.hoc'])
         log.debug(synapse_template)
-        h.load_file(synapse_template)
+        # h.load_file(synapse_template)
         
-        cell_template = '/'.join([templates_dir, cell_dir,cell_dir, 'template.hoc'])
+        cell_template = '/'.join([templates_dir, cell_dir, cell_dir, 'template.hoc'])
         # cell_template = '/'.join([templates_dir, cell_dir, 'template.hoc'])
         log.debug(cell_template)
         h.load_file(cell_template)
         
         # For some reason, need to instantiate cell from within the templates directory?
         cwd = os.getcwd()
-        os.chdir(os.path.join(templates_dir, cell_dir,cell_dir))
+        os.chdir(os.path.join(templates_dir, cell_dir, cell_dir))
         # os.chdir(os.path.join(templates_dir,cell_dir))
         
         SYNAPSES, NO_SYNAPSES = 1, 0
@@ -550,12 +554,13 @@ class BBPExcV2(BBP):
 
         # --- Segment-level kinetics (range variables) ---
         for kin_name, (mech_name, mech_param_name) in self.kinetics_map.items():
-            val = getattr(self, kin_name)  # safe now, always exists
-            for sec_instance in self.entire_cell.all:
-                for seg in sec_instance:
-                    mech = getattr(seg, mech_name, None)
-                    if mech is not None:
-                        setattr(mech, mech_param_name, val)
+            if hasattr(self, kin_name):
+                val = getattr(self, kin_name)
+                for sec_instance in self.entire_cell.all:
+                    for seg in sec_instance:
+                        mech = getattr(seg, mech_name, None)
+                        if mech is not None:
+                            setattr(mech, mech_param_name, val)
 
         
 
@@ -1480,7 +1485,7 @@ class M1_TTPC_NA_HH(BaseModel):
     def __init__(self,mod_dir,m_type, e_type, cell_i,*args,**kwargs):
        
         self.mod_dir = mod_dir
-        with open('/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/cells.json') as infile:
+        with open(f"{SCRATCH_ROOT}/cells.json") as infile:
             cells = json.load(infile)
         self.args = args
         self.e_type = e_type
@@ -1641,7 +1646,7 @@ class M1_TTPC_NA_HH(BaseModel):
         # self.axon_proper = h.cell.axon[1]
         
       
-        # self.tes1("/pscratch/sd/k/ktub1999/main/DL4neurons2/Neuron_Model_HH")
+        # self.tes1("/pscratch/sd/s/sdough/Neuron_Latest_Pipeline/DL4neurons2/Neuron_Model_HH")
         hobj = h.cell
         self.entire_cell = hobj
         return h.cell.soma[0]
@@ -1681,7 +1686,7 @@ class M1_TTPC_NA_HH(BaseModel):
     
     def _get_rec_pts(self):
         # if not hasattr(self, 'probes'):
-        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [150],dend_targets = [50])))
+        self.probes = list(OrderedDict.fromkeys(get_rec_pts_for_M1(self.entire_cell,axon_targets = [50],dend_targets = [150])))
         return self.probes
     def _n_rec_pts(self):
         return len(self._get_rec_pts())
@@ -1833,10 +1838,9 @@ class developing_model(BBPExcV2):
             if 'e_pas' in param:
                 self.UNIT_RANGES.append([-85, -65])
             elif 'cm' in param:
-                self.UNIT_RANGES.append([0.05, 0.2])
-                # self.UNIT_RANGES.append([0.5, 2])
-            elif param in SENSITIVE_MULT_PARAMS:
-                self.UNIT_RANGES.append([-0.3, 0.3])
+                self.UNIT_RANGES.append([0.5, 2])
+            # elif param in SENSITIVE_MULT_PARAMS:
+            #     self.UNIT_RANGES.append([-0.3, 0.3])
             else:
                 self.UNIT_RANGES.append([-1, 1])
 
